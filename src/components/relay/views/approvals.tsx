@@ -58,10 +58,10 @@ export function ApprovalsView() {
         breadcrumb={['Relay', 'Payments', 'Approval center']}
       />
       {queue.isError ? <ErrorState message={String(queue.error)} retry={() => queue.refetch()} /> : null}
-      {queue.data?.items.length === 0 ? (
+      {(queue.data?.items ?? []).length === 0 ? (
         <EmptyState icon={<CheckCircle2 className="h-8 w-8" />} title="Approval queue is clear" description="New payment requests appear here with policy evidence, recipient history and payload hashes." />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {(queue.data?.items ?? []).map((item) => (
             <Card key={item.id} className="border-[#26374C] bg-[#0E1725] p-5">
               <div className="flex items-start justify-between gap-3">
@@ -75,7 +75,7 @@ export function ApprovalsView() {
                 </div>
               </div>
               <div className="mt-3 grid gap-2 rounded-lg border border-[#26374C] bg-[#0B1220] p-3 text-xs">
-                <div className="flex justify-between"><span className="text-dim">Recipient</span><span className="text-secondary">{item.recipientName ?? 'Unregistered'} · <span className="font-mono">{shortAddress(item.destination, 4)}</span></span></div>
+                <div className="flex justify-between"><span className="text-dim">Recipient</span><span className="min-w-0 truncate text-secondary">{item.recipientName ?? 'Unregistered'} · <span className="font-mono">{shortAddress(item.destination, 4)}</span></span></div>
                 <div className="flex justify-between"><span className="text-dim">Asset</span><span className="text-secondary">{item.mintSymbol}</span></div>
                 <div className="flex justify-between"><span className="text-dim">Wallet</span><span className="text-secondary">{item.walletLabel ?? '—'}</span></div>
                 {item.reason ? <div className="flex justify-between gap-4"><span className="shrink-0 text-dim">Reason</span><span className="text-right text-secondary">{item.reason}</span></div> : null}
@@ -89,10 +89,10 @@ export function ApprovalsView() {
               <div className="mt-3 flex gap-2">
                 {item.iCanDecide ? (
                   <>
-                    <Button size="sm" onClick={() => decide(item, 'APPROVED')} disabled={busy === item.id} className="bg-[#36C995] font-medium text-[#06221A] hover:bg-[#36C995]/90">
+                    <Button size="sm" onClick={() => decide(item, 'APPROVED')} disabled={busy === item.id} className="h-9 px-4 bg-[#36C995] font-medium text-[#06221A] hover:bg-[#36C995]/90">
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Approve
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => decide(item, 'REJECTED')} disabled={busy === item.id} className="border-[#F27683]/40 text-[#F27683]">
+                    <Button size="sm" variant="outline" onClick={() => decide(item, 'REJECTED')} disabled={busy === item.id} className="h-9 px-4 border-[#F27683]/40 text-[#F27683]">
                       <XCircle className="mr-1.5 h-3.5 w-3.5" /> Reject
                     </Button>
                   </>

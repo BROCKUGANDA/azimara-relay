@@ -106,10 +106,18 @@ registerProcessor('SCHEDULE_SWEEP', async () => {
       const { parseAmountToBaseUnits } = await import('@/lib/money')
       const asset = s.mint === 'native:SOL' ? null : await db.supportedAsset.findUnique({ where: { mint: s.mint } })
       const decimals = asset?.decimals ?? 9
+      const recipient = await db.recipient.findUnique({ where: { id: s.recipientId } })
+      if (!recipient || recipient.status !== 'ACTIVE') {
+        // Recipient gone or archived: pause the schedule instead of retrying
+        // forever (which would spam the audit log every period).
+        await db.paymentSchedule.update({ where: { id: s.id }, data: { status: 'PAUSED' } })
+        await audit({ orgId: s.orgId, actorType: 'SYSTEM', action: 'SCHEDULE_PAUSED_MISSING_RECIPIENT', resourceType: 'PaymentSchedule', resourceId: s.id, data: { recipientId: s.recipientId } })
+        continue
+      }
       await createPayment(s.orgId, s.createdBy ?? s.orgId, {
         sourceWalletId: s.walletId,
         recipientId: s.recipientId,
-        destination: (await db.recipient.findUniqueOrThrow({ where: { id: s.recipientId } })).address,
+        destination: recipient.address,
         mint: s.mint,
         amount: formatAmount(s.amountBaseUnits, decimals),
         reason: `Scheduled payment: ${s.name}`,
@@ -145,7 +153,8 @@ registerProcessor('NOTIFICATION_DELIVER', async (payload) => {
 })
 
 function formatAmount(base: string, decimals: number): string {
-  return formatBaseUnits(base, decimals, { trimTrailingZeros: true })
+  // group:false — machine round-trip into createPayment, not display.
+  return formatBaseUnits(base, decimals, { trimTrailingZeros: true, group: false })
 }
 
 function nextRecurrence(recurrence: string, from: Date): Date {
@@ -155,11 +164,17 @@ function nextRecurrence(recurrence: string, from: Date): Date {
       d.setUTCDate(d.getUTCDate() + 7)
       break
     case 'MONTHLY':
-      d.setUTCMonth(d.getUTCMonth() + 1)
-      break
-    case 'QUARTERLY':
-      d.setUTCMonth(d.getUTCMonth() + 3)
-      break
+    case 'QUARTERLY': {
+      // Month arithmetic must clamp the day-of-month: Jan 31 + 1 month must
+      // land on Feb 28/29, not skip into March (which would double-fire on
+      // short months). Compute the target month, then clamp.
+      const monthsToAdd = recurrence === 'MONTHLY' ? 1 : 3
+      const originalDay = d.getUTCDate()
+      const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + monthsToAdd, 1, d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds()))
+      const daysInTargetMonth = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate()
+      target.setUTCDate(Math.min(originalDay, daysInTargetMonth))
+      return target
+    }
     default:
       d.setUTCDate(d.getUTCDate() + 1)
   }

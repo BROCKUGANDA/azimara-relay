@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ok, readJson, route } from '@/lib/api'
+import { ok, readJson, authRoute, route } from '@/lib/api'
 import { createOrganization } from '@/lib/organizations'
 import { db } from '@/lib/db'
 
@@ -10,7 +10,9 @@ export const GET = route(async ({ auth }) => {
   return ok(memberships.map((m) => ({ id: m.org.id, name: m.org.name, slug: m.org.slug, role: m.role, status: m.org.status, plan: m.org.plan, createdAt: m.org.createdAt })))
 })
 
-export const POST = route(async ({ auth, request }) => {
+// POST must run WITHOUT org context: creating your FIRST organization is the
+// one mutation where the client cannot send X-Organization-Id yet.
+export const POST = authRoute(async ({ auth, request }) => {
   const body = await readJson(request, createSchema)
   const org = await createOrganization(auth.user, body.name)
   return ok({ id: org.id, name: org.name, slug: org.slug })

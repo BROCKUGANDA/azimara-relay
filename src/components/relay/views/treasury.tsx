@@ -46,8 +46,8 @@ function ExpenditureChart({ timeline }: { timeline: AnalyticsData['timeline'] })
             className="w-full rounded-t bg-gradient-to-t from-[#35D6C0]/20 to-[#35D6C0]/70 transition-all duration-150 group-hover:from-[#35D6C0]/40 group-hover:to-[#35D6C0]"
             style={{ height: `${Math.max(4, (d.volume / max) * 120)}px` }}
           />
-          <div className="pointer-events-none absolute -top-10 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-[#26374C] bg-[#142135] px-2 py-1 text-[10px] group-hover:block">
-            {d.date}: {d.volume.toLocaleString('en-US', { maximumFractionDigits: 2 })} · {d.completed}✓ {d.failed}✗
+          <div className="pointer-events-none absolute -top-10 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-[#26374C] bg-[#142135] px-2 py-1 text-[10px] group-active:block group-hover:block">
+            {d.date}: {Number.isFinite(d.volume) ? d.volume.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0'} · {d.completed}✓ {d.failed}✗
           </div>
         </div>
       ))}
@@ -77,6 +77,10 @@ export function TreasuryView() {
   }
 
   const m = treasury.data?.metrics
+  const maxTotal = Math.max(...(analytics.data?.assetDistribution ?? []).map((a) => {
+    const n = parseFloat(String(a.total).replace(/,/g, ''))
+    return Number.isFinite(n) ? n : 0
+  }), 0)
 
   return (
     <div>
@@ -87,29 +91,28 @@ export function TreasuryView() {
       />
       {treasury.isError ? <ErrorState message={String(treasury.error)} retry={() => treasury.refetch()} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Payments (30d)" value={analytics.data?.totals.payments ?? analytics.data?.timeline.reduce((a, t) => a + t.count, 0) ?? 0} accent="teal" sub="All payment records" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Payments (30d)" value={analytics.data?.totals?.payments ?? analytics.data?.timeline.reduce((a, t) => a + t.count, 0) ?? 0} accent="teal" sub="All payment records" />
         <MetricCard label="Pending approvals" value={m?.pendingApprovals ?? 0} accent="purple" />
         <MetricCard label="In flight" value={m?.activeTransfers ?? 0} accent="blue" />
         <MetricCard label="Failed / attention" value={m?.failedPayments ?? 0} accent="red" />
       </div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <SectionCard title="Payment volume — last 30 days" description="Real payment records; intermediate hops are never counted as volume.">
           {analytics.isLoading ? <Skeleton className="h-36 bg-[#142135]" /> : analytics.data ? <ExpenditureChart timeline={analytics.data.timeline} /> : null}
         </SectionCard>
         <SectionCard title="Asset distribution" description="Completed payment volume per asset.">
-          {analytics.data?.assetDistribution.length ? (
+          {(analytics.data?.assetDistribution ?? []).length ? (
             <div className="space-y-2">
-              {analytics.data.assetDistribution.map((a) => (
+              {(analytics.data?.assetDistribution ?? []).map((a) => (
                 <div key={a.mint} className="flex items-center gap-3">
                   <span className="w-14 text-xs font-medium text-[#35D6C0]">{a.symbol}</span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#142135]">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#35D6C0] to-[#658CFF]" style={{ width: `${Math.max(4, Math.min(100, (parseFloat(a.total.replace(/,/g, '')) / Math.max(...analytics.data!.assetDistribution.map((x) => parseFloat(x.total.replace(/,/g, '')) || 1))) * 100))}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#35D6C0] to-[#658CFF]" style={{ width: `${maxTotal > 0 ? Math.max(4, Math.min(100, (parseFloat(String(a.total).replace(/,/g, '')) / maxTotal) * 100)) : 0}%` }} />
                   </div>
-                  <Amount base={a.total.startsWith('0') === false ? '0' : '0'} decimals={0} className="hidden" />
-                  <span className="font-mono text-xs tabular-nums">{a.total}</span>
-                  <span className="w-10 text-right text-[10px] text-dim">{a.count}×</span>
+                  <span className="min-w-0 truncate font-mono text-xs tabular-nums">{a.total}</span>
+                  <span className="hidden w-10 shrink-0 text-right text-[10px] text-dim sm:inline">{a.count}×</span>
                 </div>
               ))}
             </div>
@@ -120,10 +123,10 @@ export function TreasuryView() {
       </div>
 
       <SectionCard className="mt-6" title="Wallet balances" description="Live Solana RPC reads for verified wallets. Unreachable RPC is reported honestly — never faked." actions={<Button size="sm" variant="outline" className="border-[#26374C] text-xs" onClick={() => navigate('/app/wallets')}>Manage wallets</Button>}>
-        {treasury.data?.wallets.length === 0 ? (
+        {(treasury.data?.wallets ?? []).length === 0 ? (
           <EmptyState icon={<WalletIcon className="h-7 w-7" />} title="No wallets connected" description="Register a treasury wallet to see balances here." action={<Button size="sm" onClick={() => navigate('/app/wallets')} className="bg-[#35D6C0] font-medium text-[#062A26]">Connect wallet</Button>} />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {(treasury.data?.wallets ?? []).map((w) => (
               <div key={w.id} className="rounded-xl border border-[#26374C] bg-[#0B1220] p-4">
                 <div className="flex items-center justify-between">
@@ -131,7 +134,7 @@ export function TreasuryView() {
                     <span className="text-sm font-medium">{w.label}</span>
                     <StatusBadge status={w.ownershipStatus === 'VERIFIED' ? 'COMPLETED' : 'AWAITING_SIGNATURE'} label={w.ownershipStatus === 'VERIFIED' ? 'Verified' : 'Unverified'} />
                   </div>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs text-dim" onClick={() => refreshBalance(w.id)} disabled={refreshing === w.id}>
+                  <Button size="sm" variant="ghost" className="h-9 text-xs text-dim" onClick={() => refreshBalance(w.id)} disabled={refreshing === w.id}>
                     <RefreshCw className={`mr-1 h-3 w-3 ${refreshing === w.id ? 'animate-spin' : ''}`} /> Refresh
                   </Button>
                 </div>
@@ -162,7 +165,7 @@ export function TreasuryView() {
       </SectionCard>
 
       <SectionCard className="mt-6" title="Recent payments" description="Latest 12 across the organization.">
-        {treasury.data?.recentPayments.length === 0 ? (
+        {(treasury.data?.recentPayments ?? []).length === 0 ? (
           <EmptyState title="No payments yet" />
         ) : (
           <DataTable

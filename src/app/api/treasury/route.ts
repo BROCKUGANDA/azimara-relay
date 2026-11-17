@@ -1,5 +1,6 @@
 import { ok, route } from '@/lib/api'
 import { db } from '@/lib/db'
+import { safeJsonParse } from '@/lib/safe-json'
 
 /// Treasury overview aggregation — real application records only. Never
 /// synthetic volume; empty workspaces produce honest zero states.
@@ -32,7 +33,7 @@ export const GET = route(async ({ org }) => {
       address: w.address,
       network: w.network,
       ownershipStatus: w.ownershipStatus,
-      balance: w.balanceJson ? JSON.parse(w.balanceJson) : null,
+      balance: safeJsonParse<unknown>(w.balanceJson, null),
       balanceAt: w.balanceAt,
     })),
     metrics: {

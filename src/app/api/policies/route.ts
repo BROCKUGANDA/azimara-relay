@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { audit } from '@/lib/audit'
 import { DEFAULT_RULES } from '@/lib/approvals'
 import { entitlementsFor } from '@/lib/entitlements'
+import { safeJsonParse } from '@/lib/safe-json'
 
 export const GET = route(async ({ org }) => {
   const policies = await db.approvalPolicy.findMany({ where: { orgId: org.org.id }, orderBy: { version: 'desc' } })
@@ -13,7 +14,7 @@ export const GET = route(async ({ org }) => {
       name: p.name,
       version: p.version,
       active: p.active,
-      rules: JSON.parse(p.rulesJson),
+      rules: safeJsonParse<unknown[]>(p.rulesJson, []),
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     })),
@@ -47,6 +48,11 @@ export const POST = route(async ({ org, auth, request }) => {
   const body = await readJson(request, createSchema)
   const ent = entitlementsFor(org.org.plan)
   const requiresMulti = body.rules.some((r) => r.approversRequired > 1)
+  // Entitlement gate runs BEFORE any write: a 402 must never leave a
+  // disallowed multi-approver policy created and active.
+  if (requiresMulti && !ent.multiApprover) {
+    throw new ApiError('PLAN_LIMIT', 'Your plan does not include multi-approver policies; upgrade to use them.', 402)
+  }
   const currentVersion = await db.approvalPolicy.aggregate({ where: { orgId: org.org.id }, _max: { version: true } })
   const nextVersion = (currentVersion._max.version ?? 0) + 1
   // Policy changes never reuse approvals issued under the previous policy.
@@ -66,8 +72,5 @@ export const POST = route(async ({ org, auth, request }) => {
     resourceId: policy.id,
     data: { version: nextVersion, rules: body.rules.length, pendingAffected: pending.count },
   })
-  if (requiresMulti && !ent.multiApprover) {
-    throw new ApiError('PLAN_LIMIT', 'Your plan does not include multi-approver policies; upgrade to use them.', 402)
-  }
   return ok({ id: policy.id, version: policy.version, active: policy.active })
 }, { permission: 'policy:manage' })

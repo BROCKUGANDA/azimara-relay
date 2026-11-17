@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { ok, readJson, route } from '@/lib/api'
 import { db } from '@/lib/db'
 import { audit } from '@/lib/audit'
+import { safeJsonParse } from '@/lib/safe-json'
 
 const ONBOARDING_STEPS = [
   { id: 'org_profile', label: 'Organization profile configured', route: '#/app/settings' },
@@ -18,8 +19,8 @@ export const GET = route(async ({ org }) => {
     db.approvalPolicy.count({ where: { orgId: org.org.id, active: true } }),
     db.providerIntegration.findUnique({ where: { orgId_provider: { orgId: org.org.id, provider: 'MULTIHOPPER' } } }),
   ])
-  const settings = JSON.parse(org.org.settingsJson) as { network?: string }
-  const onboarding = JSON.parse(org.org.onboardingJson) as { steps?: Record<string, boolean>; dismissed?: boolean }
+  const settings = safeJsonParse<{ network?: string } | null>(org.org.settingsJson, {}) ?? {}
+  const onboarding = safeJsonParse<{ steps?: Record<string, boolean>; dismissed?: boolean } | null>(org.org.onboardingJson, {}) ?? {}
   const auto = {
     org_profile: true,
     wallet: walletCount > 0,
@@ -36,7 +37,7 @@ const patchSchema = z.object({ step: z.string().min(1).max(40), done: z.boolean(
 
 export const PATCH = route(async ({ org, request, auth }) => {
   const body = await readJson(request, patchSchema)
-  const onboarding = JSON.parse(org.org.onboardingJson) as { steps?: Record<string, boolean>; dismissed?: boolean }
+  const onboarding = safeJsonParse<{ steps?: Record<string, boolean>; dismissed?: boolean } | null>(org.org.onboardingJson, {}) ?? {}
   onboarding.steps = { ...(onboarding.steps ?? {}), [body.step]: body.done }
   await db.organization.update({ where: { id: org.org.id }, data: { onboardingJson: JSON.stringify(onboarding) } })
   await audit({ orgId: org.org.id, actorId: auth.user.id, action: 'ONBOARDING_STEP_UPDATED', resourceType: 'Organization', resourceId: org.org.id, data: body })

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSession } from '@/lib/client/store'
+import { useRouteSeo } from '@/lib/client/seo'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -45,11 +46,11 @@ function PublicHeader({ current }: { current: string }) {
   const session = useSession()
   return (
     <header className="sticky top-0 z-40 border-b border-[#1A293D] bg-[#080D17]/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <button onClick={() => navigate('/')} aria-label="AZIMARA RELAY home">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+        <button onClick={() => navigate('/')} aria-label="AZIMARA RELAY home" className="shrink-0">
           <Logo />
         </button>
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
+        <nav className="hidden items-center gap-1 xl:flex" aria-label="Main">
           {NAV.map((item) => (
             <button
               key={item.path}
@@ -60,14 +61,16 @@ function PublicHeader({ current }: { current: string }) {
             </button>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {session.authenticated ? (
             <Button onClick={() => navigate('/app')} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
               Open app <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           ) : (
             <>
-              <Button variant="ghost" onClick={() => navigate('/login')} className="text-secondary hover:text-foreground">Sign in</Button>
+              {/* Hidden on the tightest phones: the nav strip and register CTA
+                  keep the header within 360px. */}
+              <Button variant="ghost" onClick={() => navigate('/login')} className="hidden text-secondary hover:text-foreground sm:inline-flex">Sign in</Button>
               <Button onClick={() => navigate('/register')} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
                 Get started
               </Button>
@@ -75,12 +78,15 @@ function PublicHeader({ current }: { current: string }) {
           )}
         </div>
       </div>
-      <div className="flex gap-1 overflow-x-auto border-t border-[#1A293D] px-4 py-2 lg:hidden">
+      {/* Scrollable chip strip: the 9-page top nav only fits at ≥1280px;
+          everything smaller (phones + tablets) uses this strip. */}
+      <div className="flex gap-1 overflow-x-auto border-t border-[#1A293D] px-4 py-2 xl:hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
         {NAV.map((item) => (
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
-            className={`whitespace-nowrap rounded-md px-2.5 py-1 text-xs ${current === item.path ? 'bg-[#142135] text-[#35D6C0]' : 'text-secondary'}`}
+            aria-current={current === item.path ? 'page' : undefined}
+            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-xs ${current === item.path ? 'bg-[#142135] text-[#35D6C0]' : 'text-secondary'}`}
           >
             {item.label}
           </button>
@@ -120,8 +126,14 @@ function Footer() {
           ))}
         </div>
       </div>
-      <div className="border-t border-[#1A293D] px-6 py-4 text-center text-[11px] text-dim">
-        AZIMARA RELAY is a working product name; trademark clearance is pending. Routing does not guarantee anonymity and the interface makes no regulatory-compliance claims. Digital assets involve risk.
+      <div className="border-t border-[#1A293D] px-4 py-4 text-center text-[11px] text-dim sm:px-6">
+        {/* GEO: consistent entity + locality signal on every page. */}
+        <address className="not-italic">
+          AI Azimara · AZIMARA RELAY — Dubai, United Arab Emirates
+        </address>
+        <p className="mt-1">
+          AZIMARA RELAY is a working product name; trademark clearance is pending. Routing does not guarantee anonymity and the interface makes no regulatory-compliance claims. Digital assets involve risk.
+        </p>
       </div>
     </footer>
   )
@@ -143,7 +155,7 @@ function Hero({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: st
 
 function FeatureGrid({ items }: { items: { icon: React.ReactNode; title: string; body: string }[] }) {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {items.map((f) => (
         <Card key={f.title} className="border-[#26374C] bg-[#0E1725] p-5 transition-colors duration-150 hover:bg-[#142135]">
           <div className="text-[#35D6C0]">{f.icon}</div>
@@ -176,6 +188,82 @@ function Page({ path, children }: { path: string; children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
       <Footer />
     </div>
+  )
+}
+
+// ─── AEO/GEO: FAQ with extractable direct answers ──────────────────────────
+// Each question gets a question-form H2 and a concise 40-60 word direct answer
+// in the first paragraph — the format answer engines and generative engines
+// quote. The identical content is emitted as FAQPage JSON-LD.
+
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: 'What is AZIMARA RELAY?',
+    a: 'AZIMARA RELAY is a non-custodial financial operations platform for businesses that pay in digital assets on Solana. It combines a recipient directory, approval policies, batch payouts, schedules, reconciliation and AI-assisted operations in one application — customers keep custody of their own funds.',
+  },
+  {
+    q: 'Is AZIMARA RELAY available in the United Arab Emirates?',
+    a: 'Yes. AZIMARA RELAY is built and operated by AI Azimara from Dubai, United Arab Emirates, and is designed for UAE and wider GCC businesses. Virtual-asset activity in the UAE is regulated by authorities such as VARA in Dubai and the CBUAE; customers remain responsible for their own regulatory obligations.',
+  },
+  {
+    q: 'What does non-custodial mean?',
+    a: 'Non-custodial means AZIMARA RELAY never takes possession of customer funds. Seed phrases and private keys are never requested or stored, wallet connection alone authorizes nothing, and every transfer is executed only after authorization by the customer\u2019s own wallet.',
+  },
+  {
+    q: 'How do payment approvals work?',
+    a: 'Approvals are evaluated by a deterministic policy engine: amount thresholds, multiple independent approvers, new-recipient review and role-based rules. An approval binds a cryptographic hash of the exact payment payload, so any material change invalidates the approval automatically.',
+  },
+  {
+    q: 'Which blockchains and tokens are supported?',
+    a: 'AZIMARA RELAY operates on Solana, supporting SOL and SPL tokens such as USDC and USDT through an environment-isolated MultiHopper integration with a quote, create, prepare, sign, broadcast, confirm, settle and reconcile lifecycle.',
+  },
+  {
+    q: 'Can AI approve or sign payments?',
+    a: 'No. Relay Intelligence can prepare batches, flag duplicates and explain failures, but every proposal is validated deterministically in code and requires explicit human approval. The AI has zero signing authority and zero custody.',
+  },
+  {
+    q: 'How much does AZIMARA RELAY cost?',
+    a: 'Plans start at $49/month for small teams, $199/month for growing businesses and $499/month for finance teams, with custom enterprise agreements. Every plan includes the complete non-custodial payment pipeline; limits scale with the plan.',
+  },
+]
+
+function FaqSection() {
+  // Emit FAQPage structured data that exactly mirrors the visible content.
+  useEffect(() => {
+    const el = document.createElement('script')
+    el.id = 'ld-faq'
+    el.type = 'application/ld+json'
+    el.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQ_ITEMS.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    })
+    document.head.appendChild(el)
+    return () => {
+      el.remove()
+    }
+  }, [])
+  return (
+    <section className="border-y border-[#1A293D] bg-[#0B1220]" aria-labelledby="faq-heading">
+      <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6">
+        <h2 id="faq-heading" className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
+        <p className="mt-2 text-sm text-secondary">Direct answers about custody, approvals, UAE availability, supported assets and pricing.</p>
+        <div className="mt-8 divide-y divide-[#1A293D]">
+          {FAQ_ITEMS.map((f) => (
+            <div key={f.q} className="py-5" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
+              <h3 className="text-sm font-semibold" itemProp="name">{f.q}</h3>
+              <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                <p className="mt-2 text-xs leading-relaxed text-secondary" itemProp="text">{f.a}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -217,6 +305,7 @@ function Home() {
           ))}
         </div>
       </section>
+      <FaqSection />
       <Cta
         title="Run your onchain payment operations like a financial institution"
         sub="Set up a workspace, connect a wallet, register recipients and put your first approved batch through the full lifecycle."
@@ -234,7 +323,7 @@ function ProductPage() {
     <Page path="/product">
       <Hero eyebrow="Product overview" title="One application for the entire payment operation" sub="From obligation to verified settlement, every step is modeled, authorized and auditable." />
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {[
             ['Organization & onboarding', 'Multi-user workspaces, role-based permissions, invitations, guided setup checklist, business verification hooks.'],
             ['Wallet management', 'Connect supported wallets, verify ownership with message signatures, monitor SOL operational balances, discover supported tokens, track every change.'],
@@ -285,7 +374,7 @@ function PayoutsPage() {
     <Page path="/payouts">
       <Hero eyebrow="Batch payments" title="Pay twenty or two thousand recipients — with per-item accountability" sub="A dedicated batch builder with CSV import, per-row validation, exact-integer allocation math, duplicate warnings and error isolation." />
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {[
             ['Import & validate', 'CSV or manual entry. Wallet validation, duplicate detection, allocation totals and fee estimation before anything is submitted.'],
             ['Approval aware', 'Batches follow the same policy engine: thresholds, independent approvers, expiring approvals — with the exact payload frozen at approval time.'],
@@ -300,7 +389,7 @@ function PayoutsPage() {
         </div>
         <div className="mt-8 rounded-xl border border-[#26374C] bg-[#0E1725] p-5">
           <div className="text-xs font-semibold uppercase tracking-wide text-dim">CSV format</div>
-          <pre className="mt-2 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-xs text-[#35D6C0]">name,address,amount
+          <pre className="mt-2 min-w-0 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-xs text-[#35D6C0]">name,address,amount
 Acme Contributions,9xQeWvG816bUx9EPjHmaTprYpRxpVkYnTdC8kP7d2wTE,1250.50
 Lab Services LLC,4Nd1mBQtrMJVYVfKf2PJy9NZBCZd2ZQhRZk3Z5nL6dWx,892.25</pre>
           <p className="mt-2 text-xs text-dim">Amounts are parsed as exact decimals in the token&apos;s base units — never floating point.</p>
@@ -372,11 +461,11 @@ function DevelopersPage() {
     <Page path="/developers">
       <Hero eyebrow="API" title="A documented, versioned API for your own tooling" sub="Session-scoped application endpoints plus key-scoped developer endpoints, both speaking the same error envelope." />
       <section className="mx-auto max-w-4xl px-4 py-14 sm:px-6">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Card className="border-[#26374C] bg-[#0E1725] p-5">
             <div className="flex items-center gap-2 text-sm font-semibold"><Terminal className="h-4 w-4 text-[#35D6C0]" /> Application API</div>
             <p className="mt-2 text-xs text-dim">Cookie-session authenticated. Organization context via the <code className="font-mono text-[#35D6C0]">X-Organization-Id</code> header. RBAC enforced server-side.</p>
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] leading-relaxed text-[#A0AEC0]">GET /api/payments?status=PENDING_APPROVAL
+            <pre className="mt-3 min-w-0 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] leading-relaxed text-[#A0AEC0]">GET /api/payments?status=PENDING_APPROVAL
 POST /api/payments
 POST /api/payments/:id/quote
 POST /api/payments/:id/approve
@@ -385,13 +474,13 @@ POST /api/batches/preview</pre>
           <Card className="border-[#26374C] bg-[#0E1725] p-5">
             <div className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="h-4 w-4 text-[#658CFF]" /> Developer API (v1)</div>
             <p className="mt-2 text-xs text-dim">API keys with explicit scopes: <code className="font-mono text-[#658CFF]">payments:read</code>, <code className="font-mono text-[#658CFF]">payments:create</code>, <code className="font-mono text-[#658CFF]">recipients:read</code>, <code className="font-mono text-[#658CFF]">recipients:create</code>.</p>
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] leading-relaxed text-[#A0AEC0]">curl -H &quot;Authorization: Bearer rk_test_…&quot; \\
+            <pre className="mt-3 min-w-0 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] leading-relaxed text-[#A0AEC0]">curl -H &quot;Authorization: Bearer rk_test_…&quot; \\
   /api/v1/recipients</pre>
           </Card>
         </div>
         <Card className="mt-4 border-[#26374C] bg-[#0E1725] p-5">
           <div className="text-sm font-semibold">Error envelope</div>
-          <pre className="mt-2 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] text-[#A0AEC0]">{`{
+          <pre className="mt-2 min-w-0 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] text-[#A0AEC0]">{`{
   "error": {
     "code": "PAYMENT_VALIDATION_FAILED",
     "message": "The payment could not be validated.",
@@ -450,7 +539,7 @@ function PricingPage() {
     <Page path="/pricing">
       <Hero eyebrow="Pricing" title="Plans that match how businesses actually pay" sub="Subscriptions include the full payment pipeline. Limits scale with the plan; every plan is non-custodial." />
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {PLANS.map((p) => (
             <Card key={p.id} className={`relative border p-5 ${p.featured ? 'border-[#35D6C0]/50 bg-[#0E1725]' : 'border-[#26374C] bg-[#0E1725]'}`}>
               {p.featured ? <Badge className="absolute -top-2.5 right-4 border-0 bg-[#35D6C0] text-[#062A26]">Most popular</Badge> : null}
@@ -497,7 +586,11 @@ function CompanyPage() {
         <p className="mt-4">
           The AZIMARA RELAY name is a working title; the parent-brand direction requires trademark clearance before commercial launch. We build in public about our engineering standards, publish our risk boundaries plainly, and hold ourselves to the same approval discipline we sell.
         </p>
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <h2 className="mt-10 text-base font-semibold text-foreground">Where is AI Azimara based?</h2>
+        <p className="mt-2">
+          AI Azimara operates from Dubai, United Arab Emirates, and builds AZIMARA RELAY for businesses in the UAE, the wider GCC and globally. The UAE has become a leading hub for digital-asset operations: Dubai&apos;s VARA (Virtual Assets Regulatory Authority) and the federal Central Bank of the UAE (CBUAE) set the regulatory framework for virtual-asset activity. AZIMARA RELAY is non-custodial infrastructure software — it never holds customer funds — and customers remain responsible for their own licensing and compliance obligations in their jurisdiction.
+        </p>
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[['Accountability', 'Every payment operation is attributable, reviewable and reconcilable.'], ['Custody discipline', 'We never hold customer funds and never want to.'], ['Honesty', 'Unverified functionality is reported as unverified.']].map(([t, b]) => (
             <Card key={t} className="border-[#26374C] bg-[#0E1725] p-4">
               <div className="text-sm font-semibold text-[#35D6C0]">{t}</div>
@@ -592,6 +685,8 @@ function LegalPage({ kind }: { kind: 'privacy' | 'terms' }) {
 
 export function PublicSite() {
   const { path } = useRouter()
+  // Keep title/description/canonical/OG in sync with the visible route.
+  useRouteSeo(path)
   switch (path) {
     case '/product': return <ProductPage />
     case '/treasury': return <TreasuryPage />

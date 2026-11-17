@@ -1,5 +1,6 @@
 import { ok, route } from '@/lib/api'
 import { db } from '@/lib/db'
+import { safeJsonParse } from '@/lib/safe-json'
 
 export const GET = route(async ({ org }) => {
   const records = await db.reconciliationRecord.findMany({ where: { orgId: org.org.id }, orderBy: { lastCheckedAt: 'desc' }, take: 200, include: { payment: { select: { id: true, reference: true, status: true } } } })
@@ -16,7 +17,7 @@ export const GET = route(async ({ org }) => {
       expectedBase: r.expectedBase,
       observedBase: r.observedBase,
       feeDeltaBase: r.feeDeltaBase,
-      chainEvidence: JSON.parse(r.chainEvidenceJson),
+      chainEvidence: safeJsonParse<unknown>(r.chainEvidenceJson, null),
       lastCheckedAt: r.lastCheckedAt,
     })),
     webhookEvents: webhookEvents.map((w) => ({

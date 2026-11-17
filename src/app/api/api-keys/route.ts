@@ -4,11 +4,12 @@ import { db } from '@/lib/db'
 import { audit } from '@/lib/audit'
 import { randomToken, sha256 } from '@/lib/crypto'
 import { entitlementsFor, assertWithinLimit } from '@/lib/entitlements'
+import { safeJsonParse } from '@/lib/safe-json'
 
 export const GET = route(async ({ org }) => {
   const keys = await db.apiCredential.findMany({ where: { orgId: org.org.id }, orderBy: { createdAt: 'desc' } })
   return ok({
-    keys: keys.map((k) => ({ id: k.id, name: k.name, prefix: k.prefix, environment: k.environment, scopes: JSON.parse(k.scopesJson), lastUsedAt: k.lastUsedAt, revokedAt: k.revokedAt, createdAt: k.createdAt })),
+    keys: keys.map((k) => ({ id: k.id, name: k.name, prefix: k.prefix, environment: k.environment, scopes: safeJsonParse<string[]>(k.scopesJson, []), lastUsedAt: k.lastUsedAt, revokedAt: k.revokedAt, createdAt: k.createdAt })),
     entitlement: { apiKeys: entitlementsFor(org.org.plan).apiKeys, apiAccess: entitlementsFor(org.org.plan).apiAccess },
   })
 })

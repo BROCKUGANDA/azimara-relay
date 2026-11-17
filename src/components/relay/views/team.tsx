@@ -18,6 +18,13 @@ type Invite = { id: string; email: string; role: string; status: string; expires
 
 const ROLES = ['OWNER', 'TREASURY_ADMIN', 'FINANCE_OPERATOR', 'APPROVER', 'ANALYST', 'AUDITOR']
 
+function inviteExpiryLabel(expiresAt: string): string {
+  const ts = new Date(expiresAt).getTime()
+  if (Number.isNaN(ts)) return '—'
+  const days = Math.ceil((ts - Date.now()) / 86_400_000)
+  return days <= 0 ? 'expired' : `expires in ${days}d`
+}
+
 export function TeamView() {
   const { navigate } = useRouter()
   const session = useSession()
@@ -32,11 +39,16 @@ export function TeamView() {
   const canManage = ['OWNER', 'TREASURY_ADMIN'].includes(session.activeOrg?.role ?? '')
 
   async function invite() {
+    const email = form.email.trim()
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      toast.error('Enter a valid email address')
+      return
+    }
     setBusy(true)
     try {
-      const res = await api<{ inviteUrl: string; emailDeliveryConfigured: boolean }>('/api/invitations', { json: form })
+      const res = await api<{ inviteUrl: string; emailDeliveryConfigured: boolean }>('/api/invitations', { json: { ...form, email } })
       setInviteLink(res.inviteUrl)
-      toast.success(`Invitation created for ${form.email}`)
+      toast.success(`Invitation created for ${email}`)
       invites.refetch()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Invitation failed')
@@ -80,7 +92,7 @@ export function TeamView() {
     <div>
       <PageHeader
         title="Team"
-        description={`${members.data?.members.length ?? 0} of ${invites.data?.seatLimit ?? 3} seats used. Permissions are enforced server-side on every operation.`}
+        description={`${(members.data?.members ?? []).length} of ${invites.data?.seatLimit ?? 3} seats used. Permissions are enforced server-side on every operation.`}
         breadcrumb={['Relay', 'Administration', 'Team']}
         actions={
           canManage ? (
@@ -126,12 +138,12 @@ export function TeamView() {
           { key: 'name', header: 'Member', render: (m) => <div><div className="text-sm">{m.name}</div><div className="text-[10px] text-dim">{m.email}</div></div> },
           { key: 'role', header: 'Role', render: (m) => canManage && m.role !== 'OWNER' ? (
             <Select value={m.role} onValueChange={(v) => changeRole(m.id, v)}>
-              <SelectTrigger className="h-8 w-44 border-[#26374C] bg-[#0B1220] text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 w-full min-w-[9rem] border-[#26374C] bg-[#0B1220] text-xs sm:w-44"><SelectValue /></SelectTrigger>
               <SelectContent className="border-[#26374C] bg-[#142135]">{ROLES.filter((r) => r !== 'OWNER' || isOwner).map((r) => <SelectItem key={r} value={r}>{r.replaceAll('_', ' ')}</SelectItem>)}</SelectContent>
             </Select>
           ) : <span className="text-xs text-secondary">{m.role.replaceAll('_', ' ')}</span> },
           { key: 'login', header: 'Last active', render: (m) => <span className="text-xs text-dim">{m.lastLoginAt ? timeAgo(m.lastLoginAt) : 'never'}</span> },
-          { key: 'act', header: '', className: 'text-right', render: (m) => canManage && m.email !== session.user?.email ? <Button size="sm" variant="ghost" className="h-7 text-[#F27683]" onClick={() => remove(m.id)}><Trash2 className="h-3 w-3" /></Button> : null },
+          { key: 'act', header: '', className: 'text-right', render: (m) => canManage && m.email !== session.user?.email ? <Button size="sm" variant="ghost" aria-label="Remove member" className="h-9 px-3 text-[#F27683]" onClick={() => remove(m.id)}><Trash2 className="h-3 w-3" /></Button> : null },
         ]}
       />
 
@@ -144,9 +156,9 @@ export function TeamView() {
               <div key={i.id} className="flex items-center justify-between rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
                 <div>
                   <div className="text-xs">{i.email} <span className="text-dim">· {i.role.replaceAll('_', ' ')}</span></div>
-                  <div className="text-[10px] text-dim">expires {timeAgo(i.expiresAt).replace('ago', '')}</div>
+                  <div className="text-[10px] text-dim">{inviteExpiryLabel(i.expiresAt)}</div>
                 </div>
-                {canManage ? <Button size="sm" variant="ghost" className="h-7 text-xs text-[#F27683]" onClick={() => revokeInvite(i.id)}>Revoke</Button> : null}
+                {canManage ? <Button size="sm" variant="ghost" className="h-9 px-3 text-xs text-[#F27683]" onClick={() => revokeInvite(i.id)}>Revoke</Button> : null}
               </div>
             ))}
           </div>
@@ -154,7 +166,7 @@ export function TeamView() {
       </SectionCard>
 
       <SectionCard className="mt-5" title="Role permissions">
-        <div className="grid gap-2 text-xs text-dim sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 text-xs text-dim sm:grid-cols-2 lg:grid-cols-3">
           {[
             ['Owner', 'Full organization administration'],
             ['Treasury admin', 'Wallets, payments, policies, reporting'],

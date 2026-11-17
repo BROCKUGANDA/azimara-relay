@@ -5,6 +5,7 @@ import { audit } from '@/lib/audit'
 import { isValidSolanaAddress } from '@/lib/solana'
 import { shortId } from '@/lib/crypto'
 import { entitlementsFor, assertWithinLimit } from '@/lib/entitlements'
+import { safeJsonParse } from '@/lib/safe-json'
 
 export const GET = route(async ({ org }) => {
   const wallets = await db.wallet.findMany({ where: { orgId: org.org.id }, orderBy: { createdAt: 'desc' }, include: { events: { orderBy: { createdAt: 'desc' }, take: 5 } } })
@@ -16,12 +17,12 @@ export const GET = route(async ({ org }) => {
       network: w.network,
       kind: w.kind,
       ownershipStatus: w.ownershipStatus,
-      balance: w.balanceJson ? JSON.parse(w.balanceJson) : null,
+      balance: safeJsonParse<unknown>(w.balanceJson, null),
       balanceAt: w.balanceAt,
       revokedAt: w.revokedAt,
       verifiedAt: w.verifiedAt,
       createdAt: w.createdAt,
-      recentEvents: w.events.map((e) => ({ id: e.id, type: e.type, createdAt: e.createdAt, data: JSON.parse(e.dataJson) })),
+      recentEvents: w.events.map((e) => ({ id: e.id, type: e.type, createdAt: e.createdAt, data: safeJsonParse(e.dataJson, {}) })),
     })),
   })
 })

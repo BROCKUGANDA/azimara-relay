@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApi, api } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { timeAgo, shortAddress } from '@/lib/client/format'
@@ -30,11 +30,23 @@ type RecipientRow = {
 
 const EMPTY_FORM = { name: '', address: '', reference: '', category: 'VENDOR', notes: '' }
 
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => setDebounced(value), delay)
+    return () => { if (timer.current) clearTimeout(timer.current) }
+  }, [value, delay])
+  return debounced
+}
+
 export function RecipientsView() {
   const { navigate } = useRouter()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState('ACTIVE')
-  const recipients = useApi<{ recipients: RecipientRow[]; total: number }>(['recipients', q, status], `/api/recipients?q=${encodeURIComponent(q)}&status=${status}`)
+  const debouncedQ = useDebouncedValue(q, 300)
+  const recipients = useApi<{ recipients: RecipientRow[]; total: number }>(['recipients', debouncedQ, status], `/api/recipients?q=${encodeURIComponent(debouncedQ)}&status=${status}`)
   const [addOpen, setAddOpen] = useState(false)
   const [editRecipient, setEditRecipient] = useState<RecipientRow | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -118,7 +130,7 @@ export function RecipientsView() {
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Input placeholder="Search name, address, reference…" value={q} onChange={(e) => setQ(e.target.value)} className="w-64 border-[#26374C] bg-[#0B1220]" />
+        <Input placeholder="Search name, address, reference…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full border-[#26374C] bg-[#0B1220] sm:w-64" />
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-40 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
           <SelectContent className="border-[#26374C] bg-[#142135]">
@@ -156,8 +168,8 @@ export function RecipientsView() {
           { key: 'st', header: 'Status', render: (r) => <StatusBadge status={r.status === 'ACTIVE' ? 'COMPLETED' : r.status === 'DISABLED' ? 'QUOTE_EXPIRED' : 'CANCELLED'} label={r.status} /> },
           { key: 'act', header: '', className: 'text-right', render: (r) => (
             <div className="flex justify-end gap-1">
-              <Button size="sm" variant="ghost" className="h-7 text-xs text-dim" onClick={() => openEdit(r)}><Pencil className="h-3 w-3" /></Button>
-              <Button size="sm" variant="ghost" className="h-7 text-xs text-[#F27683]" onClick={() => archive(r)}><Archive className="h-3 w-3" /></Button>
+              <Button size="sm" variant="ghost" aria-label="Edit recipient" className="h-9 w-9 justify-center text-xs text-dim" title="Edit recipient" onClick={() => openEdit(r)}><Pencil className="h-3 w-3" /></Button>
+              <Button size="sm" variant="ghost" aria-label="Archive recipient" className="h-9 w-9 justify-center text-xs text-[#F27683]" title="Archive recipient" onClick={() => archive(r)}><Archive className="h-3 w-3" /></Button>
             </div>
           ) },
         ]}
@@ -184,7 +196,12 @@ export function RecipientsView() {
             className="hidden"
             onChange={async (e) => {
               const file = e.target.files?.[0]
-              if (file) importCsv(await file.text())
+              if (!file) return
+              if (file.size > 2_000_000) {
+                toast.error('CSV must be under 2 MB')
+                return
+              }
+              importCsv(await file.text())
             }}
           />
           <div className="flex gap-2">
@@ -222,7 +239,7 @@ function RecipientForm({ form, setForm, busy, onSave, saveLabel, editMode }: {
         <Label>Solana wallet address</Label>
         <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={`mt-1 border-[#26374C] bg-[#0B1220] font-mono text-xs ${editMode ? 'border-[#F2BB62]/40' : ''}`} placeholder="Base58 public key" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <Label>Category</Label>
           <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
@@ -243,7 +260,7 @@ function RecipientForm({ form, setForm, busy, onSave, saveLabel, editMode }: {
         <Label>Internal notes</Label>
         <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="mt-1 border-[#26374C] bg-[#0B1220]" />
       </div>
-      <Button onClick={onSave} disabled={busy || !form.name || !form.address} className="w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">{saveLabel}</Button>
+      <Button onClick={onSave} disabled={busy || !form.name.trim() || !form.address.trim()} className="w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">{saveLabel}</Button>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApi } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { timeAgo, shortAddress } from '@/lib/client/format'
@@ -41,11 +41,23 @@ const STATUS_GROUPS = [
   { value: 'MANUAL_REVIEW', label: 'Manual review' },
 ]
 
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => setDebounced(value), delay)
+    return () => { if (timer.current) clearTimeout(timer.current) }
+  }, [value, delay])
+  return debounced
+}
+
 export function PaymentsView() {
   const { navigate } = useRouter()
   const [status, setStatus] = useState('ALL')
   const [q, setQ] = useState('')
-  const payments = useApi<{ payments: PaymentRow[]; total: number }>(['payments', status, q], `/api/payments?status=${status}&q=${encodeURIComponent(q)}`)
+  const debouncedQ = useDebouncedValue(q, 300)
+  const payments = useApi<{ payments: PaymentRow[]; total: number }>(['payments', status, debouncedQ], `/api/payments?status=${status}&q=${encodeURIComponent(debouncedQ)}`)
 
   return (
     <div>
@@ -62,7 +74,7 @@ export function PaymentsView() {
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Input placeholder="Search reference, destination, reason…" value={q} onChange={(e) => setQ(e.target.value)} className="w-64 border-[#26374C] bg-[#0B1220]" />
+        <Input placeholder="Search reference, destination, reason…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full border-[#26374C] bg-[#0B1220] sm:w-64" />
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-52 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
           <SelectContent className="border-[#26374C] bg-[#142135]">

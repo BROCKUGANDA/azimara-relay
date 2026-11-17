@@ -23,12 +23,17 @@ export function setActiveOrg(id: string | null) {
 
 export async function api<T = unknown>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
   const headers = new Headers(init?.headers)
-  if (init?.json !== undefined) headers.set('content-type', 'application/json')
+  const hasJson = init?.json !== undefined
+  if (hasJson) headers.set('content-type', 'application/json')
   if (activeOrgId && !path.startsWith('/api/auth') && !path.startsWith('/api/v1')) headers.set('x-organization-id', activeOrgId)
+  // Default to POST when a JSON body is given without an explicit method —
+  // fetch otherwise rejects a GET-with-body and every mutation would fail.
+  const method = init?.method ?? (hasJson ? 'POST' : 'GET')
   const res = await fetch(path, {
     ...init,
+    method,
     headers,
-    body: init?.json !== undefined ? JSON.stringify(init.json) : init?.body,
+    body: hasJson ? JSON.stringify(init.json) : init?.body,
   })
   let payload: { data?: T; error?: { code: string; message: string; details?: unknown[] } } | null = null
   try {
@@ -40,12 +45,23 @@ export async function api<T = unknown>(path: string, init?: RequestInit & { json
     const err = payload?.error
     throw new ApiClientError(err?.code ?? `HTTP_${res.status}`, err?.message ?? `Request failed (${res.status})`, res.status, err?.details ?? [])
   }
-  return payload?.data as T
+  // A 2xx with an empty/missing body would silently return undefined cast to
+  // T and crash the caller downstream — fail loudly instead.
+  if (payload?.data === undefined) {
+    throw new ApiClientError('EMPTY_RESPONSE', 'The server returned no data for this request', res.status)
+  }
+  return payload.data as T
 }
 
 export async function apiRaw(path: string, init?: RequestInit & { json?: unknown }): Promise<Response> {
   const headers = new Headers(init?.headers)
-  if (init?.json !== undefined) headers.set('content-type', 'application/json')
-  if (activeOrgId && !path.startsWith('/api/auth')) headers.set('x-organization-id', activeOrgId)
-  return fetch(path, { ...init, headers, body: init?.json !== undefined ? JSON.stringify(init.json) : init?.body })
+  const hasJson = init?.json !== undefined
+  if (hasJson) headers.set('content-type', 'application/json')
+  if (activeOrgId && !path.startsWith('/api/auth') && !path.startsWith('/api/v1')) headers.set('x-organization-id', activeOrgId)
+  return fetch(path, {
+    ...init,
+    method: init?.method ?? (hasJson ? 'POST' : 'GET'),
+    headers,
+    body: hasJson ? JSON.stringify(init.json) : init?.body,
+  })
 }

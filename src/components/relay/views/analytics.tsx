@@ -44,11 +44,11 @@ export function AnalyticsView() {
 
       {data.isError ? <ErrorState message={String(data.error)} retry={() => data.refetch()} /> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Payments" value={data.data?.totals.payments ?? 0} accent="teal" sub={`${data.data?.totals.completed ?? 0} completed · ${data.data?.totals.failed ?? 0} failed`} />
-        <MetricCard label="Ledger entries" value={data.data?.totals.ledgerEntries ?? 0} accent="blue" sub="Observed events only" />
-        <MetricCard label="Batch completion" value={data.data ? `${data.data.batchCompletion.total ? Math.round((data.data.batchCompletion.completed / data.data.batchCompletion.total) * 100) : 0}%` : '0%'} accent="purple" sub={`${data.data?.batchCompletion.completed ?? 0}/${data.data?.batchCompletion.total ?? 0} batches`} />
-        <MetricCard label="Avg settlement" value={data.data?.avgSettlementHours ? `${data.data.avgSettlementHours.toFixed(1)}h` : '—'} accent="amber" sub="Creation → verified settlement" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Payments" value={data.data?.totals?.payments ?? 0} accent="teal" sub={`${data.data?.totals?.completed ?? 0} completed · ${data.data?.totals?.failed ?? 0} failed`} />
+        <MetricCard label="Ledger entries" value={data.data?.totals?.ledgerEntries ?? 0} accent="blue" sub="Observed events only" />
+        <MetricCard label="Batch completion" value={data.data?.batchCompletion?.total ? `${Math.round((data.data.batchCompletion.completed / data.data.batchCompletion.total) * 100)}%` : '0%'} accent="purple" sub={`${data.data?.batchCompletion?.completed ?? 0}/${data.data?.batchCompletion?.total ?? 0} batches`} />
+        <MetricCard label="Avg settlement" value={data.data?.avgSettlementHours ? `${Math.max(0, data.data.avgSettlementHours).toFixed(1)}h` : '—'} accent="amber" sub="Creation → verified settlement" />
       </div>
 
       <SectionCard className="mt-5" title="Payment volume over time" description="Daily totals from payment records. Tooltips show completed vs failed counts.">
@@ -60,21 +60,21 @@ export function AnalyticsView() {
               {(data.data?.timeline ?? []).map((t) => (
                 <div key={t.date} className="group relative flex-1">
                   <div className="w-full rounded-t bg-gradient-to-t from-[#658CFF]/20 to-[#658CFF]/70 transition-all duration-150 hover:to-[#658CFF]" style={{ height: `${Math.max(4, (t.volume / maxVolume) * 170)}px` }} />
-                  <div className="pointer-events-none absolute -top-9 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-[#26374C] bg-[#142135] px-2 py-1 text-[10px] group-hover:block">
+                  <div className="pointer-events-none absolute -top-9 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-[#26374C] bg-[#142135] px-2 py-1 text-[10px] group-active:block group-hover:block">
                     {t.date}: {t.volume.toLocaleString('en-US', { maximumFractionDigits: 2 })} ({t.count})
                   </div>
                 </div>
               ))}
             </div>
             <div className="mt-2 flex justify-between text-[10px] text-dim">
-              <span>{data.data?.timeline[0]?.date}</span>
-              <span>{data.data?.timeline[data.data.timeline.length - 1]?.date}</span>
+              <span>{(data.data?.timeline ?? [])[0]?.date}</span>
+              <span>{(data.data?.timeline ?? []).slice(-1)[0]?.date}</span>
             </div>
           </div>
         )}
       </SectionCard>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <SectionCard title="Lifecycle distribution" description="Payments by current state.">
           <div className="space-y-2">
             {(data.data?.byStatus ?? []).length === 0 ? <div className="text-xs text-dim">No data yet.</div> : null}
@@ -110,12 +110,12 @@ export function AnalyticsView() {
         </SectionCard>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <SectionCard title="Top recipients" description="Payment counts in range.">
           <div className="space-y-2">
             {(data.data?.topRecipients ?? []).length === 0 ? <div className="text-xs text-dim">No payments yet.</div> : null}
             {(data.data?.topRecipients ?? []).map((r, i) => (
-              <div key={r.name} className="flex items-center gap-3 text-xs">
+              <div key={`${r.name}-${i}`} className="flex items-center gap-3 text-xs">
                 <span className="w-4 text-dim">{i + 1}.</span>
                 <span className="flex-1 text-secondary">{r.name}</span>
                 <span className="text-dim">{r.category ?? ''}</span>

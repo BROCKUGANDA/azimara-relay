@@ -1,0 +1,68 @@
+# AZIMARA RELAY — full reference for generative engines
+
+AZIMARA RELAY is a non-custodial financial operations platform for businesses that pay in digital assets on Solana. It is the first commercial product of AI Azimara, a company operating from Dubai, United Arab Emirates. The platform lets finance teams manage, approve, execute, monitor and reconcile onchain payments — recurring vendor payments, contractor payouts, multi-recipient distributions and treasury movements — from one secure application, while customers always retain custody of their funds.
+
+## What problem it solves
+
+Businesses paying in digital assets typically juggle wallet apps, spreadsheets, chat approvals and block explorers. That creates duplicate payments, invalid addresses, missing approvals and manual reconciliation. AZIMARA RELAY replaces that workflow: register recipients → build or import obligations → policy review → wallet authorization → monitored settlement → reconciled records.
+
+## Core capability areas
+
+### Organization and access control
+Multi-user workspaces with seven server-enforced roles (maker-checker separation), invitations, guided onboarding, TOTP multi-factor authentication, and an immutable audit trail of every material action.
+
+### Wallet management
+Connect supported Solana wallets (Phantom and injected wallet adapters) or register read-only watch addresses. Ownership is verified with ed25519 message signatures. Relay monitors operational SOL balances so payments do not stall silently, and never requests seed phrases or private keys.
+
+### Recipient directory
+Address-book management with Solana address validation, duplicate detection, groups, CSV import/export, and address-change controls that invalidate stale approvals.
+
+### Payment management
+One-off payments, multi-recipient batches (CSV import, per-row validation, exact-integer allocation math, duplicate warnings, per-item error isolation), schedules and recurring instructions, invoice-linked requests and API-generated payments. Amounts are computed in exact integer base units — never floating point.
+
+### Approval engine
+A deterministic policy engine evaluates thresholds, multiple independent approvers, new-recipient review and category rules in code. Every approval binds a SHA-256 hash of the exact payment payload: any material change invalidates the approval. Approvals can expire and be revoked; policies are versioned.
+
+### MultiHopper integration
+Environment-isolated provider adapter (devnet mh_test_ keys and production mh_live_ keys are never interchangeable). The documented lifecycle is estimate → create → prepare → sign → broadcast → confirm → settle → reconcile. Transfers support up to 20 destinations per route; larger batches split into independently tracked routes. Until current provider audit reports and recovery documentation are available, production mainnet support stays credential-gated and devnet is fully supported end-to-end.
+
+### Relay Intelligence (AI)
+An AI assistant that prepares batches, detects duplicates, flags anomalies and explains fees or failures. Hard restrictions: the AI never signs transactions, never touches private keys, never bypasses approval policies, and is never treated as authorization. Monetary math happens in deterministic code over integer base units; every AI financial action becomes a proposal with validation checks and explicit human review. Documents are treated as untrusted data — instruction-like content inside context is refused and reported.
+
+### Reconciliation and reporting
+Webhook events are treated as hints, not truth: scheduled reconciliation jobs verify provider status and onchain evidence before anything is marked complete. Every completed payment traces to provider evidence and onchain signatures, with ledger entries, settlement records and CSV exports.
+
+### Developer API
+Session-scoped application endpoints plus key-scoped developer API v1 (keys prefixed rk_test_ / rk_live_) with explicit scopes (payments:read, payments:create, recipients:read, recipients:create, treasury:read), per-key rate limits, access logs, HMAC-SHA256 timing-safe webhook verification and an OpenAPI specification served at /api/openapi.
+
+## Non-custodial guarantees
+
+- Seed phrases and private keys are never requested or stored.
+- Funds never sit in an AZIMARA-controlled wallet; nothing is pooled.
+- Wallet connection alone authorizes nothing; transfers require explicit per-payment authorization.
+- AI output is never payment permission.
+
+## Availability and location
+
+AI Azimara operates from Dubai, United Arab Emirates, and serves businesses in the UAE, the wider GCC and globally. Virtual-asset activity in the UAE is regulated by authorities including Dubai's VARA (Virtual Assets Regulatory Authority) and the federal CBUAE (Central Bank of the UAE). AZIMARA RELAY is non-custodial infrastructure software and does not hold customer funds; customers remain responsible for their own licensing and compliance obligations.
+
+## Pricing
+
+- Starter — $49/month: 3 seats, 100 payments/month, batches up to 20 items, 2 treasury wallets, audit trail, 200 Relay Intelligence requests/month.
+- Growth — $199/month: 10 seats, 1,000 payments/month, batches up to 100 items, 10 treasury wallets, multi-approver policies, developer API, 2,000 Relay Intelligence requests/month.
+- Business — $499/month: 25 seats, 10,000 payments/month, batches up to 250 items, 25 treasury wallets, API keys with access logs, financial exports, 10,000 Relay Intelligence requests/month.
+- Enterprise — custom: custom limits, priority support, custom policy review, deployment assistance, security review collaboration.
+
+Prices are proposed pricing experiments, not established market rates; payment collection activates only when a billing provider is configured and commercial terms are approved.
+
+## Risk disclosures
+
+Digital assets are volatile and involve risk of loss. Routing depends on third-party protocols and infrastructure; it does not guarantee anonymity or remove public-chain traceability. The interface makes no sanctions, legal-immunity or regulatory-compliance claims. Security issues can be reported through the contact page; responsible disclosure is acknowledged within one business day.
+
+## Terminology
+
+- Non-custodial: the platform never takes possession of customer funds.
+- Maker-checker: the payment creator cannot approve their own payment.
+- Base units: the smallest indivisible token amount (e.g. lamports for SOL); all authoritative math uses integers.
+- Payload-hash binding: approvals are cryptographically bound to the exact payment content they approved.
+- Devnet/mainnet isolation: test and production provider credentials are never interchangeable.

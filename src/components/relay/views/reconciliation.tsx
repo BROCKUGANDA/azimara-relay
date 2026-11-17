@@ -48,11 +48,17 @@ export function ReconciliationView() {
             <Button size="sm" variant="outline" className="border-[#26374C]" onClick={async () => {
               try {
                 const res = await api<{ csv: string; rowCount: number }>('/api/exports', { json: { kind: 'RECONCILIATION', days: 90 } })
+                if (typeof res?.csv !== 'string') {
+                  toast.error('Export failed')
+                  return
+                }
                 const blob = new Blob([res.csv], { type: 'text/csv' })
+                const url = URL.createObjectURL(blob)
                 const a = document.createElement('a')
-                a.href = URL.createObjectURL(blob)
+                a.href = url
                 a.download = `relay-reconciliation-${new Date().toISOString().slice(0, 10)}.csv`
                 a.click()
+                URL.revokeObjectURL(url)
                 toast.success(`Exported ${res.rowCount} rows`)
               } catch (err) {
                 toast.error(err instanceof Error ? err.message : 'Export failed')
@@ -67,7 +73,7 @@ export function ReconciliationView() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {[['Matched', s?.matched ?? 0, 'text-[#36C995]'], ['Mismatched', s?.mismatched ?? 0, 'text-[#F27683]'], ['Unreconciled', s?.unreconciled ?? 0, 'text-[#F2BB62]'], ['Failed', s?.failed ?? 0, 'text-[#F27683]'], ['Rejected webhooks', s?.webhookRejected ?? 0, 'text-[#F2BB62]']].map(([label, value, color]) => (
           <div key={label as string} className="rounded-xl border border-[#26374C] bg-[#0E1725] p-4">
             <div className="text-[10px] uppercase tracking-wide text-dim">{label}</div>
@@ -83,7 +89,7 @@ export function ReconciliationView() {
           empty={<EmptyState icon={<GitCompareArrows className="h-8 w-8" />} title="Nothing to reconcile yet" description="Records appear as payments move through execution and settlement." />}
           columns={[
             { key: 'pay', header: 'Payment', render: (r) => r.payment ? <button className="font-mono text-xs text-[#35D6C0] hover:underline" onClick={() => navigate(`/app/payments/${r.payment!.id}`)}>{r.payment.reference}</button> : <span className="text-xs text-dim">—</span> },
-            { key: 'ref', header: 'Provider ref', render: (r) => <span className="font-mono text-[10px] text-secondary">{r.providerRef ?? '—'}</span> },
+            { key: 'ref', header: 'Provider ref', render: (r) => <span title={r.providerRef ?? undefined} className="block max-w-[12rem] truncate font-mono text-[10px] text-secondary">{r.providerRef ?? '—'}</span> },
             { key: 'ps', header: 'Provider', render: (r) => <span className="text-xs text-secondary">{r.providerStatus ?? '—'}</span> },
             { key: 'd', header: 'Detail', render: (r) => <span className="text-[11px] text-dim">{r.detail ?? ''}</span> },
             { key: 'when', header: 'Checked', render: (r) => <span className="text-xs text-dim">{timeAgo(r.lastCheckedAt)}</span> },
@@ -92,7 +98,7 @@ export function ReconciliationView() {
         />
       </SectionCard>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <SectionCard title="Webhook inbox" description="Every delivery attempt persisted — valid or rejected — with HMAC verification state.">
           <DataTable
             keyOf={(w) => w.id}
@@ -112,8 +118,8 @@ export function ReconciliationView() {
             rows={recon.data?.providerTransfers ?? []}
             empty={<EmptyState icon={<ShieldAlert className="h-7 w-7" />} title="No provider transfers yet" description="Transfers appear when payments reach execution." />}
             columns={[
-              { key: 'ext', header: 'External ID', render: (t) => <span className="font-mono text-[10px] text-secondary">{t.externalId}</span> },
-              { key: 'pid', header: 'Provider ref', render: (t) => <span className="font-mono text-[10px] text-secondary">{t.providerTransferId ?? '—'}</span> },
+              { key: 'ext', header: 'External ID', render: (t) => <span title={t.externalId} className="block max-w-[12rem] truncate font-mono text-[10px] text-secondary">{t.externalId}</span> },
+              { key: 'pid', header: 'Provider ref', render: (t) => <span title={t.providerTransferId ?? undefined} className="block max-w-[12rem] truncate font-mono text-[10px] text-secondary">{t.providerTransferId ?? '—'}</span> },
               { key: 'pay', header: 'Payment', render: (t) => <span className="font-mono text-[10px] text-[#35D6C0]">{t.paymentReference ?? '—'}</span> },
               { key: 'st', header: 'Status', render: (t) => <span className="text-xs text-dim">{t.providerStatus ?? t.internalPhase}</span> },
             ]}

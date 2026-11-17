@@ -4,10 +4,11 @@ import { db } from '@/lib/db'
 import { audit } from '@/lib/audit'
 import { permissionsFor } from '@/lib/rbac'
 import { entitlementsFor } from '@/lib/entitlements'
+import { safeJsonParse } from '@/lib/safe-json'
 
 export const GET = route(async ({ org }) => {
-  const settings = JSON.parse(org.org.settingsJson) as Record<string, unknown>
-  const onboarding = JSON.parse(org.org.onboardingJson) as Record<string, unknown>
+  const settings = safeJsonParse<Record<string, unknown>>(org.org.settingsJson, {})
+  const onboarding = safeJsonParse<Record<string, unknown>>(org.org.onboardingJson, {})
   const [walletCount, recipientCount, paymentCount, memberCount, subscription, integration] = await Promise.all([
     db.wallet.count({ where: { orgId: org.org.id, revokedAt: null } }),
     db.recipient.count({ where: { orgId: org.org.id, status: 'ACTIVE' } }),
@@ -43,7 +44,7 @@ const patchSchema = z.object({
 
 export const PATCH = route(async ({ org, auth, request }) => {
   const body = await readJson(request, patchSchema)
-  const settings = JSON.parse(org.org.settingsJson) as Record<string, unknown>
+  const settings = safeJsonParse<Record<string, unknown> | null>(org.org.settingsJson, {}) ?? {}
   const data: Record<string, unknown> = {}
   if (body.name) data.name = body.name
   if (body.network) settings.network = body.network
@@ -51,5 +52,5 @@ export const PATCH = route(async ({ org, auth, request }) => {
   data.settingsJson = JSON.stringify(settings)
   const updated = await db.organization.update({ where: { id: org.org.id }, data })
   await audit({ orgId: org.org.id, actorId: auth.user.id, action: 'ORG_SETTINGS_UPDATED', resourceType: 'Organization', resourceId: org.org.id, data: body })
-  return ok({ id: updated.id, name: updated.name, settings: JSON.parse(updated.settingsJson) })
+  return ok({ id: updated.id, name: updated.name, settings: safeJsonParse<Record<string, unknown>>(updated.settingsJson, {}) })
 }, { permission: 'org:manage' })

@@ -1,20 +1,21 @@
 import { ok, route } from '@/lib/api'
 import { db } from '@/lib/db'
+import { parsePage, parsePageSize } from '@/lib/safe-json'
 
 /// Approval queue: payments awaiting approval for the current organization,
 /// with policy evidence and approver independence state.
 export const GET = route(async ({ org, auth, request }) => {
   const url = new URL(request.url)
-  const page = Math.max(1, Number(url.searchParams.get('page') ?? '1'))
-  const pageSize = Math.min(50, Math.max(1, Number(url.searchParams.get('pageSize') ?? '25')))
+  const pageSize = parsePageSize(url.searchParams.get('pageSize'), 25, 50)
+  const { page, skip, take } = parsePage(url.searchParams.get('page'), pageSize)
   const where = { orgId: org.org.id, status: 'PENDING_APPROVAL' }
   const [total, payments] = await Promise.all([
     db.paymentRequest.count({ where }),
     db.paymentRequest.findMany({
       where,
       orderBy: { createdAt: 'asc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+      skip,
+      take,
       include: { recipient: { select: { name: true } }, wallet: { select: { label: true } } },
     }),
   ])

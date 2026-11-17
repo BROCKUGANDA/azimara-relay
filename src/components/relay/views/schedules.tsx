@@ -35,6 +35,10 @@ export function SchedulesView() {
   }
 
   async function create() {
+    if (form.firstRunAt && Number.isNaN(new Date(form.firstRunAt).getTime())) {
+      toast.error('Enter a valid first run date')
+      return
+    }
     setBusy(true)
     try {
       await api('/api/schedules', {
@@ -71,7 +75,7 @@ export function SchedulesView() {
               <DialogHeader><DialogTitle>Create schedule</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Monthly contractor retainer" className="mt-1 border-[#26374C] bg-[#0B1220]" /></div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Source wallet</Label>
                     <Select value={form.walletId} onValueChange={(v) => setForm({ ...form, walletId: v })}>
@@ -91,7 +95,7 @@ export function SchedulesView() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <Label>Asset</Label>
                     <Select value={form.mint} onValueChange={(v) => setForm({ ...form, mint: v })}>
@@ -121,7 +125,7 @@ export function SchedulesView() {
                   <Label>First run</Label>
                   <Input type="datetime-local" value={form.firstRunAt} onChange={(e) => setForm({ ...form, firstRunAt: e.target.value })} className="mt-1 border-[#26374C] bg-[#0B1220]" />
                 </div>
-                <Button onClick={create} disabled={busy || !form.name || !form.walletId || !form.recipientId || !form.mint || !form.amount} className="w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">Create schedule</Button>
+                <Button onClick={create} disabled={busy || !form.name.trim() || !form.walletId || !form.recipientId || !form.mint || !form.amount} className="w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">Create schedule</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -151,12 +155,12 @@ export function SchedulesView() {
           { key: 'act', header: '', className: 'text-right', render: (s) => (
             <div className="flex justify-end gap-1">
               {s.status === 'ACTIVE' ? (
-                <Button size="sm" variant="ghost" className="h-7 text-xs text-dim" onClick={() => setStatus(s.id, 'PAUSED')}><Pause className="h-3 w-3" /></Button>
+                <Button size="sm" variant="ghost" aria-label="Pause schedule" className="h-9 w-9 justify-center text-xs text-dim" title="Pause schedule" onClick={() => setStatus(s.id, 'PAUSED')}><Pause className="h-3 w-3" /></Button>
               ) : s.status === 'PAUSED' ? (
-                <Button size="sm" variant="ghost" className="h-7 text-xs text-dim" onClick={() => setStatus(s.id, 'ACTIVE')}><Play className="h-3 w-3" /></Button>
+                <Button size="sm" variant="ghost" aria-label="Resume schedule" className="h-9 w-9 justify-center text-xs text-dim" title="Resume schedule" onClick={() => setStatus(s.id, 'ACTIVE')}><Play className="h-3 w-3" /></Button>
               ) : null}
               {s.status !== 'CANCELLED' ? (
-                <Button size="sm" variant="ghost" className="h-7 text-xs text-[#F27683]" onClick={() => setStatus(s.id, 'CANCELLED')}><XCircle className="h-3 w-3" /></Button>
+                <Button size="sm" variant="ghost" aria-label="Cancel schedule" className="h-9 w-9 justify-center text-xs text-[#F27683]" title="Cancel schedule" onClick={() => setStatus(s.id, 'CANCELLED')}><XCircle className="h-3 w-3" /></Button>
               ) : null}
             </div>
           ) },

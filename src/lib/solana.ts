@@ -61,6 +61,7 @@ async function rpc<T>(network: string, method: string, params: unknown[], timeou
 
 export async function getSolBalance(network: string, address: string): Promise<{ lamports: string; blockhashSlot: number }> {
   const result = await rpc<{ context: { slot: number }; value: number }>(network, 'getBalance', [address])
+  if (result?.value == null || result?.context?.slot == null) throw new Error('RPC returned a malformed balance response')
   return { lamports: result.value.toString(), blockhashSlot: result.context.slot }
 }
 
@@ -71,8 +72,8 @@ export async function getSplBalances(network: string, address: string): Promise<
     value: { account: { data: { parsed: { info: { mint: string; tokenAmount: { amount: string; decimals: number } } } } } }[]
   }>(network, 'getTokenAccountsByOwner', [address, { encoding: 'jsonParsed' }])
   const accounts: TokenAccount[] = []
-  for (const v of result.value) {
-    const info = v.account.data.parsed?.info
+  for (const v of result?.value ?? []) {
+    const info = v?.account?.data?.parsed?.info
     if (!info || info.tokenAmount.amount === '0') continue
     accounts.push({ mint: info.mint, amount: info.tokenAmount.amount, decimals: info.tokenAmount.decimals ?? null })
   }
@@ -80,13 +81,27 @@ export async function getSplBalances(network: string, address: string): Promise<
 }
 
 export async function rpcHealthy(network: string): Promise<{ ok: boolean; slot?: number; error?: string }> {
+  // `getHealth` returns the literal string "ok" (no slot); `getSlot` returns a
+  // bare number. Normalize both so a healthy node is never reported unhealthy.
   try {
-    const r = await rpc<{ context: { slot: number } }>(network, 'getHealth', [])
-    return { ok: true, slot: r.context?.slot }
-  } catch (err) {
+    const r = await rpc<unknown>(network, 'getHealth', [])
+    if (r === 'ok') {
+      try {
+        const slot = await rpc<unknown>(network, 'getSlot', [])
+        return { ok: true, slot: typeof slot === 'number' ? slot : undefined }
+      } catch {
+        return { ok: true }
+      }
+    }
+    // Some nodes wrap getHealth in a context object — accept that shape too.
+    const maybeSlot = (r as { context?: { slot?: number } })?.context?.slot
+    return { ok: true, slot: typeof maybeSlot === 'number' ? maybeSlot : undefined }
+  } catch {
     try {
-      const r = await rpc<{ context: { slot: number } }>(network, 'getSlot', [])
-      return { ok: true, slot: r.context.slot }
+      const r = await rpc<unknown>(network, 'getSlot', [])
+      if (typeof r === 'number') return { ok: true, slot: r }
+      const slot = (r as { context?: { slot?: number } })?.context?.slot
+      return { ok: true, slot: typeof slot === 'number' ? slot : undefined }
     } catch (err2) {
       return { ok: false, error: String(err2) }
     }

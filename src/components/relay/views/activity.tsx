@@ -6,6 +6,7 @@ import { timeAgo } from '@/lib/client/format'
 import { PageHeader, EmptyState, ErrorState, SectionCard } from '../ui'
 import { History, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 type Entry = { id: string; action: string; resourceType: string; resourceId: string | null; actorType: string; actorName: string | null; data: Record<string, unknown>; createdAt: string }
 
@@ -31,11 +32,14 @@ export function ActivityView() {
             try {
               const res = await api<{ csv: string }>('/api/exports', { json: { kind: 'AUDIT', days: 90 } })
               const blob = new Blob([res.csv], { type: 'text/csv' })
+              const url = URL.createObjectURL(blob)
               const a = document.createElement('a')
-              a.href = URL.createObjectURL(blob)
+              a.href = url
               a.download = `relay-activity-${new Date().toISOString().slice(0, 10)}.csv`
               a.click()
+              URL.revokeObjectURL(url)
             } catch (err) {
+              toast.error(err instanceof Error ? err.message : 'Export failed')
               navigate('/app/audit')
             }
           }}>

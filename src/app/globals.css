@@ -44,6 +44,10 @@
 }
 
 :root {
+  /* Cross-browser: make native controls (inputs, selects, scrollbars) render
+     dark consistently — Chrome/Safari honor color-scheme; without it iOS
+     Safari renders white input backgrounds and invisible select arrows. */
+  color-scheme: dark;
   --radius: 0.75rem;
   /* AZIMARA RELAY — Precision Infrastructure (PRD §8.2) */
   --background: #080D17;
@@ -121,6 +125,72 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "cv11", "ss01";
+  }
+  /* Remove the grey tap flash on touch devices without killing feedback. */
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Momentum scrolling inside overflow containers (iOS Safari < 13 ignores
+     the CSS property; the inline WebkitOverflowScrolling on DataTables covers
+     those, this covers the rest). */
+  * {
+    overscroll-behavior-x: contain;
+  }
+}
+
+/* ─── Cross-browser form-control hardening ───────────────────────────────── */
+
+/* Firefox: no ::-webkit-scrollbar support — use the standard properties. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #26374c transparent;
+}
+
+/* Chrome/Safari autofill repaints inputs white on dark UIs. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0b1220 inset;
+  -webkit-text-fill-color: #f0f5fa;
+  caret-color: #f0f5fa;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Windows Chrome renders native <option> lists white-on-white inside dark
+   selects; force the popover palette. */
+select option {
+  background-color: #142135;
+  color: #f0f5fa;
+}
+
+/* Date/time pickers: darken the calendar icon (Chrome/Edge default is black
+   on dark input backgrounds). */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.78) sepia(0.1);
+  cursor: pointer;
+}
+
+/* iOS Safari zooms any focused input with font-size < 16px. On coarse
+   pointers, force readable sizes so focus doesn't trigger a page zoom. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Dynamic viewport: iOS Safari's 100vh ignores collapsed toolbars. Where a
+   component uses h-screen/min-h-screen, prefer dvh when supported. */
+@supports (height: 100dvh) {
+  .h-screen {
+    height: 100dvh;
+  }
+  .min-h-screen {
+    min-height: 100dvh;
   }
 }
 

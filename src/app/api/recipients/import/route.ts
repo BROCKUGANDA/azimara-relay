@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ok, readJson, route } from '@/lib/api'
+import { ok, readJson, route, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { audit } from '@/lib/audit'
 import { isValidSolanaAddress } from '@/lib/solana'
@@ -10,9 +10,9 @@ const importSchema = z.object({ csv: z.string().min(1).max(2_000_000), mode: z.e
 export const POST = route(async ({ org, auth, request }) => {
   const body = await readJson(request, importSchema)
   const { headers, rows } = csvToObjects(body.csv)
-  if (rows.length === 0) throw new Error('EMPTY_IMPORT: The CSV contains no data rows')
+  if (rows.length === 0) throw new ApiError('EMPTY_IMPORT', 'The CSV contains no data rows', 400)
   const currentCount = await db.recipient.count({ where: { orgId: org.org.id } })
-  if (currentCount + rows.length > 5000) throw new Error('IMPORT_TOO_LARGE: Recipient import is limited to 5000 records per organization')
+  if (currentCount + rows.length > 5000) throw new ApiError('IMPORT_TOO_LARGE', 'Recipient import is limited to 5000 records per organization', 413)
 
   const results: { row: number; name: string; status: 'CREATED' | 'SKIPPED_DUPLICATE' | 'ERROR'; error?: string; recipientId?: string }[] = []
   let created = 0

@@ -4,11 +4,12 @@ import { db } from '@/lib/db'
 import { buildCsv } from '@/lib/csv'
 import { audit } from '@/lib/audit'
 import { formatBaseUnits } from '@/lib/money'
+import { safeJsonParse } from '@/lib/safe-json'
 
 export const GET = route(async ({ org }) => {
   const exports = await db.financialExport.findMany({ where: { orgId: org.org.id }, orderBy: { createdAt: 'desc' }, take: 25 })
   return ok({
-    exports: exports.map((e) => ({ id: e.id, kind: e.kind, format: e.format, rowCount: e.rowCount, createdAt: e.createdAt, filters: JSON.parse(e.filtersJson) })),
+    exports: exports.map((e) => ({ id: e.id, kind: e.kind, format: e.format, rowCount: e.rowCount, createdAt: e.createdAt, filters: safeJsonParse<Record<string, unknown>>(e.filtersJson, {}) })),
   })
 })
 

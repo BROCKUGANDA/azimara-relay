@@ -63,7 +63,7 @@ export function BillingView() {
       {billing.isError ? <ErrorState message={String(billing.error)} retry={() => billing.refetch()} /> : null}
       {d ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-xl border border-[#35D6C0]/30 bg-[#35D6C0]/5 p-4">
               <div className="text-[10px] uppercase tracking-wide text-[#35D6C0]/70">Current plan</div>
               <div className="mt-1 text-xl font-semibold text-[#35D6C0]">{d.plan}</div>
@@ -71,7 +71,7 @@ export function BillingView() {
             </div>
             <div className="rounded-xl border border-[#26374C] bg-[#0E1725] p-4">
               <div className="text-[10px] uppercase tracking-wide text-dim">Monthly price</div>
-              <div className="mt-1 text-xl font-semibold tabular-nums">{d.entitlements.priceMonthlyUsd ? `$${d.entitlements.priceMonthlyUsd}` : 'Custom'}</div>
+              <div className="mt-1 text-xl font-semibold tabular-nums">{d.entitlements.priceMonthlyUsd != null ? `$${d.entitlements.priceMonthlyUsd}` : 'Custom'}</div>
             </div>
             <div className="rounded-xl border border-[#26374C] bg-[#0E1725] p-4">
               <div className="text-[10px] uppercase tracking-wide text-dim">Seats</div>
@@ -84,7 +84,7 @@ export function BillingView() {
           </div>
 
           <SectionCard className="mt-5" title="Usage against entitlements" description="Limits are enforced server-side — the UI reflects the same values.">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Meter label="Payments this month" used={d.usage.paymentsThisMonth} limit={d.usage.paymentsLimit} />
               <Meter label="Seats" used={d.usage.members} limit={d.usage.seatsLimit} />
               <Meter label="Active API keys" used={d.usage.activeKeys} limit={d.usage.apiKeysLimit} />
@@ -98,14 +98,14 @@ export function BillingView() {
           </SectionCard>
 
           <SectionCard className="mt-5" title="Plans" description="Switch any time; entitlements change immediately.">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {d.plans.map((p) => (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {(d.plans ?? []).map((p) => (
                 <div key={p.id} className={`rounded-xl border p-4 ${p.id === d.plan ? 'border-[#35D6C0]/50 bg-[#35D6C0]/5' : 'border-[#26374C] bg-[#0B1220]'}`}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold">{p.id}</span>
                     {p.id === d.plan ? <CheckCircle2 className="h-4 w-4 text-[#35D6C0]" /> : null}
                   </div>
-                  <div className="mt-1 text-lg font-semibold tabular-nums">{p.priceMonthlyUsd ? `$${p.priceMonthlyUsd}/mo` : 'Custom'}</div>
+                  <div className="mt-1 text-lg font-semibold tabular-nums">{p.priceMonthlyUsd != null ? `$${p.priceMonthlyUsd}/mo` : 'Custom'}</div>
                   <div className="mt-2 space-y-1 text-[11px] text-dim">
                     <div>{p.seats} seats · {p.maxBatchItems} batch items</div>
                     <div>{p.monthlyPayments.toLocaleString('en-US')} payments/mo</div>
@@ -125,10 +125,10 @@ export function BillingView() {
 
           <SectionCard className="mt-5" title="Billing events">
             <div className="space-y-1.5">
-              {d.billingEvents.length === 0 ? <div className="text-xs text-dim">No billing events yet.</div> : null}
-              {d.billingEvents.map((e) => (
+              {(d.billingEvents ?? []).length === 0 ? <div className="text-xs text-dim">No billing events yet.</div> : null}
+              {(d.billingEvents ?? []).map((e) => (
                 <div key={e.id} className="flex items-center justify-between rounded-lg border border-[#26374C] bg-[#0B1220] px-3 py-2 text-xs">
-                  <span className="text-secondary">{e.type.replaceAll('_', ' ')}{e.data?.to ? ` → ${e.data.to}` : ''}</span>
+                  <span className="text-secondary">{e.type.replaceAll('_', ' ')}{typeof e.data?.to === 'string' ? ` → ${e.data.to}` : ''}</span>
                   <span className="text-dim">{formatDateTime(e.createdAt)}</span>
                 </div>
               ))}

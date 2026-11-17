@@ -40,11 +40,22 @@ export function BatchesView({ initialBatchId }: { initialBatchId?: string }) {
   const { navigate } = useRouter()
   const [selected, setSelected] = useState<string | null>(initialBatchId ?? null)
   const batches = useApi<{ batches: BatchRow[] }>(['batches'], '/api/batches')
-  const detail = useApi<BatchDetail>(selected ? ['batch', selected] : ['batch', 'none'], selected ? `/api/batches/${selected}/actions`.replace('/actions', '') : '/api/batches', { enabled: !!selected })
+  const detail = useApi<BatchDetail>(selected ? ['batch', selected] : ['batch', 'none'], selected ? `/api/batches/${selected}` : '/api/batches', { enabled: !!selected })
   const [buildOpen, setBuildOpen] = useState(false)
 
   if (selected && detail.data) {
     return <BatchDetailPanel detail={detail.data} batchId={selected} onBack={() => { setSelected(null); batches.refetch() }} onChanged={() => detail.refetch()} navigate={navigate} />
+  }
+
+  if (selected && detail.isError) {
+    return (
+      <div>
+        <div className="mb-2">
+          <Button variant="ghost" size="sm" className="text-xs text-dim" onClick={() => { setSelected(null); batches.refetch() }}><ArrowLeft className="mr-1 h-3 w-3" /> All batches</Button>
+        </div>
+        <ErrorState message={detail.error instanceof Error ? detail.error.message : 'Something went wrong'} retry={() => detail.refetch()} />
+      </div>
+    )
   }
 
   return (
@@ -103,7 +114,6 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
   const [csv, setCsv] = useState('')
   const [preview, setPreview] = useState<Preview | null>(null)
   const [busy, setBusy] = useState(false)
-  const fileRef = useState<HTMLInputElement | null>(null)
 
   const verifiedWallets = (wallets.data?.wallets ?? []).filter((w) => w.ownershipStatus === 'VERIFIED')
   const asset = assets.data?.assets.find((a) => a.mint === mint)
@@ -140,7 +150,7 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
           <Label>Batch name</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="March contributor payouts" className="mt-1 border-[#26374C] bg-[#0B1220]" />
@@ -179,16 +189,16 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button onClick={runPreview} disabled={busy || !csv.trim() || !mint} variant="outline" className="border-[#26374C]"><Upload className="mr-1.5 h-3.5 w-3.5" /> Validate rows</Button>
         <Select value={failurePolicy} onValueChange={(v) => setFailurePolicy(v as 'ISOLATE' | 'HALT')}>
-          <SelectTrigger className="w-56 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full border-[#26374C] bg-[#0B1220] sm:w-56"><SelectValue /></SelectTrigger>
           <SelectContent className="border-[#26374C] bg-[#142135]">
             <SelectItem value="ISOLATE">Error isolation — keep valid rows</SelectItem>
             <SelectItem value="HALT">Halt — reject batch on any invalid row</SelectItem>
           </SelectContent>
         </Select>
-        <p className="ml-auto text-[11px] text-dim">Provider limit: 20 destinations per transfer route</p>
+        <p className="w-full text-[11px] text-dim sm:ml-auto sm:w-auto">Provider limit: 20 destinations per transfer route</p>
       </div>
 
       {preview ? (
@@ -199,8 +209,8 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
             {preview.summary.duplicates > 0 ? <span className="text-[#F2BB62]"><AlertTriangle className="mr-1 inline h-3.5 w-3.5" />{preview.summary.duplicates} duplicates</span> : null}
             <span className="ml-auto text-dim">Total principal: <strong className="font-mono tabular-nums text-[#35D6C0]">{formatAmount(preview.summary.totalBaseUnits, preview.summary.decimals, asset?.symbol)}</strong></span>
           </div>
-          <div className="max-h-56 overflow-y-auto rounded-lg border border-[#26374C]">
-            <table className="w-full text-xs">
+          <div className="max-h-56 overflow-auto rounded-lg border border-[#26374C]">
+            <table className="w-full min-w-[480px] text-xs">
               <thead className="sticky top-0 bg-[#0B1220]">
                 <tr className="text-left text-dim">
                   <th className="px-2 py-1.5">#</th><th className="px-2 py-1.5">Name</th><th className="px-2 py-1.5">Address</th><th className="px-2 py-1.5 text-right">Amount</th><th className="px-2 py-1.5">Checks</th>
@@ -221,7 +231,7 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
               </tbody>
             </table>
           </div>
-          <Button onClick={create} disabled={busy || preview.summary.validRows === 0 || !name || !walletId} className="mt-3 w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+          <Button onClick={create} disabled={busy || preview.summary.validRows === 0 || !name.trim() || !walletId} className="mt-3 w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
             <Layers className="mr-1.5 h-4 w-4" /> Create batch with {preview.summary.validRows} items
           </Button>
           <p className="mt-2 text-[11px] text-dim">Creating a batch validates again server-side, then enters the approval flow. Execution creates one real payment per item through the normal pipeline — approvals still apply.</p>
@@ -274,7 +284,7 @@ function BatchDetailPanel({ detail, batchId, onBack, onChanged, navigate }: { de
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-[#26374C] bg-[#0E1725] p-4">
           <div className="text-[10px] uppercase tracking-wide text-dim">Total principal</div>
           <Amount base={b.totalBaseUnits} decimals={b.decimals} symbol={b.mintSymbol} className="mt-1 text-lg text-[#35D6C0]" />

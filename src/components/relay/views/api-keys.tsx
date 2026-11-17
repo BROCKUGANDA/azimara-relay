@@ -119,7 +119,7 @@ export function ApiKeysView() {
           { key: 'scopes', header: 'Scopes', render: (k) => <div className="flex flex-wrap gap-1">{k.scopes.map((s) => <code key={s} className="rounded bg-[#142135] px-1 py-0.5 font-mono text-[10px] text-secondary">{s}</code>)}</div> },
           { key: 'used', header: 'Last used', render: (k) => <span className="text-xs text-dim">{k.lastUsedAt ? timeAgo(k.lastUsedAt) : 'never'}</span> },
           { key: 'st', header: 'Status', render: (k) => <span className={`text-xs ${k.revokedAt ? 'text-[#F27683]' : 'text-[#36C995]'}`}>{k.revokedAt ? 'Revoked' : 'Active'}</span> },
-          { key: 'act', header: '', className: 'text-right', render: (k) => !k.revokedAt ? <Button size="sm" variant="ghost" className="h-7 text-[#F27683]" onClick={() => revoke(k.id)}><Trash2 className="h-3 w-3" /></Button> : null },
+          { key: 'act', header: '', className: 'text-right', render: (k) => !k.revokedAt ? <Button size="sm" variant="ghost" aria-label="Revoke key" className="h-9 w-9 justify-center text-[#F27683]" title="Revoke key" onClick={() => revoke(k.id)}><Trash2 className="h-3 w-3" /></Button> : null },
         ]}
       />
 

@@ -4,13 +4,14 @@ import { apiRoute, ok, readJson, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { createPayment } from '@/lib/payments'
 import { audit } from '@/lib/audit'
+import { parsePageSize } from '@/lib/safe-json'
 
 const listSchema = z.object({})
 
 export const GET = apiRoute('payments:read', async (request, ctx) => {
   void listSchema
   const url = new URL(request.url)
-  const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') ?? '25')))
+  const limit = parsePageSize(url.searchParams.get('limit'), 25, 100)
   const payments = await db.paymentRequest.findMany({
     where: { orgId: ctx.orgId },
     orderBy: { createdAt: 'desc' },

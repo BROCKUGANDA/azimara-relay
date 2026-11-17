@@ -3,6 +3,7 @@ import { ok, readJson, route, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { runAssistant, extractInvoice } from '@/lib/ai'
 import { audit } from '@/lib/audit'
+import { safeJsonParse } from '@/lib/safe-json'
 
 const chatSchema = z.object({
   sessionId: z.string().optional(),
@@ -84,6 +85,6 @@ export const GET = route(async ({ org, auth, request }) => {
   const messages = await db.aiMessage.findMany({ where: { sessionId }, orderBy: { createdAt: 'asc' } })
   return ok({
     session: { id: session.id, title: session.title },
-    messages: messages.map((m) => ({ id: m.id, role: m.role, content: m.content, data: JSON.parse(m.dataJson), createdAt: m.createdAt })),
+    messages: messages.map((m) => ({ id: m.id, role: m.role, content: m.content, data: safeJsonParse<unknown>(m.dataJson, null), createdAt: m.createdAt })),
   })
 })

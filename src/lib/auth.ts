@@ -76,7 +76,14 @@ export async function getSessionByToken(token: string): Promise<AuthContext | nu
 export function sessionTokenFrom(request: Request): string | null {
   const cookie = request.headers.get('cookie') ?? ''
   const match = cookie.split(/;\s*/).find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-  return match ? decodeURIComponent(match.slice(SESSION_COOKIE.length + 1)) : null
+  if (!match) return null
+  // A malformed cookie value (e.g. a stray "%") must never take down every
+  // request — treat undecodable cookies as no session.
+  try {
+    return decodeURIComponent(match.slice(SESSION_COOKIE.length + 1))
+  } catch {
+    return null
+  }
 }
 
 export async function getAuth(request: Request): Promise<AuthContext | null> {

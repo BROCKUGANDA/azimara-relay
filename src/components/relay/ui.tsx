@@ -30,9 +30,11 @@ export function StatusBadge({ status, label }: { status: string; label?: string 
   const tone = TONES[STATUS_TONE[status] ?? 'grey']
   const text = label ?? status.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium', tone.bg, tone.text, tone.border)}>
-      <span className={cn('h-1.5 w-1.5 rounded-full', tone.dot)} />
-      {text}
+    // max-w + truncate: long lifecycle labels (e.g. "Settlement verification")
+    // must not blow out narrow table cells or overview list rows on mobile.
+    <span className={cn('inline-flex max-w-[11rem] items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium', tone.bg, tone.text, tone.border)}>
+      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', tone.dot)} />
+      <span className="truncate">{text}</span>
     </span>
   )
 }
@@ -70,7 +72,7 @@ export function PageHeader({ title, description, actions, breadcrumb }: { title:
           <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
           {description ? <p className="mt-1 max-w-2xl text-sm text-secondary">{description}</p> : null}
         </div>
-        {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
     </div>
   )
@@ -111,30 +113,35 @@ export function SetupRequiredState({ title, detail, action }: { title: string; d
   )
 }
 
-export function DataTable<T>({ rows, columns, empty, keyOf }: {
+export function DataTable<T>({ rows, columns, empty, keyOf, minWidth = 640 }: {
   rows: T[]
   columns: { key: string; header: string; render: (row: T) => React.ReactNode; className?: string }[]
   empty?: React.ReactNode
   keyOf: (row: T) => string
+  // min-width of the scrollable table: dense 6-8 column tables must scroll
+  // horizontally on phones instead of compressing into unreadable columns.
+  minWidth?: number
 }) {
   if (rows.length === 0 && empty) return <>{empty}</>
   return (
     <div className="overflow-x-auto rounded-xl border border-[#26374C]">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm" style={{ minWidth }}>
         <thead>
           <tr className="border-b border-[#26374C] bg-[#0B1220]">
             {columns.map((c) => (
-              <th key={c.key} className={cn('px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-dim', c.className)}>
+              <th key={c.key} className={cn('whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-dim md:px-4', c.className)}>
                 {c.header}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={keyOf(row)} className="border-b border-[#1A293D] transition-colors duration-150 last:border-0 hover:bg-[#142135]">
+          {rows.map((row, i) => (
+            // Index-suffixed keys: duplicate business keys (repeated names,
+            // identical rows) must not break React reconciliation.
+            <tr key={`${keyOf(row)}-${i}`} className="border-b border-[#1A293D] transition-colors duration-150 last:border-0 hover:bg-[#142135]">
               {columns.map((c) => (
-                <td key={c.key} className={cn('px-4 py-3 align-middle', c.className)}>
+                <td key={c.key} className={cn('px-3 py-3 align-middle md:px-4', c.className)}>
                   {c.render(row)}
                 </td>
               ))}
@@ -158,7 +165,7 @@ export function SectionCard({ title, description, children, actions, className }
           <h2 className="text-sm font-semibold">{title}</h2>
           {description ? <p className="mt-0.5 text-xs text-dim">{description}</p> : null}
         </div>
-        {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
       <div className="p-4">{children}</div>
     </section>

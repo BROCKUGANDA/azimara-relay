@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApi } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { timeAgo } from '@/lib/client/format'
@@ -10,11 +10,23 @@ import { Badge } from '@/components/ui/badge'
 
 type Entry = { id: string; action: string; resourceType: string; resourceId: string | null; actorType: string; actorName: string | null; data: Record<string, unknown>; ip: string | null; createdAt: string }
 
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => setDebounced(value), delay)
+    return () => { if (timer.current) clearTimeout(timer.current) }
+  }, [value, delay])
+  return debounced
+}
+
 export function AuditView() {
   const { navigate } = useRouter()
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
-  const audit = useApi<{ entries: Entry[]; total: number }>(['audit', q, page], `/api/audit?q=${encodeURIComponent(q)}&page=${page}&pageSize=40`)
+  const debouncedQ = useDebouncedValue(q, 300)
+  const audit = useApi<{ entries: Entry[]; total: number }>(['audit', debouncedQ, page], `/api/audit?q=${encodeURIComponent(debouncedQ)}&page=${page}&pageSize=40`)
 
   return (
     <div>
@@ -23,7 +35,7 @@ export function AuditView() {
         description="Immutable record of every consequential action. Financial records are never cascade-deleted."
         breadcrumb={['Relay', 'Administration', 'Audit trail']}
       />
-      <Input placeholder="Search action, resource…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} className="mb-4 w-64 border-[#26374C] bg-[#0B1220]" />
+      <Input placeholder="Search action, resource…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} className="mb-4 w-full border-[#26374C] bg-[#0B1220] sm:w-64" />
       {audit.isError ? <ErrorState message={String(audit.error)} retry={() => audit.refetch()} /> : null}
       <DataTable
         keyOf={(e) => e.id}
@@ -38,7 +50,7 @@ export function AuditView() {
               <span className="text-xs text-secondary">{e.actorName ?? '—'}</span>
             </div>
           ) },
-          { key: 'data', header: 'Context', render: (e) => <span className="line-clamp-1 max-w-xs text-[10px] text-dim">{JSON.stringify(e.data)}</span> },
+          { key: 'data', header: 'Context', render: (e) => <span className="line-clamp-1 max-w-xs text-[10px] text-dim">{JSON.stringify(e.data ?? {})}</span> },
           { key: 'ip', header: 'IP', render: (e) => <span className="font-mono text-[10px] text-dim">{e.ip ?? '—'}</span> },
           { key: 'when', header: 'When', render: (e) => <span className="text-xs text-dim">{timeAgo(e.createdAt)}</span> },
         ]}
@@ -47,8 +59,8 @@ export function AuditView() {
         <div className="mt-4 flex items-center justify-between text-xs text-dim">
           <span>Page {page} of {Math.ceil(audit.data.total / 40)}</span>
           <div className="flex gap-2">
-            <button className="rounded border border-[#26374C] px-2 py-1 hover:bg-[#142135] disabled:opacity-40" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-            <button className="rounded border border-[#26374C] px-2 py-1 hover:bg-[#142135] disabled:opacity-40" disabled={page >= Math.ceil(audit.data.total / 40)} onClick={() => setPage(page + 1)}>Next</button>
+            <button className="min-h-9 rounded border border-[#26374C] px-3 py-2 hover:bg-[#142135] disabled:opacity-40" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
+            <button className="min-h-9 rounded border border-[#26374C] px-3 py-2 hover:bg-[#142135] disabled:opacity-40" disabled={page >= Math.ceil(audit.data.total / 40)} onClick={() => setPage(page + 1)}>Next</button>
           </div>
         </div>
       ) : null}

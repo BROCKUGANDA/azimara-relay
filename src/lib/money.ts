@@ -9,9 +9,12 @@ export function assertBaseUnits(value: string): bigint {
 }
 
 /// "12.34" + 6 decimals -> "12340000". Never parses floats.
+/// Tolerates thousand-grouping commas (e.g. "1,250.50") so formatter output
+/// can safely round-trip back through the parser.
 export function parseAmountToBaseUnits(amount: string, decimals: number): string {
-  const s = amount.trim()
+  const s = amount.trim().replace(/,/g, '')
   if (!/^\d*(\.\d*)?$/.test(s) || s === '' || s === '.') throw new Error(`Invalid amount: ${amount}`)
+  if (s.length > 40) throw new Error(`Invalid amount: ${amount}`)
   const neg = false
   const [wholeRaw, fracRaw = ''] = s.split('.')
   const whole = wholeRaw === '' ? '0' : wholeRaw.replace(/^0+(?=\d)/, '')
@@ -23,14 +26,20 @@ export function parseAmountToBaseUnits(amount: string, decimals: number): string
   return bi.toString()
 }
 
-export function formatBaseUnits(base: string | bigint, decimals: number, opts?: { trimTrailingZeros?: boolean }): string {
+export function formatBaseUnits(
+  base: string | bigint,
+  decimals: number,
+  opts?: { trimTrailingZeros?: boolean; group?: boolean },
+): string {
   const bi = typeof base === 'bigint' ? base : assertBaseUnits(base)
   const neg = bi < 0n
   const abs = (neg ? -bi : bi).toString().padStart(decimals + 1, '0')
   const whole = abs.slice(0, abs.length - decimals)
   let frac = decimals > 0 ? abs.slice(abs.length - decimals) : ''
   if (opts?.trimTrailingZeros) frac = frac.replace(/0+$/, '')
-  const wholeGrouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  // Grouping is for display only. Machine round-trips (parseAmountToBaseUnits
+  // inputs, provider payloads) must pass group:false — commas are display sugar.
+  const wholeGrouped = opts?.group === false ? whole : whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   const sign = neg ? '-' : ''
   return frac ? `${sign}${wholeGrouped}.${frac}` : `${sign}${wholeGrouped}`
 }
@@ -63,6 +72,7 @@ export function isZeroBase(a: string): boolean {
 
 /// percentage fee in basis points (e.g. 25 bps = 0.25%) with floor rounding.
 export function mulBpsFloor(base: string, bps: number): string {
+  if (!Number.isInteger(bps) || bps < 0) throw new Error(`Invalid basis points: ${bps}`)
   return ((assertBaseUnits(base) * BigInt(bps)) / 10000n).toString()
 }
 

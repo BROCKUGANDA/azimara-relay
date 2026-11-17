@@ -1,12 +1,13 @@
 import { ok, route } from '@/lib/api'
 import { db } from '@/lib/db'
 import { formatBaseUnits } from '@/lib/money'
+import { parseDaysWindow } from '@/lib/safe-json'
 
 /// Business analytics over real records. Intermediate hops are never counted
 /// as payment volume — only payment-level records feed these aggregates.
 export const GET = route(async ({ org, request }) => {
   const url = new URL(request.url)
-  const days = Math.min(365, Math.max(7, Number(url.searchParams.get('days') ?? '30')))
+  const days = parseDaysWindow(url.searchParams.get('days'), 30, 365)
   const since = new Date(Date.now() - days * 86_400_000)
   const [payments, ledger, batches, recipients] = await Promise.all([
     db.paymentRequest.findMany({ where: { orgId: org.org.id, createdAt: { gte: since } }, select: { id: true, status: true, mint: true, amountBaseUnits: true, createdAt: true, completedAt: true, recipientId: true, source: true } }),

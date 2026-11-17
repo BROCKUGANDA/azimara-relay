@@ -22,7 +22,13 @@ type SessionState = {
 
 function readActiveOrgId(): string | null {
   if (typeof window === 'undefined') return null
-  return window.localStorage.getItem('relay:activeOrg')
+  // localStorage throws in Safari private mode / on quota errors — degrade to
+  // "no saved org" instead of crashing session boot.
+  try {
+    return window.localStorage.getItem('relay:activeOrg')
+  } catch {
+    return null
+  }
 }
 
 export const useSession = create<SessionState>((set, get) => ({
@@ -72,14 +78,26 @@ export const useSession = create<SessionState>((set, get) => ({
   },
   setActive: (orgId: string) => {
     const org = get().organizations.find((o) => o.id === orgId) ?? null
-    if (org && typeof window !== 'undefined') window.localStorage.setItem('relay:activeOrg', orgId)
+    if (org && typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem('relay:activeOrg', orgId)
+      } catch {
+        // Storage unavailable (private mode / quota): session still works.
+      }
+    }
     setActiveOrg(orgId)
     set({ activeOrg: org })
   },
   signOut: async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     setActiveOrg(null)
-    if (typeof window !== 'undefined') window.localStorage.removeItem('relay:activeOrg')
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem('relay:activeOrg')
+      } catch {
+        // ignore
+      }
+    }
     set({ authenticated: false, user: null, organizations: [], activeOrg: null })
   },
 }))

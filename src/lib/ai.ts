@@ -14,6 +14,7 @@ import { z } from 'zod'
 import { parseAmountToBaseUnits, formatBaseUnits } from './money'
 import { evaluateRules, type PolicyRule } from './approvals'
 import { SOL_MINT, SOL_DECIMALS } from './solana'
+import { safeJsonParse } from './safe-json'
 
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
 
@@ -233,12 +234,10 @@ async function deterministicValidate(orgId: string, proposal: NonNullable<z.infe
 }
 
 function safeRules(rulesJson: string): PolicyRule[] {
-  try {
-    const parsed = JSON.parse(rulesJson) as PolicyRule[]
-    return Array.isArray(parsed) && parsed.length ? parsed : []
-  } catch {
-    return []
-  }
+  const parsed = safeJsonParse<unknown>(rulesJson, [])
+  if (!Array.isArray(parsed)) return []
+  // Same shape discipline as payments.parseRules — skip malformed conditions.
+  return (parsed as PolicyRule[]).filter((r) => r?.condition && typeof r.condition === 'object' && typeof r.condition.field === 'string')
 }
 
 export async function runAssistant(orgId: string, userId: string, sessionId: string, userMessage: string): Promise<AssistantResult> {
@@ -302,7 +301,11 @@ export async function acceptProposal(proposalId: string, orgId: string, userId: 
   const proposal = await db.aiProposal.findFirst({ where: { id: proposalId, orgId } })
   if (!proposal) throw new Error('NOT_FOUND')
   if (proposal.status !== 'PROPOSED') throw Object.assign(new Error(`Proposal is ${proposal.status}`), { code: 'INVALID_STATE', status: 409 })
-  const payload = JSON.parse(proposal.payloadJson) as { mint: string; sourceWalletId: string | null; items: { recipientName: string; address: string; amount: string; note?: string }[] }
+  // A corrupted proposal payload must fail with a clean API error, not a 500.
+  const payload = safeJsonParse<{ mint?: string; sourceWalletId?: string | null; items?: { recipientName: string; address: string; amount: string; note?: string }[] }>(proposal.payloadJson, null as never)
+  if (!payload || !Array.isArray(payload.items) || payload.items.length === 0 || typeof payload.mint !== 'string') {
+    throw Object.assign(new Error('The proposal payload is corrupted and cannot be converted'), { code: 'PROPOSAL_CORRUPT', status: 422 })
+  }
   if (!payload.sourceWalletId) throw Object.assign(new Error('The proposal has no verified source wallet; resolve the wallet first'), { code: 'WALLET_MISSING', status: 400 })
   const { createPayment } = await import('./payments')
   const created: { reference: string; recipient: string; status: string }[] = []
@@ -326,11 +329,12 @@ export async function acceptProposal(proposalId: string, orgId: string, userId: 
       errors.push({ recipient: item.recipientName, error: message })
     }
   }
+  // One update with the final status — the old double-write made CONVERTED
+  // unreachable and briefly exposed an inconsistent state.
   await db.aiProposal.update({
     where: { id: proposalId },
-    data: { status: errors.length === 0 ? 'CONVERTED' : proposal.status, resultRefJson: JSON.stringify({ created, errors }) },
+    data: { status: 'ACCEPTED', resultRefJson: JSON.stringify({ created, errors }) },
   })
-  await db.aiProposal.update({ where: { id: proposalId }, data: { status: 'ACCEPTED' } }).catch(() => undefined)
   return { created, errors }
 }
 

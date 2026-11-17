@@ -10,7 +10,7 @@ import { db } from '@/lib/db'
 import { enqueue } from '@/lib/jobs'
 import { MultiHopperClient } from '@/lib/multihopper'
 import { decryptSecret } from '@/lib/crypto'
-import { clientIp } from '@/lib/rate-limit'
+import { rateLimit, clientIp } from '@/lib/rate-limit'
 import { createHash, timingSafeEqual } from 'crypto'
 import { z } from 'zod'
 
@@ -27,6 +27,12 @@ function extractTransferRef(payload: Record<string, unknown>): string | null {
 const eventSchema = z.looseObject({ event: z.string().optional(), type: z.string().optional(), id: z.string().optional(), eventId: z.string().optional() })
 
 export async function POST(request: Request) {
+  // Public unauthenticated endpoint: rate-limit per source IP so the inbox
+  // cannot be flooded with junk attempts.
+  const rl = rateLimit(`${clientIp(request)}:mh-webhook`, 60, 60_000)
+  if (!rl.allowed) {
+    return Response.json({ error: { code: 'RATE_LIMITED', message: 'Too many webhook attempts', requestId: 'n/a', details: [] } }, { status: 429 })
+  }
   const raw = await request.text()
   const signature = request.headers.get('x-multihopper-signature')
   // Resolve the webhook secret from any org integration configured for this
@@ -57,6 +63,15 @@ export async function POST(request: Request) {
     transferRef = extractTransferRef(parsed)
   } catch {
     // Non-JSON body: stored raw for forensics.
+  }
+  // Cap persisted attempts per provider event: beyond 20 deliveries of the
+  // same event id, stop writing new inbox rows (the provider still receives a
+  // 2xx so it stops retrying; scheduled reconciliation remains authoritative).
+  if (eventId) {
+    const priorAttempts = await db.webhookInbox.count({ where: { provider: 'MULTIHOPPER', eventId } })
+    if (priorAttempts > 20) {
+      return Response.json({ data: { deduplicated: true } }, { status: 200 })
+    }
   }
   const dedupeHash = createHash('sha256').update(raw).digest('hex')
   const inbox = await db.webhookInbox

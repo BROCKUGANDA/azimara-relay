@@ -3,6 +3,7 @@ import { ok, readJson, route, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { audit } from '@/lib/audit'
 import { isValidSolanaAddress } from '@/lib/solana'
+import { parsePage, parsePageSize } from '@/lib/safe-json'
 
 export const GET = route(async ({ org, request }) => {
   const url = new URL(request.url)
@@ -10,18 +11,28 @@ export const GET = route(async ({ org, request }) => {
   const status = url.searchParams.get('status') ?? 'ACTIVE'
   const category = url.searchParams.get('category')
   const groupId = url.searchParams.get('groupId')
-  const page = Math.max(1, Number(url.searchParams.get('page') ?? '1'))
-  const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') ?? '50')))
+  const pageSize = parsePageSize(url.searchParams.get('pageSize'), 50, 100)
+  const { page, skip, take } = parsePage(url.searchParams.get('page'), pageSize)
   const where = {
     orgId: org.org.id,
     ...(status !== 'ALL' ? { status } : {}),
     ...(category ? { category } : {}),
     ...(groupId ? { groupId } : {}),
-    ...(q ? { OR: [{ name: { contains: q } }, { address: { contains: q } }, { reference: { contains: q } }] } : {}),
+    // SQLite `contains` is case-sensitive: match lowercase and uppercase
+    // variants so searches behave case-insensitively.
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q } }, { name: { contains: q.toLowerCase() } }, { name: { contains: q.toUpperCase() } },
+            { address: { contains: q } }, { address: { contains: q.toLowerCase() } }, { address: { contains: q.toUpperCase() } },
+            { reference: { contains: q } }, { reference: { contains: q.toLowerCase() } }, { reference: { contains: q.toUpperCase() } },
+          ],
+        }
+      : {}),
   }
   const [total, recipients] = await Promise.all([
     db.recipient.count({ where }),
-    db.recipient.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize, include: { group: true } }),
+    db.recipient.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take, include: { group: true } }),
   ])
   return ok({
     recipients: recipients.map((r) => ({

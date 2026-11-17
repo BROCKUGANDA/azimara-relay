@@ -66,6 +66,14 @@ function RelayRoot() {
     return <AuthView mode="verify" token={path.slice('/verify/'.length)} />
   }
 
+  // MFA gate MUST be evaluated before the authRoutes branch: after the login
+  // endpoint sets the session cookie on the mfaRequired response, the session
+  // is authenticated but not yet MFA-trusted — routing /login/mfa to the plain
+  // login form here would loop forever between login and MFA.
+  if (!session.mfaPassed && session.mfaEnabled && session.authenticated) {
+    return <AuthView mode="mfa" />
+  }
+
   const authRoutes = ['/login', '/register']
   if (authRoutes.includes(path) || (path.startsWith('/login') && path.includes('/mfa'))) {
     return <AuthView mode={path === '/register' ? 'register' : 'login'} />
@@ -74,10 +82,6 @@ function RelayRoot() {
   if (!session.authenticated) {
     // Public website; auth actions available via header.
     return <PublicSite />
-  }
-
-  if (!session.mfaPassed && session.mfaEnabled) {
-    return <AuthView mode="mfa" />
   }
 
   if (!session.activeOrg && session.organizations.length === 0) {

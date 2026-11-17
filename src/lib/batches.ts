@@ -153,13 +153,19 @@ export async function validateBatch(batchId: string, orgId: string) {
   }
   const validItems = await db.paymentBatchItem.findMany({ where: { batchId, status: 'VALID' } })
   const total = sumBase(validItems.map((v) => v.amountBaseUnits))
-  await db.paymentBatch.update({ where: { id: batchId }, data: { totalBaseUnits: total, status: 'AWAITING_APPROVAL' } })
+  const invalidRemaining = batch.items.length - validItems.length
+  // A batch with invalid rows stays DRAFT; only a fully valid batch advances.
+  await db.paymentBatch.update({
+    where: { id: batchId },
+    data: { totalBaseUnits: total, status: invalidRemaining > 0 ? 'DRAFT' : 'AWAITING_APPROVAL' },
+  })
   await audit({ orgId, action: 'BATCH_VALIDATED', resourceType: 'PaymentBatch', resourceId: batchId, data: { changed, totalBaseUnits: total } })
   return { changed, totalBaseUnits: total, validCount: validItems.length }
 }
 
 function formatAmount(base: string, decimals: number): string {
-  return formatBaseUnits(base, decimals, { trimTrailingZeros: true })
+  // group:false — this feeds parseAmountToBaseUnits / provider payloads, not UI.
+  return formatBaseUnits(base, decimals, { trimTrailingZeros: true, group: false })
 }
 
 /// Executes an approved batch by creating one real child payment per valid

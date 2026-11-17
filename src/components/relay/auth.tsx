@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSession } from '@/lib/client/store'
 import { api } from '@/lib/client/api'
 import { Button } from '@/components/ui/button'
@@ -53,10 +53,16 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null)
   const [inviteState, setInviteState] = useState<'pending' | 'ok' | 'error' | 'needs-account'>('pending')
   const [inviteInfo, setInviteInfo] = useState<{ email?: string; orgName?: string }>({})
+  // Idempotency guard: React StrictMode double-invokes effects, and the loser
+  // of two concurrent verify/accept calls (token already consumed → 400) must
+  // never overwrite a success state.
+  const verifyStarted = useRef(false)
+  const inviteStarted = useRef(false)
 
   // Auto-verify email when landing with a token.
   useEffect(() => {
-    if (mode === 'verify' && token && verifyState === 'pending') {
+    if (mode === 'verify' && token && verifyState === 'pending' && !verifyStarted.current) {
+      verifyStarted.current = true
       api('/api/auth/verify-email', { json: { token } })
         .then(() => setVerifyState('ok'))
         .catch(() => setVerifyState('error'))
@@ -65,29 +71,31 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
 
   // Invite preview: accept directly when account exists.
   useEffect(() => {
-    if (mode === 'invite' && token && inviteState === 'pending') {
+    if (mode === 'invite' && token && inviteState === 'pending' && !inviteStarted.current) {
+      inviteStarted.current = true
       api('/api/invitations/accept', { json: { token } })
         .then(() => {
           setInviteState('ok')
           session.refresh()
         })
-        .catch((err) => {
-          if (err.code === 'ACCOUNT_REQUIRED') {
+        .catch((err: { code?: string }) => {
+          if (err?.code === 'ACCOUNT_REQUIRED') {
             setInviteState('needs-account')
           } else {
             setInviteState('error')
           }
         })
     }
-  }, [mode, token, inviteState])
+  }, [mode, token, inviteState, session])
 
   async function register() {
-    if (!email || !password || !name) return toast.error('Name, email and password are required')
+    if (!email.trim() || !password || !name.trim()) return toast.error('Name, email and password are required')
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return toast.error('Enter a valid email address')
     if (password.length < 10) return toast.error('Password must be at least 10 characters')
     setBusy(true)
     try {
       const res = await api<{ emailDelivery: { verificationToken: string } }>('/api/auth/register', {
-        json: { name, email, password, organizationName: orgName || undefined },
+        json: { name: name.trim(), email: email.trim(), password, organizationName: orgName.trim() || undefined },
       })
       // Email delivery is not configured in this environment: the verification
       // link is surfaced directly (genuine unconfigured-channel behavior).
@@ -103,10 +111,10 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
   }
 
   async function login() {
-    if (!email || !password) return toast.error('Email and password are required')
+    if (!email.trim() || !password) return toast.error('Email and password are required')
     setBusy(true)
     try {
-      const res = await api<{ mfaRequired: boolean }>('/api/auth/login', { json: { email, password } })
+      const res = await api<{ mfaRequired: boolean }>('/api/auth/login', { json: { email: email.trim(), password } })
       await session.refresh()
       if (res.mfaRequired) {
         navigate('/login/mfa')
@@ -200,6 +208,7 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
               <Input type="password" placeholder="Choose a password (min 10 chars)" value={password} onChange={(e) => setPassword(e.target.value)} className="border-[#26374C] bg-[#0B1220]" />
               <Button
                 onClick={async () => {
+                  if (password.length < 10) return toast.error('Password must be at least 10 characters')
                   setBusy(true)
                   try {
                     await api('/api/invitations/accept', { json: { token, password } })
@@ -242,10 +251,10 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
           </div>
           <Button
             onClick={async () => {
-              if (!orgName || orgName.length < 2) return toast.error('Organization name is required')
+              if (!orgName.trim() || orgName.trim().length < 2) return toast.error('Organization name is required')
               setBusy(true)
               try {
-                await api('/api/organizations', { json: { name: orgName } })
+                await api('/api/organizations', { json: { name: orgName.trim() } })
                 await session.refresh()
                 navigate('/app')
               } catch (err) {
@@ -281,7 +290,10 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
         </div>
         <div>
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" placeholder={isRegister ? 'Minimum 10 characters' : '••••••••••'} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (isRegister ? register() : login())} className="mt-1.5 border-[#26374C] bg-[#0B1220]" />
+          <Input id="password" type="password" placeholder={isRegister ? 'Minimum 10 characters' : '••••••••••'} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => {
+            // IME-composition Enter (CJK candidates confirm) must not submit.
+            if (e.key === 'Enter' && !(e.nativeEvent instanceof KeyboardEvent && e.nativeEvent.isComposing)) (isRegister ? register() : login())
+          }} className="mt-1.5 border-[#26374C] bg-[#0B1220]" />
         </div>
         {isRegister && (
           <div>
@@ -296,7 +308,12 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
           <div className="rounded-lg border border-[#F2BB62]/30 bg-[#F2BB62]/5 p-3 text-xs text-[#F2BB62]">
             <div className="flex items-center gap-1.5 font-medium"><ShieldCheck className="h-3.5 w-3.5" /> Email delivery not configured in this environment</div>
             <p className="mt-1 text-[#F2BB62]/80">In production this link would be emailed. Development verification:</p>
-            <button className="mt-1.5 block w-full truncate rounded bg-[#0B1220] px-2 py-1.5 text-left font-mono text-[10px] text-[#35D6C0] hover:underline" onClick={() => { window.location.hash = devVerifyLink.slice(1); window.location.reload() }}>
+            <button className="mt-1.5 block w-full truncate rounded bg-[#0B1220] px-2 py-1.5 text-left font-mono text-[10px] text-[#35D6C0] hover:underline" onClick={() => {
+              // SPA-internal navigation only: a reload here races the hashchange
+              // router, which auto-verifies the token on the old page before the
+              // fresh page repeats the call against a now-consumed token.
+              window.location.hash = devVerifyLink.slice(1)
+            }}>
               {devVerifyLink}
             </button>
           </div>

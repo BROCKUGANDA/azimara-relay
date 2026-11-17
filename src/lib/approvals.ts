@@ -51,25 +51,32 @@ export function evaluateRules(rules: PolicyRule[], payment: { mint: string; amou
   const approverRoles = new Set<string>()
   for (const rule of rules) {
     let hit = false
-    switch (rule.condition.field) {
-      case 'ALWAYS':
-        hit = true
-        break
-      case 'AMOUNT_LT':
-        hit = (!rule.condition.mint || rule.condition.mint === payment.mint) && cmpBase(payment.amountBaseUnits, rule.condition.amountBaseUnits) < 0
-        break
-      case 'AMOUNT_GTE':
-        hit = (!rule.condition.mint || rule.condition.mint === payment.mint) && cmpBase(payment.amountBaseUnits, rule.condition.amountBaseUnits) >= 0
-        break
-      case 'NEW_RECIPIENT': {
-        if (!recipient) break
-        const ageDays = (Date.now() - new Date(recipient.createdAt).getTime()) / 86_400_000
-        hit = ageDays <= rule.condition.withinDays
-        break
+    // Each rule evaluates defensively: a bad stored condition skips the rule
+    // (never throws) — payment creation must survive corrupt policy data.
+    try {
+      switch (rule.condition.field) {
+        case 'ALWAYS':
+          hit = true
+          break
+        case 'AMOUNT_LT':
+          hit = (!rule.condition.mint || rule.condition.mint === payment.mint) && cmpBase(payment.amountBaseUnits, rule.condition.amountBaseUnits) < 0
+          break
+        case 'AMOUNT_GTE':
+          hit = (!rule.condition.mint || rule.condition.mint === payment.mint) && cmpBase(payment.amountBaseUnits, rule.condition.amountBaseUnits) >= 0
+          break
+        case 'NEW_RECIPIENT': {
+          if (!recipient) break
+          const ageDays = (Date.now() - new Date(recipient.createdAt).getTime()) / 86_400_000
+          const within = Number(rule.condition.withinDays)
+          hit = Number.isFinite(within) && ageDays <= within
+          break
+        }
+        case 'RECIPIENT_CATEGORY':
+          hit = !!recipient && recipient.category === rule.condition.category
+          break
       }
-      case 'RECIPIENT_CATEGORY':
-        hit = !!recipient && recipient.category === rule.condition.category
-        break
+    } catch {
+      hit = false
     }
     if (hit) {
       matched.push({ id: rule.id, description: rule.description })

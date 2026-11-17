@@ -5,6 +5,7 @@ import { useRouter, useSession } from '@/lib/client/store'
 import { api } from '@/lib/client/api'
 import { timeAgo } from '@/lib/client/format'
 import { permissionsFor } from '@/lib/rbac'
+import { useAppSeo } from '@/lib/client/seo'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -76,11 +77,16 @@ export function AppShell() {
   const activeOrg = session.activeOrg
   const role = activeOrg?.role ?? 'ANALYST'
   const permissions = permissionsFor(role)
+  // App views are authenticated content: title sync + noindex.
+  const viewLabel = labelForPath(path)
+  useAppSeo(path, viewLabel)
 
   useEffect(() => {
     let alive = true
     const load = () => {
-      if (!activeOrg) return
+      if (!activeOrg?.id) return
+      // Skip polling while the tab is hidden — saves battery/data on mobile.
+      if (typeof document !== 'undefined' && document.hidden) return
       api<{ notifications: Notification[]; unread: number }>('/api/notifications')
         .then((d) => {
           if (alive) setNotifications(d.notifications)
@@ -93,7 +99,7 @@ export function AppShell() {
       alive = false
       clearInterval(t)
     }
-  }, [activeOrg])
+  }, [activeOrg?.id])
 
   if (!activeOrg) return null
 
@@ -116,7 +122,7 @@ export function AppShell() {
           {!collapsed && <span className="text-[13px] font-semibold tracking-tight">AZIMARA <span className="text-[#35D6C0]">RELAY</span></span>}
         </button>
         {!collapsed && (
-          <button className="text-dim hover:text-foreground lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
+          <button className="rounded-lg p-2 text-dim hover:bg-[#142135] hover:text-foreground md:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
             <X className="h-4 w-4" />
           </button>
         )}
@@ -138,7 +144,7 @@ export function AppShell() {
               )}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64 border-[#26374C] bg-[#142135]">
+          <DropdownMenuContent align="start" className="w-[min(16rem,calc(100vw-3rem))] border-[#26374C] bg-[#142135]">
             <DropdownMenuLabel className="text-xs text-dim">Workspaces</DropdownMenuLabel>
             {session.organizations.map((o) => (
               <DropdownMenuItem key={o.id} onClick={() => session.setActive(o.id)} className="text-xs">
@@ -209,7 +215,7 @@ export function AppShell() {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className={cn('hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-dim hover:bg-[#142135] hover:text-foreground lg:flex', collapsed && 'justify-center px-0')}
+          className={cn('hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-dim hover:bg-[#142135] hover:text-foreground md:flex', collapsed && 'justify-center px-0')}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <ChevronsLeftRight className="h-4 w-4" />
@@ -221,13 +227,14 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-screen bg-[#080D17]">
-      {/* Desktop sidebar */}
-      <aside className={cn('sticky top-0 hidden h-screen shrink-0 border-r border-[#1A293D] bg-[#0B1220] transition-all duration-200 lg:block', collapsed ? 'w-[72px]' : 'w-[248px]')}>
+      {/* Desktop sidebar — md covers tablets (768-1023px) too, which previously
+          fell back to the cramped phone drawer. */}
+      <aside className={cn('sticky top-0 hidden h-screen shrink-0 border-r border-[#1A293D] bg-[#0B1220] transition-all duration-200 md:block', collapsed ? 'w-[72px]' : 'w-[248px]')}>
         {SidebarContent}
       </aside>
       {/* Mobile drawer */}
       {mobileOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute left-0 top-0 h-full w-[260px] border-r border-[#1A293D] bg-[#0B1220]">{SidebarContent}</aside>
         </div>
@@ -236,28 +243,36 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar */}
         <header className="sticky top-0 z-30 flex h-[68px] items-center justify-between gap-3 border-b border-[#1A293D] bg-[#080D17]/90 px-4 backdrop-blur sm:px-6">
-          <div className="flex items-center gap-3">
-            <button className="text-secondary lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
+          <div className="flex min-w-0 items-center gap-2">
+            <button className="rounded-lg p-2 text-secondary hover:bg-[#142135] hover:text-foreground md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
               <Menu className="h-5 w-5" />
             </button>
             <Breadcrumbs path={path} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               size="sm"
               onClick={() => navigate('/app/payments/new')}
-              className="hidden bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90 sm:inline-flex"
+              aria-label="New payment"
+              className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90 md:hidden"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => navigate('/app/payments/new')}
+              className="hidden bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90 md:inline-flex"
             >
               <Send className="mr-1.5 h-3.5 w-3.5" /> New payment
             </Button>
             <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
               <DropdownMenuTrigger asChild>
-                <button className="relative rounded-lg border border-[#26374C] p-2 text-secondary hover:bg-[#142135] hover:text-foreground" aria-label="Notifications">
+                <button className="relative rounded-lg border border-[#26374C] p-2.5 text-secondary hover:bg-[#142135] hover:text-foreground" aria-label="Notifications">
                   <Bell className="h-4 w-4" />
                   {unread > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F27683] px-1 text-[9px] font-bold text-[#080D17]">{unread}</span> : null}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 border-[#26374C] bg-[#142135]">
+              <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))] border-[#26374C] bg-[#142135]">
                 <DropdownMenuLabel className="text-xs">Notifications</DropdownMenuLabel>
                 <div className="max-h-80 overflow-y-auto">
                   {notifications.length === 0 ? (
@@ -270,7 +285,9 @@ export function AppShell() {
                         onClick={async () => {
                           await api('/api/notifications', { json: { ids: [n.id], markRead: true } }).catch(() => undefined)
                           setNotifOpen(false)
-                          if (n.link) navigate(n.link.replace('#', ''))
+                          // Only navigate DB-supplied links that point back into
+                          // the app — anything else is dropped.
+                          if (n.link && n.link.replace('#', '').startsWith('/app')) navigate(n.link.replace('#', ''))
                         }}
                       >
                         <div className="text-xs font-medium">{n.title}</div>
@@ -284,7 +301,7 @@ export function AppShell() {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-lg border border-[#26374C] px-2.5 py-1.5 hover:bg-[#142135]" aria-label="Account menu">
+                <button className="flex items-center gap-2 rounded-lg border border-[#26374C] px-2.5 py-2 hover:bg-[#142135]" aria-label="Account menu">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#658CFF]/15 text-[10px] font-bold text-[#658CFF]">
                     {session.user?.name?.slice(0, 2).toUpperCase() ?? '??'}
                   </span>
@@ -315,8 +332,10 @@ export function AppShell() {
           </div>
         </header>
 
-        {/* Content */}
-        <main className="mx-auto w-full max-w-[1600px] flex-1 p-4 sm:p-8">
+        {/* Content — min-w-0: without it the flex item's automatic minimum
+            size tracks the widest table's min-content and inflates the whole
+            shell horizontally on narrow screens. */}
+        <main className="mx-auto w-full min-w-0 max-w-[1600px] flex-1 p-4 sm:p-8">
           <AppView path={path} navigate={navigate} />
         </main>
       </div>
@@ -327,9 +346,16 @@ export function AppShell() {
 function ApprovalsCountBadge() {
   const [count, setCount] = useState<number | null>(null)
   useEffect(() => {
-    api<{ total: number }>('/api/approvals?pageSize=1')
-      .then((d) => setCount(d.total))
-      .catch(() => undefined)
+    // Refresh with the notification poll cadence so the badge reflects
+    // approvals decided in other tabs/sessions.
+    const load = () => {
+      api<{ total: number }>('/api/approvals?pageSize=1')
+        .then((d) => setCount(d.total))
+        .catch(() => undefined)
+    }
+    load()
+    const t = setInterval(load, 60_000)
+    return () => clearInterval(t)
   }, [])
   if (!count) return null
   return <span className="ml-auto rounded-full bg-[#A18BEB]/15 px-2 py-0.5 text-[10px] font-semibold text-[#A18BEB]">{count}</span>
@@ -341,14 +367,16 @@ function Breadcrumbs({ path }: { path: string }) {
     NAV_GROUPS.flatMap((g) => g.items).map((i) => [i.path.replace(/^\//, ''), i.label]),
   )
   return (
-    <div className="flex items-center gap-1 text-xs text-dim" aria-label="Breadcrumb">
+    // min-w-0 + truncate: multi-segment paths squeeze the right-side topbar
+    // controls on phones unless the crumb row can shrink.
+    <div className="flex min-w-0 items-center gap-1 overflow-hidden text-xs text-dim" aria-label="Breadcrumb">
       {parts.length === 0 || (parts.length === 1 && parts[0] === 'app') ? (
         <span>Overview</span>
       ) : (
         parts.map((p, i) => (
-          <span key={i} className="flex items-center gap-1">
+          <span key={i} className="flex min-w-0 items-center gap-1">
             {i > 0 && <ChevronSep />}
-            <span className={i === parts.length - 1 ? 'text-secondary' : ''}>
+            <span className={`truncate ${i === parts.length - 1 ? 'text-secondary' : 'hidden sm:inline'}`}>
               {labelFor[parts.slice(0, i + 1).join('/')] ?? (p === 'app' ? 'Relay' : p.length > 20 ? p.slice(0, 10) + '…' : p.charAt(0).toUpperCase() + p.slice(1))}
             </span>
           </span>
@@ -360,6 +388,17 @@ function Breadcrumbs({ path }: { path: string }) {
 
 function ChevronSep() {
   return <span className="text-[#26374C]">/</span>
+}
+
+function labelForPath(p: string): string {
+  for (const group of NAV_GROUPS) {
+    for (const item of group.items) {
+      if (p === item.path) return item.label
+    }
+  }
+  if (p.startsWith('/app/payments/') && p !== '/app/payments/new') return 'Payment detail'
+  if (p.startsWith('/app/batches/')) return 'Batch detail'
+  return 'Overview'
 }
 
 // View dispatch — views imported statically to keep the shell simple.
@@ -392,7 +431,11 @@ function AppView({ path, navigate }: { path: string; navigate: (to: string) => v
   if (path === '/app/recipients') return <RecipientsView />
   if (path === '/app/payments/new') return <PaymentBuilderView />
   if (path === '/app/payments') return <PaymentsView />
-  if (path.startsWith('/app/payments/')) return <PaymentDetailView paymentId={path.split('/')[3] ?? ''} navigate={navigate} />
+  if (path.startsWith('/app/payments/')) {
+    const paymentId = path.split('/')[3] ?? ''
+    // `/app/payments/` with a trailing slash must not fetch an empty id.
+    return paymentId ? <PaymentDetailView paymentId={paymentId} navigate={navigate} /> : <NotFoundView navigate={navigate} />
+  }
   if (path === '/app/batches') return <BatchesView />
   if (path.startsWith('/app/batches/')) return <BatchesView initialBatchId={path.split('/')[3]} />
   if (path === '/app/approvals') return <ApprovalsView />
@@ -408,6 +451,10 @@ function AppView({ path, navigate }: { path: string; navigate: (to: string) => v
   if (path === '/app/audit') return <AuditView />
   if (path === '/app/billing') return <BillingView />
   if (path === '/app/settings') return <SettingsView />
+  return <NotFoundView navigate={navigate} />
+}
+
+function NotFoundView({ navigate }: { navigate: (to: string) => void }) {
   return (
     <div className="rounded-xl border border-dashed border-[#26374C] p-10 text-center text-sm text-dim">
       Page not found — <button className="text-[#35D6C0] hover:underline" onClick={() => navigate('/app')}>back to overview</button>

@@ -12,6 +12,7 @@ import { assertBaseUnits, addBase, subBase } from '@/lib/money'
 import { shortId, sha256 } from '@/lib/crypto'
 import { audit, notify } from '@/lib/audit'
 import { entitlementsFor } from '@/lib/entitlements'
+import { safeJsonParse } from '@/lib/safe-json'
 import { MultiHopperClient, SetupRequiredError, providerConfigFromRow, MultiHopperError } from '@/lib/multihopper'
 import type { PaymentRequest, Prisma } from '@prisma/client'
 
@@ -31,8 +32,25 @@ async function getActivePolicy(orgId: string) {
 
 function parseRules(rulesJson: string): PolicyRule[] {
   try {
-    const parsed = JSON.parse(rulesJson) as PolicyRule[]
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_RULES
+    const parsed = safeJsonParse<unknown>(rulesJson, DEFAULT_RULES)
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_RULES
+    // Shape-validate each rule: a malformed stored rule (missing condition
+    // fields, non-numeric base units) must be skipped, not 500 payment creation
+    // when evaluateRules touches it.
+    const valid: PolicyRule[] = []
+    for (const r of parsed) {
+      const rule = r as PolicyRule
+      if (!rule || typeof rule !== 'object' || !rule.condition || typeof rule.condition !== 'object') continue
+      const c = rule.condition as { field?: unknown; amountBaseUnits?: unknown; withinDays?: unknown; category?: unknown; mint?: unknown }
+      if (typeof c.field !== 'string') continue
+      if ((c.field === 'AMOUNT_LT' || c.field === 'AMOUNT_GTE')) {
+        if (typeof c.amountBaseUnits !== 'string' || !/^\d+$/.test(c.amountBaseUnits.trim())) continue
+      }
+      if (c.field === 'NEW_RECIPIENT' && (!Number.isFinite(Number(c.withinDays)) || Number(c.withinDays) <= 0)) continue
+      if (c.field === 'RECIPIENT_CATEGORY' && typeof c.category !== 'string') continue
+      valid.push(rule)
+    }
+    return valid.length > 0 ? valid : DEFAULT_RULES
   } catch {
     return DEFAULT_RULES
   }
@@ -93,8 +111,9 @@ export async function createPayment(
     const existing = await db.idempotencyRecord.findUnique({ where: { key: keyHash } })
     if (existing && existing.orgId === orgId) {
       if (existing.status === 'COMPLETED' && existing.responseJson) {
-        const snapshot = JSON.parse(existing.responseJson) as { paymentId: string }
-        const payment = await db.paymentRequest.findUnique({ where: { id: snapshot.paymentId } })
+        // Corrupt snapshot columns must not break the idempotent replay path.
+        const snapshot = safeJsonParse<{ paymentId?: string }>(existing.responseJson, {})
+        const payment = snapshot.paymentId ? await db.paymentRequest.findUnique({ where: { id: snapshot.paymentId } }) : null
         if (payment) return { payment, idempotentReplay: true }
       }
       if (existing.status === 'IN_FLIGHT' && Date.now() - new Date(existing.updatedAt).getTime() < 120_000) {

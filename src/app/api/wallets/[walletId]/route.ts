@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { ok, readJson, route, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { audit } from '@/lib/audit'
+import { safeJsonParse } from '@/lib/safe-json'
 
 function walletIdFrom(request: Request): string {
   // Direct-child route: /api/wallets/<id> → last segment.
@@ -18,11 +19,11 @@ export const GET = route(async ({ org, request }) => {
     network: wallet.network,
     kind: wallet.kind,
     ownershipStatus: wallet.ownershipStatus,
-    balance: wallet.balanceJson ? JSON.parse(wallet.balanceJson) : null,
+    balance: safeJsonParse<unknown>(wallet.balanceJson, null),
     balanceAt: wallet.balanceAt,
     verifiedAt: wallet.verifiedAt,
     revokedAt: wallet.revokedAt,
-    history: wallet.events.map((e) => ({ id: e.id, type: e.type, createdAt: e.createdAt, data: JSON.parse(e.dataJson) })),
+    history: wallet.events.map((e) => ({ id: e.id, type: e.type, createdAt: e.createdAt, data: safeJsonParse(e.dataJson, {}) })),
   })
 }, { permission: 'wallet:read' })
 

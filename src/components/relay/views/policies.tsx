@@ -29,6 +29,13 @@ export function PoliciesView() {
   const [busy, setBusy] = useState(false)
 
   const active = policies.data?.policies.find((p) => p.active)
+  const amountValid = (() => {
+    const a = amount.trim()
+    if (a === '' || a === '.') return false
+    if (!/^\d*(\.\d*)?$/.test(a)) return false
+    const [, f = ''] = a.split('.')
+    return f.length <= AMOUNT_PRESETS[0].decimals
+  })()
 
   async function createPolicy() {
     const usdc = AMOUNT_PRESETS[0]
@@ -38,12 +45,13 @@ export function PoliciesView() {
       const [w, f = ''] = a.split('.')
       return `${w || '0'}${(f + '0'.repeat(usdc.decimals)).slice(0, usdc.decimals)}`.replace(/^0+(?=\d)/, '') || '0'
     })()
+    const newRecipientDays = Math.max(1, Math.floor(Number(withinDays) || 0))
     const rule = ruleType === 'AMOUNT_GTE'
       ? { id: `gte-${Date.now()}`, description: description || `Payments of ${amount}+ ${usdc.symbol} require ${approvers} approvers`, condition: { field: 'AMOUNT_GTE', mint: usdc.mint, amountBaseUnits: baseAmount }, approversRequired: Number(approvers) }
       : ruleType === 'AMOUNT_LT'
         ? { id: `lt-${Date.now()}`, description: description || `Payments under ${amount} ${usdc.symbol} require ${approvers} approver`, condition: { field: 'AMOUNT_LT', mint: usdc.mint, amountBaseUnits: baseAmount }, approversRequired: Number(approvers) }
         : ruleType === 'NEW_RECIPIENT'
-          ? { id: `new-${Date.now()}`, description: description || `Recipients registered within ${withinDays} days require ${approvers} approvers`, condition: { field: 'NEW_RECIPIENT', withinDays: Number(withinDays) }, approversRequired: Number(approvers) }
+          ? { id: `new-${Date.now()}`, description: description || `Recipients registered within ${newRecipientDays} days require ${approvers} approvers`, condition: { field: 'NEW_RECIPIENT', withinDays: newRecipientDays }, approversRequired: Number(approvers) }
           : { id: `always-${Date.now()}`, description: description || `All payments require ${approvers} approver`, condition: { field: 'ALWAYS' }, approversRequired: Number(approvers) }
 
     const rules = [...(active?.rules ?? []).map((r) => ({ ...r, condition: r.condition as never })), rule]
@@ -76,11 +84,11 @@ export function PoliciesView() {
                   <Label>Policy name</Label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Treasury policy" className="mt-1 border-[#26374C] bg-[#0B1220]" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Condition</Label>
                     <Select value={ruleType} onValueChange={(v) => setRuleType(v as typeof ruleType)}>
-                      <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="mt-1 w-full border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
                       <SelectContent className="border-[#26374C] bg-[#142135]">
                         <SelectItem value="AMOUNT_GTE">Amount ≥ threshold</SelectItem>
                         <SelectItem value="AMOUNT_LT">Amount &lt; threshold</SelectItem>
@@ -92,7 +100,7 @@ export function PoliciesView() {
                   <div>
                     <Label>Approvers required</Label>
                     <Select value={approvers} onValueChange={setApprovers}>
-                      <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="mt-1 w-full border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
                       <SelectContent className="border-[#26374C] bg-[#142135]">
                         {[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                       </SelectContent>
@@ -114,7 +122,7 @@ export function PoliciesView() {
                   <Label>Description (shown as approval evidence)</Label>
                   <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Displayed to approvers" className="mt-1 border-[#26374C] bg-[#0B1220]" />
                 </div>
-                <Button onClick={createPolicy} disabled={busy} className="w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">Create new version</Button>
+                <Button onClick={createPolicy} disabled={busy || (ruleType.startsWith('AMOUNT') && !amountValid)} className="w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">Create new version</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -134,9 +142,12 @@ export function PoliciesView() {
             <ul className="mt-3 space-y-2">
               {active.rules.map((r) => (
                 <li key={r.id} className="flex items-start justify-between gap-3 rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
-                  <div>
+                  {/* min-w-0: the condition JSON must be able to shrink and
+                      truncate — a long unbreakable string otherwise inflates
+                      the flex item and the whole page horizontally. */}
+                  <div className="min-w-0">
                     <div className="text-xs text-secondary">{r.description}</div>
-                    <div className="mt-1 font-mono text-[10px] text-dim">{JSON.stringify(r.condition)}</div>
+                    <div className="mt-1 font-mono text-[10px] text-dim"><span className="block max-w-full truncate break-all font-mono text-[10px]">{JSON.stringify(r.condition)}</span></div>
                   </div>
                   <span className="shrink-0 rounded bg-[#A18BEB]/10 px-2 py-0.5 text-[10px] text-[#A18BEB]">{r.approversRequired} approver{r.approversRequired > 1 ? 's' : ''}</span>
                 </li>
@@ -151,9 +162,9 @@ export function PoliciesView() {
       <SectionCard className="mt-5" title="Version history" description="Approvals store the policy context; policy changes flag pending payments for re-review.">
         <div className="space-y-2">
           {(policies.data?.policies ?? []).filter((p) => !p.active).map((p) => (
-            <div key={p.id} className="flex items-center gap-3 rounded-lg border border-[#26374C] bg-[#0B1220] p-3 text-xs">
+            <div key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-[#26374C] bg-[#0B1220] p-3 text-xs">
               <History className="h-3.5 w-3.5 text-dim" />
-              <span className="text-secondary">{p.name}</span>
+              <span className="min-w-0 max-w-full truncate text-secondary sm:max-w-none">{p.name}</span>
               <span className="rounded bg-[#142135] px-1.5 py-0.5 text-[10px] text-dim">v{p.version}</span>
               <span className="text-dim">{p.rules.length} rules · superseded</span>
             </div>

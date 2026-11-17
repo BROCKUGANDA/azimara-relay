@@ -4,9 +4,10 @@ import { apiRoute, ok, readJson, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { isValidSolanaAddress } from '@/lib/solana'
 import { audit } from '@/lib/audit'
+import { parsePageSize } from '@/lib/safe-json'
 
 export const GET = apiRoute('recipients:read', async (request, ctx) => {
-  const limit = Math.min(100, Math.max(1, Number(new URL(request.url).searchParams.get('limit') ?? '50')))
+  const limit = parsePageSize(new URL(request.url).searchParams.get('limit'), 50, 100)
   const recipients = await db.recipient.findMany({
     where: { orgId: ctx.orgId, status: 'ACTIVE' },
     orderBy: { createdAt: 'desc' },

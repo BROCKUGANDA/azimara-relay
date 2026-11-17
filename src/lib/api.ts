@@ -5,6 +5,7 @@ import { hasPermission, type Permission } from './rbac'
 import { rateLimit, clientIp } from './rate-limit'
 import { db } from '@/lib/db'
 import { sha256, timingSafeEqualStr } from './crypto'
+import { safeJsonParse } from './safe-json'
 
 export class ApiError extends Error {
   code: string
@@ -28,6 +29,16 @@ export function fail(request: Request, err: unknown): Response {
     return Response.json(
       { error: { code: err.code, message: err.message, requestId, details: err.details ?? [] } },
       { status: err.status },
+    )
+  }
+  // Tagged plain errors (thrown with { code, status } via Object.assign in
+  // low-level libs to avoid importing ApiError and creating an import cycle)
+  // must surface their real status, not a generic 500.
+  const tagged = err as { code?: unknown; status?: unknown; message?: unknown }
+  if (typeof tagged?.code === 'string' && typeof tagged?.status === 'number' && tagged.status >= 400 && tagged.status < 600) {
+    return Response.json(
+      { error: { code: tagged.code, message: typeof tagged.message === 'string' ? tagged.message : 'Request failed', requestId, details: [] } },
+      { status: tagged.status },
     )
   }
   console.error(JSON.stringify({ level: 'error', msg: 'unhandled_route_error', requestId, path: new URL(request.url).pathname, err: String(err) }))
@@ -134,7 +145,11 @@ export async function authenticateApiKey(request: Request, requiredScope: string
   if (!key) throw new ApiError('UNAUTHENTICATED', 'Provide an API key via Authorization: Bearer <key>', 401)
   const cred = await db.apiCredential.findUnique({ where: { keyHash: sha256(key) } })
   if (!cred || cred.revokedAt) throw new ApiError('UNAUTHENTICATED', 'Invalid or revoked API key', 401)
-  const scopes = JSON.parse(cred.scopesJson) as string[]
+  // A corrupted scopes column must fail closed (no scopes), not 500.
+  const scopes = safeJsonParse<string[]>(cred.scopesJson, [])
+  if (!Array.isArray(scopes) || scopes.length === 0) {
+    throw new ApiError('FORBIDDEN', 'API key has no valid scopes', 403)
+  }
   if (!credentialHasScope({ credentialId: cred.id, orgId: cred.orgId, scopes }, requiredScope)) {
     throw new ApiError('FORBIDDEN', `API key lacks required scope: ${requiredScope}`, 403)
   }

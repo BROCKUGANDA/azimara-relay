@@ -35,6 +35,7 @@ export function WalletsView() {
   const [addOpen, setAddOpen] = useState(false)
   const [form, setForm] = useState({ label: '', address: '', network: 'devnet', kind: 'TREASURY' })
   const [busy, setBusy] = useState(false)
+  const [verifying, setVerifying] = useState(false)
   const [verifyMsg, setVerifyMsg] = useState<{ walletId: string; message: string } | null>(null)
 
   const extensionAvailable = walletAvailable()
@@ -62,6 +63,8 @@ export function WalletsView() {
   }
 
   async function verifyOwnership(walletId: string) {
+    if (verifying) return
+    setVerifying(true)
     const target = verifyMsg?.walletId === walletId ? verifyMsg : null
     try {
       let message = target?.message
@@ -82,6 +85,8 @@ export function WalletsView() {
       wallets.refetch()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Verification failed')
+    } finally {
+      setVerifying(false)
     }
   }
 
@@ -135,7 +140,7 @@ export function WalletsView() {
                   <Label>Address (read-only mode)</Label>
                   <Input placeholder="Solana public key" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1 border-[#26374C] bg-[#0B1220] font-mono text-xs" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Network</Label>
                     <Select value={form.network} onValueChange={(v) => setForm({ ...form, network: v })}>
@@ -157,11 +162,11 @@ export function WalletsView() {
                     </Select>
                   </div>
                 </div>
-                <div className="flex gap-2 pt-1">
-                  <Button disabled={busy || !form.label} onClick={() => registerWallet('WALLET')} className="flex-1 bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+                <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+                  <Button disabled={busy || !form.label.trim()} onClick={() => registerWallet('WALLET')} className="flex-1 bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
                     <PenLine className="mr-1.5 h-3.5 w-3.5" /> Connect {walletAvailable() ? walletName() : 'wallet'}
                   </Button>
-                  <Button disabled={busy || !form.label || !form.address} onClick={() => registerWallet('READ_ONLY')} variant="outline" className="flex-1 border-[#26374C]">
+                  <Button disabled={busy || !form.label.trim() || !form.address.trim()} onClick={() => registerWallet('READ_ONLY')} variant="outline" className="flex-1 border-[#26374C]">
                     Register read-only
                   </Button>
                 </div>
@@ -181,7 +186,7 @@ export function WalletsView() {
             title="Ownership challenge ready"
             detail="Sign the displayed message with the wallet to complete verification. The message is NOT a transaction and authorizes nothing."
             action={
-              <Button size="sm" onClick={() => verifyOwnership(verifyMsg.walletId)} className="bg-[#35D6C0] font-medium text-[#062A26]">
+              <Button size="sm" onClick={() => verifyOwnership(verifyMsg.walletId)} disabled={verifying} className="bg-[#35D6C0] font-medium text-[#062A26]">
                 <ShieldCheck className="mr-1.5 h-3.5 w-3.5" /> Sign challenge
               </Button>
             }
@@ -190,14 +195,14 @@ export function WalletsView() {
         </div>
       ) : null}
 
-      {wallets.data?.wallets.length === 0 && !wallets.isLoading ? (
+      {(wallets.data?.wallets ?? []).length === 0 && !wallets.isLoading ? (
         <EmptyState
           icon={<Wallet className="h-8 w-8" />}
           title="No wallets registered"
           description="Register your first treasury wallet to enable payments. Relay stores only the public key and verification state."
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {(wallets.data?.wallets ?? []).map((w) => (
             <div key={w.id} className={`rounded-xl border bg-[#0E1725] p-4 ${w.revokedAt ? 'border-[#26374C]/50 opacity-60' : 'border-[#26374C]'}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -224,21 +229,21 @@ export function WalletsView() {
               ) : (
                 <div className="mt-3 text-xs text-dim">No balance observed — refresh to query Solana RPC</div>
               )}
-              <div className="mt-3 flex items-center justify-between">
-                <div className="text-[10px] text-dim">
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 truncate text-[10px] text-dim">
                   {w.verifiedAt ? `Verified ${timeAgo(w.verifiedAt)} · ` : ''}Last event {w.recentEvents[0] ? `${w.recentEvents[0].type} ${timeAgo(w.recentEvents[0].createdAt)}` : '—'}
                 </div>
                 <div className="flex gap-1.5">
                   {!w.revokedAt && w.ownershipStatus !== 'VERIFIED' ? (
-                    <Button size="sm" variant="outline" className="h-7 border-[#26374C] text-xs" onClick={() => verifyOwnership(w.id)}>
+                    <Button size="sm" variant="outline" className="h-9 border-[#26374C] px-3 text-xs" onClick={() => verifyOwnership(w.id)} disabled={verifying}>
                       <ShieldCheck className="mr-1 h-3 w-3" /> Verify
                     </Button>
                   ) : null}
-                  <Button size="sm" variant="ghost" className="h-7 text-xs text-dim" onClick={() => refreshBalance(w.id)}>
+                  <Button size="sm" variant="ghost" className="h-9 px-3 text-xs text-dim" onClick={() => refreshBalance(w.id)}>
                     <RefreshCw className="mr-1 h-3 w-3" /> Balance
                   </Button>
                   {!w.revokedAt ? (
-                    <Button size="sm" variant="ghost" className="h-7 text-xs text-[#F27683]" onClick={() => revoke(w.id)}>
+                    <Button size="sm" variant="ghost" aria-label="Remove wallet" className="h-9 w-9 justify-center text-xs text-[#F27683]" onClick={() => revoke(w.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   ) : null}

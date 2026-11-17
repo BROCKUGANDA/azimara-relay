@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useApi, api } from '@/lib/client/hooks'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/client/hooks'
 import { formatAmount, shortAddress, shortHash, formatDateTime, timeAgo } from '@/lib/client/format'
 import { PageHeader, StatusBadge, Amount, SectionCard, ErrorState, SetupRequiredState } from '../ui'
 import { Button } from '@/components/ui/button'
@@ -57,13 +58,22 @@ type Detail = {
 const LIFECYCLE_STEPS = ['PENDING_APPROVAL', 'APPROVED', 'QUOTED', 'AWAITING_SIGNATURE', 'FUNDING_BROADCAST', 'FUNDING_CONFIRMED', 'INITIALIZATION_BROADCAST', 'PROCESSING', 'SETTLEMENT_VERIFICATION', 'COMPLETED']
 
 export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; navigate: (to: string) => void }) {
-  const detail = useApi<Detail>(['payment', paymentId], `/api/payments/${paymentId}`, { refetchInterval: 15_000 })
+  const detail = useQuery<Detail>({
+    queryKey: ['payment', paymentId],
+    queryFn: () => api<Detail>(`/api/payments/${paymentId}`),
+    refetchInterval: (query) => {
+      const s = query.state.data?.payment?.status
+      return s && ['COMPLETED', 'REJECTED', 'CANCELLED', 'FAILED'].includes(s) ? false : 15_000
+    },
+    retry: 1,
+  })
   const [busy, setBusy] = useState<string | null>(null)
 
   const d = detail.data
   const network = d?.wallet?.network ?? 'devnet'
   const idx = d ? LIFECYCLE_STEPS.indexOf(d.payment.status) : -1
   const terminated = d ? ['REJECTED', 'CANCELLED', 'FAILED', 'QUOTE_EXPIRED', 'TRANSFER_EXPIRED', 'REFUNDED', 'RECOVERABLE', 'RESCUED', 'MANUAL_REVIEW', 'RECONCILIATION_REQUIRED'].includes(d.payment.status) : false
+  const rawQuote = d?.quote ? (JSON.stringify(d.quote.rawResponse, null, 2) ?? '') : ''
 
   async function act(action: string, body?: Record<string, unknown>, method: string = 'POST') {
     setBusy(action)
@@ -79,7 +89,8 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
   }
 
   async function approve(decision: 'APPROVED' | 'REJECTED') {
-    const reason = decision === 'REJECTED' ? window.prompt('Rejection reason:') ?? '' : window.prompt('Approval note (optional):') ?? ''
+    const reason = decision === 'REJECTED' ? window.prompt('Rejection reason:') : window.prompt('Approval note (optional):')
+    if (reason === null) return
     if (decision === 'REJECTED' && !reason) return
     await act('approve', { decision, reason: reason || undefined })
   }
@@ -103,37 +114,37 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                 <StatusBadge status={d.payment.status} />
                 {d.payment.status === 'PENDING_APPROVAL' && d.canApprove ? (
                   <>
-                    <Button size="sm" onClick={() => approve('APPROVED')} disabled={busy === 'approve'} className="bg-[#36C995] font-medium text-[#06221A] hover:bg-[#36C995]/90">
+                    <Button size="sm" onClick={() => approve('APPROVED')} disabled={busy !== null} className="bg-[#36C995] font-medium text-[#06221A] hover:bg-[#36C995]/90">
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Approve
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => approve('REJECTED')} disabled={busy === 'approve'} className="border-[#F27683]/40 text-[#F27683]">
+                    <Button size="sm" variant="outline" onClick={() => approve('REJECTED')} disabled={busy !== null} className="border-[#F27683]/40 text-[#F27683]">
                       <XCircle className="mr-1.5 h-3.5 w-3.5" /> Reject
                     </Button>
                   </>
                 ) : null}
                 {d.hasDecided && d.payment.status === 'PENDING_APPROVAL' ? <span className="text-xs text-dim">You already decided on this payment</span> : null}
                 {(d.payment.status === 'APPROVED' || d.payment.status === 'QUOTE_EXPIRED') ? (
-                  <Button size="sm" onClick={() => act('quote')} disabled={busy === 'quote'} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+                  <Button size="sm" onClick={() => act('quote')} disabled={busy !== null} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
                     <Quote className="mr-1.5 h-3.5 w-3.5" /> Request quote
                   </Button>
                 ) : null}
                 {d.payment.status === 'QUOTED' ? (
-                  <Button size="sm" onClick={() => act('execute')} disabled={busy === 'execute'} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+                  <Button size="sm" onClick={() => act('execute')} disabled={busy !== null} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
                     <Play className="mr-1.5 h-3.5 w-3.5" /> Start execution
                   </Button>
                 ) : null}
                 {d.payment.status === 'AWAITING_SIGNATURE' ? (
-                  <Button size="sm" onClick={() => act('prepare')} disabled={busy === 'prepare'} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+                  <Button size="sm" onClick={() => act('prepare')} disabled={busy !== null} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
                     <FileSignature className="mr-1.5 h-3.5 w-3.5" /> Prepare bundle
                   </Button>
                 ) : null}
                 {['AWAITING_SIGNATURE', 'FUNDING_BROADCAST', 'PROCESSING', 'SETTLEMENT_VERIFICATION', 'RECOVERABLE', 'RECONCILIATION_REQUIRED'].includes(d.payment.status) ? (
-                  <Button size="sm" variant="outline" onClick={() => act('sync')} disabled={busy === 'sync'} className="border-[#26374C]">
+                  <Button size="sm" variant="outline" onClick={() => act('sync')} disabled={busy !== null} className="border-[#26374C]">
                     <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Sync status
                   </Button>
                 ) : null}
                 {['DRAFT', 'VALIDATING', 'PENDING_APPROVAL', 'APPROVED', 'QUOTED', 'AWAITING_SIGNATURE', 'QUOTE_EXPIRED'].includes(d.payment.status) ? (
-                  <Button size="sm" variant="ghost" onClick={() => act('cancel')} disabled={busy === 'cancel'} className="text-[#F27683]">
+                  <Button size="sm" variant="ghost" onClick={() => act('cancel')} disabled={busy !== null} className="text-[#F27683]">
                     <Ban className="mr-1.5 h-3.5 w-3.5" /> Cancel
                   </Button>
                 ) : null}
@@ -156,7 +167,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
             </div>
           ) : null}
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             <div className="space-y-5 lg:col-span-2">
               {/* Lifecycle timeline */}
               <SectionCard title="Lifecycle" description="Ordered provider sequence — status changes only on verified evidence.">
@@ -188,7 +199,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
               {/* Quote */}
               {d.quote ? (
                 <SectionCard title="Provider quote" description="From the live MultiHopper estimate — authoritative at sign time, with expiry.">
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
                       <div className="text-[10px] uppercase tracking-wide text-dim">Principal</div>
                       <Amount base={d.quote.principalBase} decimals={d.payment.decimals} symbol={d.payment.mintSymbol} className="text-sm" />
@@ -210,7 +221,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                   </div>
                   <details className="mt-3">
                     <summary className="cursor-pointer text-xs text-[#35D6C0]">Raw provider response</summary>
-                    <pre className="mt-2 max-h-48 overflow-auto rounded-lg border border-[#26374C] bg-[#080D17] p-3 font-mono text-[10px] leading-relaxed text-dim">{JSON.stringify(d.quote.rawResponse, null, 2)}</pre>
+                    <pre className="mt-2 max-h-48 overflow-auto rounded-lg border border-[#26374C] bg-[#080D17] p-3 font-mono text-[10px] leading-relaxed text-dim">{rawQuote.length > 20000 ? rawQuote.slice(0, 20000) + '\n… truncated' : rawQuote}</pre>
                   </details>
                 </SectionCard>
               ) : null}
@@ -265,8 +276,8 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                   <div className="flex justify-between gap-3"><dt className="text-dim">Recipient</dt><dd className="text-right text-secondary">{d.recipient?.name ?? 'Not registered'}</dd></div>
                   <div className="flex justify-between gap-3"><dt className="text-dim">Source wallet</dt><dd className="text-right text-secondary">{d.wallet?.label ?? '—'}</dd></div>
                   <div className="flex justify-between gap-3"><dt className="text-dim">Network</dt><dd className="text-secondary">{network}</dd></div>
-                  {d.payment.reason ? <div className="flex justify-between gap-3"><dt className="shrink-0 text-dim">Reason</dt><dd className="text-right text-secondary">{d.payment.reason}</dd></div> : null}
-                  {d.payment.invoiceRef ? <div className="flex justify-between gap-3"><dt className="text-dim">Invoice</dt><dd className="font-mono text-secondary">{d.payment.invoiceRef}</dd></div> : null}
+                  {d.payment.reason ? <div className="flex justify-between gap-3"><dt className="shrink-0 text-dim">Reason</dt><dd className="min-w-0 break-words text-right text-secondary">{d.payment.reason}</dd></div> : null}
+                  {d.payment.invoiceRef ? <div className="flex justify-between gap-3"><dt className="text-dim">Invoice</dt><dd className="min-w-0 break-words text-right font-mono text-secondary">{d.payment.invoiceRef}</dd></div> : null}
                   <div className="flex justify-between gap-3"><dt className="text-dim">Approvers required</dt><dd className="text-secondary">{d.payment.approvalsRequired}</dd></div>
                   {d.payment.completedAt ? <div className="flex justify-between gap-3"><dt className="text-dim">Completed</dt><dd className="text-[#36C995]">{formatDateTime(d.payment.completedAt)}</dd></div> : null}
                 </dl>

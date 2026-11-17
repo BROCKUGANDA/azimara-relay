@@ -31,15 +31,18 @@ export function IntelligenceView() {
   const [busy, setBusy] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const loadSeq = useRef(0)
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
   async function loadSession(id: string) {
     setSessionId(id)
+    const seq = ++loadSeq.current
     try {
       const d = await api<{ messages: Message[] }>(`/api/intelligence/chat?sessionId=${id}`)
-      setMessages(d.messages)
+      if (seq !== loadSeq.current) return
+      setMessages(d?.messages ?? [])
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load session')
     }
@@ -48,8 +51,9 @@ export function IntelligenceView() {
   async function send(text?: string) {
     const message = (text ?? input).trim()
     if (!message || busy) return
+    const localId = `local-${Date.now()}`
     setInput('')
-    setMessages((m) => [...m, { id: `local-${Date.now()}`, role: 'user', content: message, data: {} }])
+    setMessages((m) => [...m, { id: localId, role: 'user', content: message, data: {} }])
     setBusy(true)
     try {
       const res = await api<{ sessionId: string; message: Message }>('/api/intelligence/chat', { json: { sessionId: sessionId ?? undefined, message } })
@@ -61,6 +65,8 @@ export function IntelligenceView() {
       if (msg.includes('AI_PROVIDER_UNAVAILABLE')) {
         setMessages((m) => [...m, { id: `err-${Date.now()}`, role: 'assistant', content: 'The AI provider is unreachable from this environment. Deterministic tools (payment records, duplicate checks, exports) remain fully available — nothing is simulated.', data: { kind: 'ERROR' } }])
       } else {
+        setMessages((m) => m.filter((x) => x.id !== localId))
+        setInput(message)
         toast.error(msg)
       }
     } finally {
@@ -72,8 +78,8 @@ export function IntelligenceView() {
     try {
       if (action === 'ACCEPT') {
         const res = await api<ProposalAction>(`/api/intelligence/proposals/${proposalId}/action`, { json: { action } })
-        toast.success(`Converted to ${res.created.length} real payment(s) — approvals still apply`)
-        if (res.errors.length) toast.warning(`${res.errors.length} item(s) failed validation: ${res.errors.map((e) => e.recipient).join(', ')}`)
+        toast.success(`Converted to ${(res.created ?? []).length} real payment(s) — approvals still apply`)
+        if ((res.errors ?? []).length) toast.warning(`${(res.errors ?? []).length} item(s) failed validation: ${(res.errors ?? []).map((e) => e.recipient).join(', ')}`)
         navigate('/app/payments')
       } else {
         await api(`/api/intelligence/proposals/${proposalId}/action`, { json: { action } })
@@ -99,15 +105,15 @@ export function IntelligenceView() {
           ))}
         </div>
         <div className="mt-2 space-y-1 text-[11px] text-dim">
-          <div><CheckCircle2 className="mr-1 inline h-3 w-3 text-[#36C995]" /> Deterministic validation: {String(checks.recipientsMatched ?? 0)} recipient(s) matched, {String(checks.recipientsMissing ?? []).length ? `${(checks.recipientsMissing as string[]).length} missing` : 'none missing'}</div>
+          <div><CheckCircle2 className="mr-1 inline h-3 w-3 text-[#36C995]" /> Deterministic validation: {String(checks.recipientsMatched ?? 0)} recipient(s) matched, {((checks.recipientsMissing as string[] | undefined) ?? []).length ? `${(checks.recipientsMissing as string[]).length} missing` : 'none missing'}</div>
           <div><ShieldCheck className="mr-1 inline h-3 w-3 text-[#A18BEB]" /> Policy: ~{String(checks.policyApproversRequired ?? 1)} approver(s) required by the active policy</div>
           <div><Lightbulb className="mr-1 inline h-3 w-3 text-[#F2BB62]" /> Estimated total: {String(checks.estimatedTotal ?? '0')} base units ({String(checks.totalCurrency ?? '')}) — recalculated by code, never by the model</div>
         </div>
-        <div className="mt-3 flex gap-2">
-          <Button size="sm" onClick={() => decideProposal(data.proposalId!, 'ACCEPT')} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => decideProposal(data.proposalId!, 'ACCEPT')} disabled={!data.proposalId} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
             <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Accept → create payments
           </Button>
-          <Button size="sm" variant="outline" onClick={() => decideProposal(data.proposalId!, 'REJECT')} className="border-[#F27683]/40 text-[#F27683]">
+          <Button size="sm" variant="outline" onClick={() => decideProposal(data.proposalId!, 'REJECT')} disabled={!data.proposalId} className="border-[#F27683]/40 text-[#F27683]">
             <XCircle className="mr-1.5 h-3.5 w-3.5" /> Reject
           </Button>
         </div>
@@ -123,9 +129,9 @@ export function IntelligenceView() {
         description="Contextual AI treasury assistant. Every proposal carries evidence, deterministic checks and a human approval handoff."
         breadcrumb={['Relay', 'Assurance', 'Relay Intelligence']}
       />
-      <div className="grid gap-5 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
         {/* Sessions */}
-        <div className="space-y-3">
+        <div className="max-h-64 space-y-3 overflow-y-auto lg:max-h-none">
           <SectionCard title="Conversations">
             <div className="space-y-1">
               {(sessions.data?.sessions ?? []).map((s) => (
@@ -153,7 +159,7 @@ export function IntelligenceView() {
 
         {/* Chat */}
         <div className="lg:col-span-3">
-          <div className="flex h-[560px] flex-col rounded-xl border border-[#26374C] bg-[#0E1725]">
+          <div className="flex h-[min(560px,calc(100dvh-14rem))] min-h-[380px] flex-col rounded-xl border border-[#26374C] bg-[#0E1725]">
             <div className="flex items-center gap-2 border-b border-[#1A293D] px-4 py-3">
               <BrainCircuit className="h-4 w-4 text-[#A18BEB]" />
               <span className="text-sm font-medium">Relay Intelligence</span>
@@ -164,7 +170,7 @@ export function IntelligenceView() {
                 <div className="flex h-full flex-col items-center justify-center gap-4">
                   <BrainCircuit className="h-10 w-10 text-[#A18BEB]/40" />
                   <div className="text-sm text-dim">Ask about your payments, propose a batch, or extract invoice details.</div>
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {SUGGESTIONS.map((s) => (
                       <button key={s} onClick={() => send(s)} className="rounded-lg border border-[#26374C] bg-[#0B1220] px-3 py-2 text-left text-xs text-secondary hover:border-[#A18BEB]/40 hover:text-foreground">
                         {s}
@@ -196,6 +202,7 @@ export function IntelligenceView() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.nativeEvent instanceof KeyboardEvent && e.nativeEvent.isComposing) return
                       e.preventDefault()
                       send()
                     }

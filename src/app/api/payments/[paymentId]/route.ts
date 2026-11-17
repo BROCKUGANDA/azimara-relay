@@ -2,6 +2,7 @@ import { ok, route, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { materialPayload } from '@/lib/approvals'
 import { STATUS_META } from '@/lib/state-machine'
+import { safeJsonParse } from '@/lib/safe-json'
 
 function idFrom(request: Request): string {
   // Direct-child route: /api/<resource>/<id> → last segment.
@@ -33,7 +34,7 @@ export const GET = route(async ({ org, request, auth }) => {
   const activeQuote = payment.quotes.find((q) => q.status === 'ACTIVE') ?? payment.quotes[0] ?? null
   const hash = materialPayload(payment)
   const lifecycle = [
-    ...payment.approvalsLog.map((e) => ({ at: e.createdAt, kind: 'APPROVAL', type: e.type, detail: e.dataJson ? JSON.parse(e.dataJson) : {} })),
+    ...payment.approvalsLog.map((e) => ({ at: e.createdAt, kind: 'APPROVAL', type: e.type, detail: safeJsonParse<Record<string, unknown>>(e.dataJson, {}) })),
     ...payment.signatures.map((s) => ({ at: s.submittedAt, kind: 'SIGNATURE', type: s.purpose, detail: { signature: s.signature } })),
     ...(payment.transfer ? [{ at: payment.transfer.createdAt, kind: 'PROVIDER', type: 'TRANSFER_CREATED', detail: { externalId: payment.transfer.externalId, providerTransferId: payment.transfer.providerTransferId } }] : []),
     ...(payment.settlement ? [{ at: payment.settlement.reconciledAt ?? payment.createdAt, kind: 'SETTLEMENT', type: 'SETTLEMENT_RECORDED', detail: { providerStatus: payment.settlement.providerStatus, chainStatus: payment.settlement.chainStatus, signature: payment.settlement.signature } }] : []),
@@ -77,7 +78,7 @@ export const GET = route(async ({ org, request, auth }) => {
           screeningBase: activeQuote.screeningBase,
           recipientGetsBase: activeQuote.recipientGetsBase,
           expiresAt: activeQuote.expiresAt,
-          rawResponse: JSON.parse(activeQuote.responseJson),
+          rawResponse: safeJsonParse<unknown>(activeQuote.responseJson, null),
         }
       : null,
     approvals: payment.approvals.map((a) => ({ id: a.id, approverName: a.approver.name, approverEmail: a.approver.email, decision: a.decision, reason: a.reason, payloadHashValid: a.payloadHash === hash, createdAt: a.createdAt, expiresAt: a.expiresAt })),
@@ -91,7 +92,7 @@ export const GET = route(async ({ org, request, auth }) => {
           providerTransferId: payment.transfer.providerTransferId,
           providerStatus: payment.transfer.providerStatus,
           internalPhase: payment.transfer.internalPhase,
-          progress: payment.transfer.progressJson ? JSON.parse(payment.transfer.progressJson) : null,
+          progress: payment.transfer.progressJson ? safeJsonParse<unknown>(payment.transfer.progressJson, []) : null,
         }
       : null,
     signatures: payment.signatures.map((s) => ({ id: s.id, purpose: s.purpose, signature: s.signature, confirmedAt: s.confirmedAt, submittedAt: s.submittedAt })),

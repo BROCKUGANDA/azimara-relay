@@ -51,6 +51,20 @@ Health: `GET /api/health` · OpenAPI: `GET /api/openapi`
 
 See `.env.example`. Production fails fast without `AUTH_SECRET` and `ENCRYPTION_KEY`. MultiHopper keys are validated per environment (`mh_test_` → devnet only, `mh_live_` → production only).
 
+## Responsive, cross-browser and search visibility
+
+- **Mobile / tablet** — every public and authenticated view is verified overflow-free at 320 / 375 / 768 / 1024 / 1440 px (Playwright sweep: `scripts/visual-smoke.js`). Dense tables scroll horizontally with min-widths; dialogs clamp to `max-h-[calc(100dvh-2rem)]` and scroll; touch targets are ≥36-44 px; the desktop sidebar appears from `md` (tablets keep the real sidebar), the 9-page marketing nav collapses to a scrollable chip strip below `xl`.
+- **Cross-browser** — `color-scheme: dark` for native controls, Firefox `scrollbar-width/color` scrollbars, autofill repaint fix (WebKit), dark `<option>` palettes for Windows Chrome, dark calendar-picker indicators, `-webkit-tap-highlight-color` suppression, `dvh` upgrade for iOS Safari toolbars, and 16 px input font-size on coarse pointers to stop iOS focus zoom.
+- **SEO** — server-rendered metadata (canonical, Open Graph with 1200×630 `/og.png`, Twitter card, robots directives, geo meta for Dubai) plus per-route client sync of title/description/canonical/OG via `src/lib/client/seo.ts`; app views are `noindex`. `/sitemap.xml`, `/robots.txt` and `/manifest.webmanifest` are generated metadata routes. JSON-LD (`Organization`, `WebSite`, `SoftwareApplication`, per-route `BreadcrumbList`, home `FAQPage`) is emitted server-side.
+- **AEO / GEO** — a visible FAQ section with question-form headings and concise extractable answers (mirrored as `FAQPage` JSON-LD + microdata), `public/llms.txt` and `public/llms-full.txt` for generative engines, and consistent Dubai / UAE entity signals (footer address element, company page regional compliance paragraph referencing VARA/CBUAE, `areaServed` in schema, `en-AE` locale).
+- Set `NEXT_PUBLIC_SITE_URL` to the production origin before launch — every canonical/OG/sitemap URL derives from it.
+
+## Verification tooling
+
+- `scripts/visual-smoke.js` — end-to-end Playwright smoke: register → verify → login → org → app views → batch dialog at mobile/tablet widths, plus overflow checks and title/noindex assertions.
+- `scripts/debug-overflow.js` — reports elements wider than the viewport (excludes intentional scroll containers).
+- `scripts/gen-og.js` — regenerates `/og.png` and the PWA/apple icons from `scripts/og-template.html`.
+
 ## Non-negotiable rules honored by this codebase
 
 1. No fake functionality — mock responses never enter production paths; missing dependencies surface genuine setup-required states.

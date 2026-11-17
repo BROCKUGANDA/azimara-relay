@@ -65,6 +65,7 @@ export function PaymentBuilderView() {
   const asset = assets.data?.assets.find((a) => a.mint === mint)
   const decimals = asset?.decimals ?? 6
   const baseAmount = useMemo(() => (amount ? localAmountBase(amount, decimals) : null), [amount, decimals])
+  const tok = asset ? (wallet?.balance?.tokens ?? []).find((t) => t.mint === asset.mint) : undefined
 
   // Defaults
   useEffect(() => {
@@ -86,9 +87,13 @@ export function PaymentBuilderView() {
     let required = 0
     for (const rule of activePolicy.rules) {
       const c = (rule.condition ?? {}) as { field: string; amountBaseUnits?: string; mint?: string; withinDays?: number }
-      if (c.field === 'ALWAYS') required = Math.max(required, rule.approversRequired)
-      if (c.field === 'AMOUNT_LT' && (!c.mint || c.mint === asset.mint) && BigInt(baseAmount) < BigInt(c.amountBaseUnits ?? '0')) required = Math.max(required, rule.approversRequired)
-      if (c.field === 'AMOUNT_GTE' && (!c.mint || c.mint === asset.mint) && BigInt(baseAmount) >= BigInt(c.amountBaseUnits ?? '0')) required = Math.max(required, rule.approversRequired)
+      try {
+        if (c.field === 'ALWAYS') required = Math.max(required, rule.approversRequired)
+        if (c.field === 'AMOUNT_LT' && (!c.mint || c.mint === asset.mint) && BigInt(baseAmount) < BigInt(c.amountBaseUnits ?? '0')) required = Math.max(required, rule.approversRequired)
+        if (c.field === 'AMOUNT_GTE' && (!c.mint || c.mint === asset.mint) && BigInt(baseAmount) >= BigInt(c.amountBaseUnits ?? '0')) required = Math.max(required, rule.approversRequired)
+      } catch {
+        // Malformed rule (unparseable amount) — treat the rule as not matched and skip it.
+      }
     }
     return Math.max(1, required)
   }, [activePolicy, baseAmount, asset])
@@ -171,11 +176,11 @@ export function PaymentBuilderView() {
       {/* Step indicator */}
       <div className="mb-6 flex items-center gap-1 overflow-x-auto">
         {STEPS.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-1">
+          <div key={s.id} className="flex shrink-0 items-center gap-1">
             <button
               onClick={() => i < step && setStep(i)}
               disabled={i > step}
-              className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs transition-colors ${i === step ? 'bg-[#142135] text-[#35D6C0]' : i < step ? 'text-[#36C995] hover:bg-[#142135]' : 'text-dim'}`}
+              className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs transition-colors ${i === step ? 'bg-[#142135] text-[#35D6C0]' : i < step ? 'text-[#36C995] hover:bg-[#142135]' : 'text-dim'}`}
               aria-current={i === step ? 'step' : undefined}
             >
               {i < step ? <CheckCircle2 className="h-3.5 w-3.5" /> : s.icon}
@@ -301,7 +306,7 @@ export function PaymentBuilderView() {
                 {amount && !baseAmount ? <p className="mt-1 text-[11px] text-[#F27683]">Exceeds {decimals} decimal places</p> : null}
                 {wallet?.balance?.available && asset ? (
                   <p className="mt-1 text-[11px] text-dim">
-                    Wallet observed: {(wallet.balance.tokens ?? []).find((t) => t.mint === asset.mint) ? formatAmount((wallet.balance.tokens ?? []).find((t) => t.mint === asset.mint)!.amount, decimals) + ' ' + asset.symbol : `no ${asset.symbol} balance observed`}
+                    Wallet observed: {tok ? formatAmount(tok.amount, decimals) + ' ' + asset.symbol : `no ${asset.symbol} balance observed`}
                     {' · '}SOL {formatAmount(wallet.balance.sol?.lamports ?? '0', 9)}
                   </p>
                 ) : null}

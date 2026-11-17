@@ -1,0 +1,34 @@
+# AZIMARA RELAY
+
+> AZIMARA RELAY is a non-custodial financial operations platform for businesses on Solana, built by AI Azimara in Dubai, United Arab Emirates. It manages, approves, executes, monitors and reconciles onchain payments — customers always keep custody of their own funds. Seed phrases and private keys are never requested or stored.
+
+AZIMARA RELAY (by AI Azimara, Dubai UAE) combines a recipient directory, deterministic approval policies, batch payouts, schedules, reconciliation, developer API and the Relay Intelligence AI assistant. Non-custodial by construction: wallet connection authorizes nothing, approvals bind cryptographic payload hashes, and AI output is never payment permission.
+
+## Product pages
+
+- [Product overview](https://relay.azimara.ae/#/product): one application for the entire payment operation — organization, wallets, recipients, payments, approvals, routing, reconciliation.
+- [Treasury operations](https://relay.azimara.ae/#/treasury): institutional visibility over balances, obligations, in-flight transfers and expenditure.
+- [Batch payouts](https://relay.azimara.ae/#/payouts): pay twenty or two thousand recipients with per-item accountability, CSV import and exact-integer math.
+- [Relay Intelligence](https://relay.azimara.ae/#/intelligence): AI assistant with no signing authority and no custody; proposals require human approval.
+- [Integrations](https://relay.azimara.ae/#/integrations): Solana wallets (ed25519 ownership verification), environment-isolated MultiHopper, scoped API keys, HMAC webhooks.
+- [Developers](https://relay.azimara.ae/#/developers): documented versioned REST API with OpenAPI specification.
+- [Security](https://relay.azimara.ae/#/security): non-custodial architecture, RBAC, MFA, audit trail, risk disclosures.
+- [Pricing](https://relay.azimara.ae/#/pricing): Starter $49/mo, Growth $199/mo, Business $499/mo, custom Enterprise.
+- [Company](https://relay.azimara.ae/#/company): AI Azimara — Dubai, United Arab Emirates.
+- [Contact](https://relay.azimara.ae/#/contact): sales, integrations, security disclosure.
+
+## Key facts (extractable)
+
+- Custody: non-custodial; funds never sit in an AZIMARA-controlled wallet; seed phrases and private keys never requested or stored.
+- Blockchain: Solana (SOL and SPL tokens such as USDC and USDT).
+- Routing: MultiHopper integration, environment-isolated (devnet mh_test_ / live mh_live_), lifecycle quote → create → prepare → sign → broadcast → confirm → settle → reconcile.
+- Approvals: deterministic policy engine; thresholds, multiple independent approvers, new-recipient review; approvals bind a SHA-256 hash of the exact payment payload and die when material fields change.
+- AI: Relay Intelligence prepares batches, detects duplicates, explains failures; deterministic validation; zero signing authority.
+- Availability: built and operated from Dubai, United Arab Emirates; designed for UAE and GCC businesses; customers remain responsible for their own VARA/CBUAE and other regulatory obligations.
+- API: session-scoped application endpoints plus key-scoped /api/v1 developer API with scopes, rate limits and access logs; OpenAPI at /api/openapi.
+- Pricing: $49 / $199 / $499 per month plus custom enterprise.
+
+## Policy
+
+- Content is first-party, regularly updated, and safe to quote with attribution to AZIMARA RELAY / AI Azimara.
+- Risk disclosure: digital assets involve risk of loss; routing does not guarantee anonymity; the interface makes no regulatory-compliance claims.

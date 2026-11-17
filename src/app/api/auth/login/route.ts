@@ -20,7 +20,9 @@ export async function POST(request: Request) {
     const result = await login(body.email, body.password, { ip: clientIp(request), userAgent: request.headers.get('user-agent') ?? undefined })
     if (result.mfaRequired && !body.mfaCode) {
       // Session exists but is not yet trusted; require TOTP before use.
-      return ok({ mfaRequired: true, sessionToken: result.token, user: { id: result.user.id, email: result.user.email } })
+      // The cookie must be set here too: the client needs the session to
+      // complete the MFA challenge (mfaPassed stays false until TOTP passes).
+      return ok({ mfaRequired: true, sessionToken: result.token, user: { id: result.user.id, email: result.user.email } }, { headers: { 'set-cookie': sessionCookieHeader(result.token) } })
     }
     if (result.mfaRequired && body.mfaCode) {
       const { completeMfa } = await import('@/lib/auth')

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; background: #080D17; font-family: 'Geist', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  .stage { position: relative; width: 1200px; height: 630px; overflow: hidden; }
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(53,214,192,0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(53,214,192,0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  .radial {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(60% 55% at 50% 0%, rgba(53,214,192,0.14) 0%, transparent 70%),
+      radial-gradient(40% 40% at 82% 25%, rgba(101,140,255,0.10) 0%, transparent 70%);
+  }
+  .content { position: relative; padding: 72px 84px; height: 100%; display: flex; flex-direction: column; }
+  .brandrow { display: flex; align-items: center; gap: 14px; }
+  .badge { width: 44px; height: 44px; }
+  .wordmark { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: #F0F5FA; }
+  .wordmark .relay { color: #35D6C0; }
+  h1 { margin-top: 84px; font-size: 64px; line-height: 1.12; font-weight: 600; letter-spacing: -0.025em; color: #F0F5FA; max-width: 1000px; }
+  h1 .accent { color: #35D6C0; }
+  .sub { margin-top: 26px; font-size: 24px; line-height: 1.5; color: #A0AEC0; max-width: 860px; }
+  .chips { margin-top: auto; display: flex; gap: 12px; align-items: center; }
+  .chip { border: 1px solid #26374C; background: rgba(20,33,53,0.6); color: #A0AEC0; border-radius: 999px; padding: 10px 20px; font-size: 17px; font-weight: 500; }
+  .chip.teal { border-color: rgba(53,214,192,0.4); background: rgba(53,214,192,0.10); color: #35D6C0; }
+  .geo { margin-left: auto; color: #74849A; font-size: 17px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="grid"></div>
+  <div class="radial"></div>
+  <div class="content">
+    <div class="brandrow">
+      <svg class="badge" viewBox="0 0 32 32" fill="none">
+        <rect x="1.5" y="1.5" width="29" height="29" rx="8" stroke="#35D6C0" stroke-width="1.6"/>
+        <path d="M9 20.5 16 8l7 12.5" stroke="#35D6C0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12.2 17.4h7.6" stroke="#658CFF" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <span class="wordmark">AZIMARA <span class="relay">RELAY</span></span>
+    </div>
+    <h1>Non-custodial treasury &amp; payment operations, <span class="accent">engineered for accountability</span>.</h1>
+    <p class="sub">Approval-bound payments, batch payouts, reconciliation and AI-assisted operations on Solana.</p>
+    <div class="chips">
+      <span class="chip teal">Non-custodial</span>
+      <span class="chip">Solana</span>
+      <span class="chip">MultiHopper</span>
+      <span class="chip">Relay Intelligence</span>
+      <span class="geo">Dubai · United Arab Emirates</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

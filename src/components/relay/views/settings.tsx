@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useApi, api } from '@/lib/client/hooks'
 import { useRouter, useSession } from '@/lib/client/store'
 import { PageHeader, SectionCard, ErrorState } from '../ui'
@@ -26,11 +26,18 @@ export function SettingsView() {
   const session = useSession()
   const org = useApi<OrgData>(['org-active'], '/api/organizations/active')
   const [name, setName] = useState('')
-  const [mfa, setMfa] = useState<{ secret: string; uri: string } | null>(null)
+  const [mfa, setMfa] = useState<{ secret: string; otpauthUri: string } | null>(null)
   const [mfaCode, setMfaCode] = useState('')
+  const [mfaBusy, setMfaBusy] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const isOwner = session.activeOrg?.role === 'OWNER'
+
+  // Initialize the editable org name once, when data first arrives (never clobber user edits).
+  const orgName = org.data?.name
+  useEffect(() => {
+    setName((current) => current || orgName || '')
+  }, [orgName])
 
   async function saveOrg() {
     setBusy(true)
@@ -66,6 +73,8 @@ export function SettingsView() {
   }
 
   async function confirmMfa() {
+    if (mfaBusy) return
+    setMfaBusy(true)
     try {
       await enableTotpClient(mfaCode)
       toast.success('MFA enabled — you will be challenged at next sign-in')
@@ -74,6 +83,8 @@ export function SettingsView() {
       session.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Invalid code')
+    } finally {
+      setMfaBusy(false)
     }
   }
 
@@ -82,13 +93,13 @@ export function SettingsView() {
       <PageHeader title="Settings" description="Organization profile, security and workspace preferences." breadcrumb={['Relay', 'Administration', 'Settings']} />
       {org.isError ? <ErrorState message={String(org.error)} retry={() => org.refetch()} /> : null}
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <SectionCard title="Organization profile" description={org.data ? `${org.data.counts.wallets} wallets · ${org.data.counts.recipients} recipients · ${org.data.counts.payments} payments` : undefined}>
           <div className="space-y-3">
             <div>
               <Label>Organization name</Label>
               <div className="mt-1 flex gap-2">
-                <Input value={name || org.data?.name || ''} onChange={(e) => setName(e.target.value)} disabled={!isOwner} className="border-[#26374C] bg-[#0B1220]" />
+                <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!isOwner} className="border-[#26374C] bg-[#0B1220]" />
                 <Button onClick={saveOrg} disabled={busy || !isOwner} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">Save</Button>
               </div>
               <p className="mt-1 text-[11px] text-dim">Slug: {org.data?.slug ?? '—'}</p>
@@ -129,11 +140,11 @@ export function SettingsView() {
               <div className="rounded-lg border border-[#35D6C0]/30 bg-[#35D6C0]/5 p-3">
                 <div className="text-xs font-medium text-[#35D6C0]">1. Add this secret to your authenticator app:</div>
                 <code className="mt-1.5 block truncate rounded bg-[#0B1220] px-2 py-1.5 font-mono text-xs text-[#35D6C0]">{mfa.secret}</code>
-                <div className="mt-1 truncate font-mono text-[10px] text-dim">{mfa.uri}</div>
+                <div className="mt-1 truncate font-mono text-[10px] text-dim">{mfa.otpauthUri}</div>
                 <div className="mt-2 text-xs font-medium text-[#35D6C0]">2. Enter the current 6-digit code:</div>
                 <div className="mt-1 flex gap-2">
                   <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="123456" className="border-[#26374C] bg-[#0B1220] font-mono" />
-                  <Button onClick={confirmMfa} disabled={mfaCode.length !== 6} className="bg-[#35D6C0] font-medium text-[#062A26]">Verify</Button>
+                  <Button onClick={confirmMfa} disabled={mfaBusy || mfaCode.length !== 6} className="bg-[#35D6C0] font-medium text-[#062A26]">Verify</Button>
                 </div>
               </div>
             ) : null}

@@ -72,7 +72,12 @@ export function csvToObjects(input: string): { headers: string[]; rows: Record<s
 }
 
 export function csvEscape(value: string | number | null | undefined): string {
-  const s = value === null || value === undefined ? '' : String(value)
+  let s = value === null || value === undefined ? '' : String(value)
+  // Neutralize spreadsheet formula injection (=, +, -, @ prefixes execute as
+  // formulas when exported recipients are opened in Excel/Sheets).
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`
+  if (/^\d{1,}[-/]\d{1,2}[-/]\d{1,2}/.test(s)) s = `'${s}` // date coercion
+  if (/^[A-Z]{1,3}\d+:/i.test(s)) s = `'${s}` // cell-range coercion
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`
   return s
 }

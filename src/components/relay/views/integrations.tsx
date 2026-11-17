@@ -49,7 +49,7 @@ export function IntegrationsView() {
     try {
       const res = await api<{ ok: boolean; detail: string }>(`/api/integrations/multihopper`, { method: 'PUT', json: { action: 'probe' } })
       if (res.ok) toast.success('Provider connectivity verified: ' + res.detail)
-      else toast.warning('Probe result: ' + res.detail.slice(0, 160))
+      else toast.warning('Probe result: ' + (res.detail ?? '').slice(0, 160))
       config.refetch()
       status.refetch()
     } catch (err) {
@@ -82,7 +82,7 @@ export function IntegrationsView() {
         breadcrumb={['Relay', 'Administration', 'Integrations']}
       />
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <SectionCard
           title="MultiHopper"
           description="Programmable transaction routing provider."
@@ -98,10 +98,10 @@ export function IntegrationsView() {
                 <div>
                   <Label>Environment</Label>
                   <Select value={environment} onValueChange={(v) => setEnvironment(v as 'DEVNET' | 'PRODUCTION')}>
-                    <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="mt-1 w-full border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
                     <SelectContent className="border-[#26374C] bg-[#142135]">
-                      <SelectItem value="DEVNET">Devnet — mh_test_ keys · {s?.multihopper.baseUrl.replace('multihopper', 'devnet.multihopper') ?? 'https://devnet.multihopper.com'}</SelectItem>
-                      <SelectItem value="PRODUCTION">Production — mh_live_ keys · {s?.multihopper.baseUrl ?? 'https://multihopper.com'}</SelectItem>
+                      <SelectItem value="DEVNET">Devnet — mh_test_ keys</SelectItem>
+                      <SelectItem value="PRODUCTION">Production — mh_live_ keys</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -117,7 +117,7 @@ export function IntegrationsView() {
                   <Button onClick={save} disabled={busy || !apiKey} className="flex-1 bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">Save credentials</Button>
                   <Button onClick={probe} disabled={busy || !c?.configured} variant="outline" className="border-[#26374C]"><RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Probe</Button>
                 </div>
-                <p className="text-[11px] text-dim">Test keys are rejected against production and vice versa — environment isolation is enforced server-side.</p>
+                <p className="text-[11px] text-dim">Endpoints — devnet: {s?.multihopper?.baseUrl?.replace('multihopper', 'devnet.multihopper') ?? 'https://devnet.multihopper.com'} · production: {s?.multihopper?.baseUrl ?? 'https://multihopper.com'}. Test keys are rejected against production and vice versa — environment isolation is enforced server-side.</p>
               </div>
             </div>
           ) : (
@@ -134,7 +134,7 @@ export function IntegrationsView() {
               </div>
               {c.statusDetail ? <div className="rounded-lg border border-[#26374C] bg-[#0B1220] p-3 text-xs text-dim">{c.statusDetail}</div> : null}
               <div className="text-xs text-dim">
-                <div>Capability limit: {s?.multihopper.capability.maxDestinations ?? 20} destinations per transfer route</div>
+                <div>Capability limit: {s?.multihopper?.capability?.maxDestinations ?? 20} destinations per transfer route</div>
                 <div className="mt-1">Webhook secret: {c.webhookConfigured ? 'configured (HMAC-SHA256 verified, timing-safe)' : 'not configured — configure before expecting provider callbacks'}</div>
                 {c.lastCheckAt ? <div className="mt-1">Last probe: {formatDateTime(c.lastCheckAt)}</div> : null}
               </div>
@@ -142,7 +142,7 @@ export function IntegrationsView() {
                 <Button size="sm" onClick={probe} disabled={busy} variant="outline" className="border-[#26374C]"><RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Run connectivity probe</Button>
               </div>
               <div className="rounded-lg border border-[#F2BB62]/30 bg-[#F2BB62]/5 p-3 text-[11px] text-[#F2BB62]">
-                <ShieldCheck className="mr-1 inline h-3 w-3" /> {s?.multihopper.verificationNote}
+                <ShieldCheck className="mr-1 inline h-3 w-3" /> {s?.multihopper?.verificationNote}
                 <div className="mt-1">Webhook endpoint to register with the provider: <code className="font-mono text-[#35D6C0]">/api/webhooks/multihopper</code></div>
               </div>
             </div>
@@ -177,7 +177,7 @@ export function IntegrationsView() {
               {s ? Object.entries(s.nonCustodialAttestation).map(([k, v]) => (
                 <div key={k} className="flex items-center justify-between rounded-lg border border-[#26374C] bg-[#0B1220] px-3 py-2">
                   <span className="text-secondary">{k.replace(/([A-Z])/g, ' $1').replace(/^./, (ch) => ch.toUpperCase())}</span>
-                  <span className={v ? 'text-[#36C995]' : 'text-[#36C995]'}>{v ? 'false' : 'false'} <CheckCircle2 className="inline h-3 w-3" /></span>
+                  <span className={v ? 'text-[#36C995]' : 'text-[#F27683]'}>{v ? 'Yes' : 'No'} <CheckCircle2 className="inline h-3 w-3" /></span>
                 </div>
               )) : null}
               <p className="pt-1 text-[10px] text-dim">All values above are permanently false by platform design.</p>

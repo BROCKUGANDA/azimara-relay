@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { ok, readJson, route } from '@/lib/api'
+import { ok, readJson, route, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { PLANS, entitlementsFor } from '@/lib/entitlements'
 import { audit } from '@/lib/audit'
+import { safeJsonParse } from '@/lib/safe-json'
 
 export const GET = route(async ({ org }) => {
   const subscription = await db.subscription.findUnique({ where: { orgId: org.org.id } })
@@ -21,7 +22,7 @@ export const GET = route(async ({ org }) => {
     entitlements: ent,
     usage: { paymentsThisMonth, members, activeKeys, paymentsLimit: ent.monthlyPayments, seatsLimit: ent.seats, apiKeysLimit: ent.apiKeys },
     plans: Object.entries(PLANS).map(([id, p]) => ({ id, ...p })),
-    billingEvents: events.map((e) => ({ id: e.id, type: e.type, data: JSON.parse(e.dataJson), createdAt: e.createdAt })),
+    billingEvents: events.map((e) => ({ id: e.id, type: e.type, data: safeJsonParse(e.dataJson, {}), createdAt: e.createdAt })),
     collectionNote: 'Payment collection is not configured (no billing provider connected). Plan switches take effect immediately and are recorded as billing events; connect a billing provider before charging real customers.',
   })
 })
@@ -31,8 +32,26 @@ const changeSchema = z.object({ plan: z.enum(['STARTER', 'GROWTH', 'BUSINESS', '
 export const POST = route(async ({ org, auth, request }) => {
   const body = await readJson(request, changeSchema)
   const previousPlan = org.org.plan
-  await db.organization.update({ where: { id: org.org.id }, data: { plan: body.plan } })
   const ent = entitlementsFor(body.plan)
+  // Downgrade guard: block the switch BEFORE any write when current usage
+  // already exceeds the target plan's entitlements (same usage sources the
+  // plan-gating and the GET usage summary rely on).
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const [paymentsThisMonth, members, activeKeys, activeWallets] = await Promise.all([
+    db.paymentRequest.count({ where: { orgId: org.org.id, createdAt: { gte: monthStart } } }),
+    db.membership.count({ where: { orgId: org.org.id } }),
+    db.apiCredential.count({ where: { orgId: org.org.id, revokedAt: null } }),
+    db.wallet.count({ where: { orgId: org.org.id, revokedAt: null } }),
+  ])
+  const usageExceeded =
+    paymentsThisMonth > ent.monthlyPayments ||
+    members > ent.seats ||
+    activeKeys > ent.apiKeys ||
+    activeWallets > ent.treasuryWallets
+  if (usageExceeded) {
+    throw new ApiError('PLAN_DOWNGRADE_BLOCKED', 'Current usage exceeds the target plan limits. Reduce usage or contact support.', 409)
+  }
+  await db.organization.update({ where: { id: org.org.id }, data: { plan: body.plan } })
   await db.subscription.upsert({
     where: { orgId: org.org.id },
     create: { orgId: org.org.id, plan: body.plan, status: 'ACTIVE', seatLimit: ent.seats, periodStart: new Date(), periodEnd: new Date(Date.now() + 30 * 24 * 3600 * 1000) },

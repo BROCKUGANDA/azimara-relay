@@ -54,13 +54,13 @@ export function OverviewView() {
       ) : null}
 
       {treasury.isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-xl bg-[#142135]" />)}
         </div>
       ) : treasury.isError ? (
-        <ErrorState message={String(treasury.error)} retry={() => treasury.refetch()} />
+        <ErrorState message={treasury.error instanceof Error ? treasury.error.message : 'Something went wrong'} retry={() => treasury.refetch()} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Pending approvals" value={m?.pendingApprovals ?? 0} accent="purple" sub={m?.pendingApprovals ? 'Needs review' : 'Nothing waiting'} />
           <MetricCard label="Transfers in flight" value={m?.activeTransfers ?? 0} accent="blue" sub="Signing → settlement" />
           <MetricCard label="Completed this month" value={m?.completedThisMonth ?? 0} accent="teal" sub="Verified settlements" />
@@ -68,7 +68,7 @@ export function OverviewView() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Onboarding checklist */}
         <SectionCard title="Workspace setup" description="Guided checklist — real completion state, not decorative progress." className="lg:col-span-1">
           {onboarding.isLoading ? (
@@ -76,7 +76,7 @@ export function OverviewView() {
           ) : (
             <div className="space-y-2.5">
               {(onboarding.data?.steps ?? []).map((s) => (
-                <button key={s.id} onClick={() => navigate(s.route.replace('#', ''))} className="flex w-full items-start gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-[#142135]">
+                <button key={s.id} onClick={() => navigate(s.route.replace('#', ''))} className="flex w-full items-start gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-[#142135]">
                   {s.done ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#36C995]" /> : <Circle className="mt-0.5 h-4 w-4 shrink-0 text-dim" />}
                   <span className="flex-1">
                     <span className={`block text-xs ${s.done ? 'text-dim line-through' : 'text-secondary'}`}>{s.label}</span>
@@ -91,7 +91,7 @@ export function OverviewView() {
 
         {/* Recent payments */}
         <SectionCard title="Recent payments" description="Latest activity across all sources." className="lg:col-span-2" actions={<Button variant="ghost" size="sm" className="text-xs text-dim" onClick={() => navigate('/app/payments')}>View all <ArrowRight className="ml-1 h-3 w-3" /></Button>}>
-          {treasury.data?.recentPayments.length === 0 ? (
+          {(treasury.data?.recentPayments ?? []).length === 0 ? (
             <EmptyState
               icon={<Send className="h-7 w-7" />}
               title="No payments yet"
@@ -104,7 +104,7 @@ export function OverviewView() {
                 <button key={p.id} onClick={() => navigate(`/app/payments/${p.id}`)} className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-[#142135]">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="font-mono text-[#35D6C0]">{p.reference}</span>
+                      <span className="min-w-0 truncate font-mono text-[#35D6C0]">{p.reference}</span>
                       <span className="text-dim">·</span>
                       <span className="truncate text-secondary">{p.recipientName ?? p.walletLabel ?? 'Unknown'}</span>
                     </div>
@@ -120,7 +120,7 @@ export function OverviewView() {
       </div>
 
       {/* Quick actions */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { icon: <Wallet className="h-5 w-5" />, label: 'Connect wallet', route: '/app/wallets' },
           { icon: <Users className="h-5 w-5" />, label: 'Add recipients', route: '/app/recipients' },

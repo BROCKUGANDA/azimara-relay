@@ -3,29 +3,41 @@ import { ok, readJson, route } from '@/lib/api'
 import { db } from '@/lib/db'
 import { createPayment } from '@/lib/payments'
 import { audit } from '@/lib/audit'
+import { parsePage, parsePageSize } from '@/lib/safe-json'
 
 export const GET = route(async ({ org, request }) => {
   const url = new URL(request.url)
   const status = url.searchParams.get('status') ?? ''
   const q = url.searchParams.get('q') ?? ''
   const walletId = url.searchParams.get('walletId') ?? ''
-  const page = Math.max(1, Number(url.searchParams.get('page') ?? '1'))
-  const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') ?? '50')))
+  const pageSize = parsePageSize(url.searchParams.get('pageSize'), 50, 100)
+  const { page, skip, take } = parsePage(url.searchParams.get('page'), pageSize)
   const where = {
     orgId: org.org.id,
     ...(status && status !== 'ALL'
       ? { status: status === 'ACTIVE_EXECUTION' ? { in: ['AWAITING_SIGNATURE', 'FUNDING_BROADCAST', 'FUNDING_CONFIRMED', 'INITIALIZATION_BROADCAST', 'PROCESSING', 'SETTLEMENT_VERIFICATION'] } : status }
       : {}),
     ...(walletId ? { sourceWalletId: walletId } : {}),
-    ...(q ? { OR: [{ reference: { contains: q } }, { destination: { contains: q } }, { reason: { contains: q } }, { invoiceRef: { contains: q } }] } : {}),
+    // SQLite `contains` is case-sensitive: match lowercase and uppercase
+    // variants so searches behave case-insensitively.
+    ...(q
+      ? {
+          OR: [
+            { reference: { contains: q } }, { reference: { contains: q.toLowerCase() } }, { reference: { contains: q.toUpperCase() } },
+            { destination: { contains: q } }, { destination: { contains: q.toLowerCase() } }, { destination: { contains: q.toUpperCase() } },
+            { reason: { contains: q } }, { reason: { contains: q.toLowerCase() } }, { reason: { contains: q.toUpperCase() } },
+            { invoiceRef: { contains: q } }, { invoiceRef: { contains: q.toLowerCase() } }, { invoiceRef: { contains: q.toUpperCase() } },
+          ],
+        }
+      : {}),
   }
   const [total, payments] = await Promise.all([
     db.paymentRequest.count({ where }),
     db.paymentRequest.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+      skip,
+      take,
       include: { recipient: { select: { name: true } }, wallet: { select: { label: true, address: true, network: true } }, transfer: { select: { providerTransferId: true, providerStatus: true } } },
     }),
   ])
