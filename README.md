@@ -51,6 +51,16 @@ Health: `GET /api/health` · OpenAPI: `GET /api/openapi`
 
 See `.env.example`. Production fails fast without `AUTH_SECRET` and `ENCRYPTION_KEY`. MultiHopper keys are validated per environment (`mh_test_` → devnet only, `mh_live_` → production only).
 
+## Commercialization — on-chain subscription collection
+
+Subscription collection is LIVE on Solana **mainnet-beta** in USDC (native Circle mint), payable to the configured treasury (`TREASURY_ADDRESS`):
+
+- **Invoices** — an upgrade or renewal creates a `SubscriptionInvoice` whose amount carries a globally-unique micro-suffix (e.g. `199.311518 USDC`), so an incoming transfer can be matched to exactly one invoice with no off-chain binding.
+- **Two settlement paths, both reading the real chain** — a `BILLING_SWEEP` cron (60 s) watches the treasury owner address + its derived USDC ATA via `getSignaturesForAddress` at `finalized` commitment, and customers can paste a transaction signature for instant verification. PDA/ATA derivation is byte-identical to `@solana/web3.js` (verified by `scripts/verify-billing.ts`).
+- **Idempotent and honest** — signatures are unique-indexed (one transfer credits one invoice, claims are idempotent), failed/wrong-recipient/unmatched transfers return typed errors, and unmatched incoming deposits are recorded (`TreasuryDeposit`) for reconciliation — never dropped, never simulated.
+- **Entitlements** — plan switches apply only after on-chain settlement; downgrades remain immediate and keep their usage guards. Enterprise is contract-priced (`CUSTOM_QUOTE_REQUIRED`).
+- The platform never requests or stores private keys; the treasury address is a public key.
+
 ## Responsive, cross-browser and search visibility
 
 - **Mobile / tablet** — every public and authenticated view is verified overflow-free at 320 / 375 / 768 / 1024 / 1440 px (Playwright sweep: `scripts/visual-smoke.js`). Dense tables scroll horizontally with min-widths; dialogs clamp to `max-h-[calc(100dvh-2rem)]` and scroll; touch targets are ≥36-44 px; the desktop sidebar appears from `md` (tablets keep the real sidebar), the 9-page marketing nav collapses to a scrollable chip strip below `xl`.
@@ -62,6 +72,9 @@ See `.env.example`. Production fails fast without `AUTH_SECRET` and `ENCRYPTION_
 ## Verification tooling
 
 - `scripts/visual-smoke.js` — end-to-end Playwright smoke: register → verify → login → org → app views → batch dialog at mobile/tablet widths, plus overflow checks and title/noindex assertions.
+- `scripts/verify-billing.ts` — commercialization suite: PDA/on-curve differential vs `@solana/web3.js`, real mainnet transfer parsing, live treasury sweep, invoice lifecycle API tests (fabricated claims fail honestly).
+- `scripts/verify-sweep-live.ts` — points the sweep at a wallet with genuine USDC traffic and asserts real transfers are recorded then cleaned up.
+- `scripts/verify-lifecycle.ts` — 24-check financial pipeline: ed25519 ownership, duplicate guard, separation of duties, RBAC, honest `PROVIDER_SETUP_REQUIRED`, invoice issuance.
 - `scripts/debug-overflow.js` — reports elements wider than the viewport (excludes intentional scroll containers).
 - `scripts/gen-og.js` — regenerates `/og.png` and the PWA/apple icons from `scripts/og-template.html`.
 

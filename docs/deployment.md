@@ -8,7 +8,7 @@
 
 ## Environment
 
-Copy `.env.example` → `.env`. Mandatory in production: `AUTH_SECRET`, `ENCRYPTION_KEY` (startup fails fast without them), `DATABASE_URL`. Optional integrations: `SOLANA_RPC_URL`, `MULTIHOPPER_API_KEY` + `MULTIHOPPER_WEBHOOK_SECRET` (environment-validated: `mh_test_` devnet, `mh_live_` production — cross-usage is rejected), AI provider keys, billing provider keys when collection is activated.
+Copy `.env.example` → `.env`. Mandatory in production: `AUTH_SECRET`, `ENCRYPTION_KEY` (startup fails fast without them), `DATABASE_URL`. Set `SOLANA_NETWORK=mainnet-beta` and `TREASURY_ADDRESS` (the public key that receives USDC) to activate on-chain subscription collection; `BILLING_*` variables control the mint, decimals and invoice validity. Optional integrations: `SOLANA_RPC_URL` (a dedicated RPC such as Helius/QuickNode is recommended before charging real customers — the public endpoint is rate-limited), `MULTIHOPPER_API_KEY` + `MULTIHOPPER_WEBHOOK_SECRET` (environment-validated: `mh_test_` devnet, `mh_live_` production — cross-usage is rejected), AI provider keys.
 
 Never commit real secrets; rotate `AUTH_SECRET`/`ENCRYPTION_KEY` through a secret manager. Note: rotating `ENCRYPTION_KEY` invalidates stored provider credentials and TOTP secrets — re-enter them after rotation.
 

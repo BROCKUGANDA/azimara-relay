@@ -7,6 +7,17 @@ import { syncTransfer } from '@/lib/payments'
 import { formatBaseUnits } from '@/lib/money'
 import { audit, notify } from '@/lib/audit'
 import { MultiHopperClient, providerConfigFromRow, SetupRequiredError } from '@/lib/multihopper'
+import { sweepTreasuryDeposits } from '@/lib/billing'
+
+registerProcessor('BILLING_SWEEP', async () => {
+  // Reads the real chain for incoming USDC to the configured treasury and
+  // settles matching subscription invoices. Throws propagate to the queue so
+  // RPC outages retry with backoff instead of failing silently.
+  const summary = await sweepTreasuryDeposits()
+  if (summary.matched > 0 || summary.unmatched > 0 || summary.expired > 0) {
+    console.log(JSON.stringify({ level: 'info', msg: 'billing_sweep', ...summary }))
+  }
+})
 
 registerProcessor('WEBHOOK_PROCESS', async (payload, job) => {
   const inboxId = String(payload.inboxId ?? '')

@@ -120,6 +120,10 @@ const CRONS: { key: string; everyMs: number; type: string }[] = [
   { key: 'cron:reconciliation', everyMs: 120_000, type: 'RECONCILIATION_SWEEP' },
   { key: 'cron:schedules', everyMs: 60_000, type: 'SCHEDULE_SWEEP' },
   { key: 'cron:webhook-replay', everyMs: 60_000, type: 'WEBHOOK_REPLAY_SWEEP' },
+  // On-chain subscription collection: watch the treasury for incoming USDC
+  // and settle pending subscription invoices. Public RPC rate limits make a
+  // 60s cadence the safe ceiling.
+  { key: 'cron:billing-sweep', everyMs: 60_000, type: 'BILLING_SWEEP' },
 ]
 
 async function runCron() {

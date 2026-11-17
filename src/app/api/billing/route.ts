@@ -1,19 +1,23 @@
 import { z } from 'zod'
 import { ok, readJson, route, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
-import { PLANS, entitlementsFor } from '@/lib/entitlements'
+import { PLANS, entitlementsFor, type PlanId } from '@/lib/entitlements'
 import { audit } from '@/lib/audit'
 import { safeJsonParse } from '@/lib/safe-json'
+import { billingConfig, billingRpcHealth, createInvoiceForPlan, serializeInvoice, explorerAccount } from '@/lib/billing'
 
 export const GET = route(async ({ org }) => {
   const subscription = await db.subscription.findUnique({ where: { orgId: org.org.id } })
   const events = await db.billingEvent.findMany({ where: { orgId: org.org.id }, orderBy: { createdAt: 'desc' }, take: 20 })
+  const invoices = await db.subscriptionInvoice.findMany({ where: { orgId: org.org.id }, orderBy: { createdAt: 'desc' }, take: 25 })
   const ent = entitlementsFor(org.org.plan)
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  const [paymentsThisMonth, members, activeKeys] = await Promise.all([
+  const [paymentsThisMonth, members, activeKeys, collection, rpcHealth] = await Promise.all([
     db.paymentRequest.count({ where: { orgId: org.org.id, createdAt: { gte: monthStart } } }),
     db.membership.count({ where: { orgId: org.org.id } }),
     db.apiCredential.count({ where: { orgId: org.org.id, revokedAt: null } }),
+    billingConfig(),
+    billingRpcHealth(),
   ])
   return ok({
     subscription,
@@ -23,7 +27,19 @@ export const GET = route(async ({ org }) => {
     usage: { paymentsThisMonth, members, activeKeys, paymentsLimit: ent.monthlyPayments, seatsLimit: ent.seats, apiKeysLimit: ent.apiKeys },
     plans: Object.entries(PLANS).map(([id, p]) => ({ id, ...p })),
     billingEvents: events.map((e) => ({ id: e.id, type: e.type, data: safeJsonParse(e.dataJson, {}), createdAt: e.createdAt })),
-    collectionNote: 'Payment collection is not configured (no billing provider connected). Plan switches take effect immediately and are recorded as billing events; connect a billing provider before charging real customers.',
+    invoices: invoices.map(serializeInvoice),
+    collection: {
+      enabled: true,
+      network: collection.network,
+      mint: collection.mint,
+      decimals: collection.decimals,
+      treasuryAddress: collection.treasuryAddress,
+      treasuryAta: collection.treasuryAta,
+      explorerTreasury: explorerAccount(collection.treasuryAddress, collection.network),
+      invoiceValidityHours: collection.invoiceValidityHours,
+      rpcHealth,
+    },
+    collectionNote: `Payment collection is live on Solana ${collection.network}: upgrade/renewal invoices settle automatically when the exact USDC amount arrives at the treasury. Treasury: ${collection.treasuryAddress}`,
   })
 })
 
@@ -31,6 +47,26 @@ const changeSchema = z.object({ plan: z.enum(['STARTER', 'GROWTH', 'BUSINESS', '
 
 export const POST = route(async ({ org, auth, request }) => {
   const body = await readJson(request, changeSchema)
+  if (body.plan === org.org.plan) {
+    return ok({ plan: org.org.plan, unchanged: true, entitlements: entitlementsFor(body.plan) })
+  }
+  const target = PLANS[body.plan]
+  const current = entitlementsFor(org.org.plan)
+  if (target.priceMonthlyUsd == null) {
+    throw new ApiError('CUSTOM_QUOTE_REQUIRED', 'Enterprise is priced by contract — contact sales to switch.', 422)
+  }
+
+  // Downgrades (and same-price moves) stay administrative: no payment is owed
+  // for fewer entitlements, so the switch applies immediately with its guard.
+  const isUpgrade = target.priceMonthlyUsd > (current.priceMonthlyUsd ?? 0)
+  if (isUpgrade) {
+    // Real commercialization: an upgrade is provisioned only after the USDC
+    // invoice settles on-chain. Nothing is granted here yet.
+    const invoice = await createInvoiceForPlan(org.org.id, body.plan, 'UPGRADE', 1)
+    await audit({ orgId: org.org.id, actorId: auth.user.id, action: 'UPGRADE_INVOICE_CREATED', resourceType: 'SubscriptionInvoice', resourceId: invoice.id, data: { plan: body.plan, amountBaseUnits: invoice.amountBaseUnits } })
+    return ok({ invoiceRequired: true, plan: org.org.plan, invoice: serializeInvoice(invoice) })
+  }
+
   const previousPlan = org.org.plan
   const ent = entitlementsFor(body.plan)
   // Downgrade guard: block the switch BEFORE any write when current usage

@@ -39,23 +39,32 @@ export function ownershipMessage(orgName: string, address: string, nonce: string
   ].join('\n')
 }
 
-async function rpc<T>(network: string, method: string, params: unknown[], timeoutMs = 15000): Promise<T> {
+export async function rpc<T>(network: string, method: string, params: unknown[], timeoutMs = 15000): Promise<T> {
   const url = network === env().SOLANA_NETWORK ? env().resolvedRpcUrl : network === 'devnet' ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com'
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-      signal: controller.signal,
-    })
-    if (!res.ok) throw new Error(`RPC HTTP ${res.status}`)
-    const json = (await res.json()) as { result?: T; error?: { message: string } }
-    if (json.error) throw new Error(`RPC error: ${json.error.message}`)
-    return json.result as T
-  } finally {
-    clearTimeout(timer)
+  // Public RPC endpoints throttle bursts (HTTP 429/503). A short bounded
+  // backoff absorbs transient throttles; genuine outages still surface to the
+  // caller so states stay honest instead of faking success.
+  for (let attempt = 0; ; attempt++) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+        signal: controller.signal,
+      })
+      if ((res.status === 429 || res.status === 503) && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 1500 * 2 ** attempt))
+        continue
+      }
+      if (!res.ok) throw new Error(`RPC HTTP ${res.status}`)
+      const json = (await res.json()) as { result?: T; error?: { message: string } }
+      if (json.error) throw new Error(`RPC error: ${json.error.message}`)
+      return json.result as T
+    } finally {
+      clearTimeout(timer)
+    }
   }
 }
 

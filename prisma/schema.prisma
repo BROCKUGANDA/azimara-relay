@@ -91,6 +91,7 @@ model Organization {
   notifications    Notification[]
   subscription     Subscription?
   billingEvents    BillingEvent[]
+  subscriptionInvoices SubscriptionInvoice[]
   reconciliation   ReconciliationRecord[]
   aiSessions       AiSession[]
   aiProposals      AiProposal[]
@@ -717,13 +718,75 @@ model Subscription {
 model BillingEvent {
   id        String   @id @default(cuid())
   orgId     String
-  type      String   // PLAN_CHANGED | SEAT_CHANGED | ENTITLEMENT_BLOCKED | RENEWAL | TRIAL_STARTED
+  type      String   // PLAN_CHANGED | SEAT_CHANGED | ENTITLEMENT_BLOCKED | RENEWAL | TRIAL_STARTED | PLAN_PURCHASED | RENEWAL_PAID | INVOICE_EXPIRED
   dataJson  String   @default("{}")
   createdAt DateTime @default(now())
 
   org Organization @relation(fields: [orgId], references: [id])
 
   @@index([orgId, createdAt])
+}
+
+// ─── Commercialization: on-chain subscription collection ─────────────────
+// Subscriptions are paid in USDC (SPL) directly to the platform treasury on
+// Solana mainnet-beta. Each invoice carries a globally-unique micro-suffix
+// amount so an incoming transfer can be matched to exactly one invoice with
+// no off-chain state beyond the blockchain itself.
+
+model SubscriptionInvoice {
+  id                 String    @id @default(cuid())
+  orgId              String
+  kind               String    // UPGRADE | RENEWAL
+  plan               String    // target plan (for RENEWAL: the current plan)
+  months             Int       @default(1)
+  amountBaseUnits    String    // USDC base units (6 decimals), unique per invoice
+  currency           String    @default("USDC")
+  network            String    @default("mainnet-beta")
+  treasuryAddress    String
+  status             String    @default("PENDING") // PENDING | CONFIRMED | EXPIRED | CANCELLED
+  confirmedSignature String?   @unique
+  confirmedSlot      Int?
+  confirmedAt        DateTime?
+  expiresAt          DateTime
+  metaJson           String    @default("{}")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, createdAt])
+  @@index([status, amountBaseUnits])
+}
+
+// Every incoming USDC transfer observed on the treasury — matched or not.
+// Unmatched deposits are recorded (never silently dropped) so platform
+// operators can reconcile stray payments against invoices manually.
+model TreasuryDeposit {
+  id              String    @id @default(cuid())
+  signature       String    @unique
+  network         String
+  mint            String
+  amountBaseUnits String
+  sourceOwner     String?
+  destination     String
+  slot            Int?
+  blockTime       DateTime?
+  status          String    // MATCHED | UNMATCHED
+  invoiceId       String?
+  orgId           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
+// Generic platform key/value config (e.g. last-seen treasury cursor). Key
+// writes are idempotent upserts — safe for concurrent workers.
+model PlatformConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 // ─── AI (Relay Intelligence) ───────────────────────────────────────────────

@@ -33,10 +33,38 @@ const session = await call('/api/auth/session')
 orgId = session.json.data.organizations[0].id
 log(login.status === 200, 'login')
 
-// switch plan to GROWTH (verifies plan-change + entitlement expansion)
+// Commercialization flow runs in a FRESH organization so the STARTER baseline
+// is guaranteed regardless of accumulated state from prior runs. Upgrades now
+// issue a USDC invoice (settled on-chain) instead of switching instantly.
+const homeOrgId = session.json.data.organizations[0].id
+const freshOrg = await call('/api/organizations', { method: 'POST', body: JSON.stringify({ name: `Lifecycle Verify ${Date.now()}` }) })
+orgId = String(freshOrg.json.data?.id ?? homeOrgId)
+log(typeof freshOrg.json.data?.id === 'string', 'fresh lifecycle organization created')
+const baseline = await call('/api/billing')
+log(baseline.json.data?.plan === 'STARTER', 'fresh org on STARTER baseline', String(baseline.json.data?.plan))
 const planChange = await call('/api/billing', { method: 'POST', body: JSON.stringify({ plan: 'BUSINESS' }) })
-if (planChange.json.data?.plan !== 'BUSINESS') console.log('  PLAN DEBUG:', planChange.status, JSON.stringify(planChange.json).slice(0, 150))
-log(planChange.json.data?.plan === 'BUSINESS', 'plan switched to BUSINESS (entitlements raised)')
+const invoiceIssued = planChange.json.data?.invoiceRequired === true && !!planChange.json.data?.invoice?.amountBaseUnits
+if (!invoiceIssued) console.log('  PLAN DEBUG:', planChange.status, JSON.stringify(planChange.json).slice(0, 200))
+log(invoiceIssued, 'upgrade issues USDC invoice (entitlements pending real payment)')
+if (invoiceIssued) {
+  const inv = planChange.json.data.invoice
+  log(inv.status === 'PENDING' && inv.amountUi.startsWith('499.'), 'upgrade invoice pending at BUSINESS price (499 USDC + unique suffix)', inv.amountUi)
+  // Clean up the test invoice so it does not sit pending forever.
+  const cancel = await call('/api/billing/invoice', { method: 'DELETE', body: JSON.stringify({ invoiceId: inv.id }) })
+  log(cancel.json.data?.cancelled === true, 'test invoice cancelled')
+}
+// Back to the home organization for the financial-pipeline flows.
+orgId = homeOrgId
+
+// Free accumulated seats from prior runs so the invite flow can add a member.
+const members = await call('/api/members')
+let freedSeats = 0
+for (const m of members.json.data?.members ?? []) {
+  if (m.userId === session.json.data.user?.id) continue
+  const removed = await call('/api/members', { method: 'DELETE', body: JSON.stringify({ membershipId: m.id }) })
+  if (removed.json.data?.removed || removed.status === 200) freedSeats += 1
+}
+log(true, 'stale test members cleaned up', `${freedSeats} seats freed`)
 
 // register wallet with generated keypair
 let reg = await call('/api/wallets', { method: 'POST', body: JSON.stringify({ label: 'Keypair Treasury', address, network: 'devnet', kind: 'TREASURY' }) })
@@ -63,25 +91,36 @@ const signature = nacl.sign.detached(new TextEncoder().encode(message), keypair.
 const verify = await call(`/api/wallets/${wallet.id}/verify`, { method: 'POST', body: JSON.stringify({ signature: bs58.encode(signature) }) })
 log(verify.status === 200 && verify.json.data?.verified === true, 'REAL ed25519 ownership verified')
 
-// create payment through the real pipeline
+// create payment through the real pipeline — amount carries a run-unique
+// cent-suffix so repeated runs never collide with stale rows.
+const runCents = (Date.now() % 90) + 10
+const amount = `2500.${runCents}`
 const pay = await call('/api/payments', {
   method: 'POST',
   body: JSON.stringify({
     sourceWalletId: wallet.id,
     destination: address,
     mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-    amount: '2500.00',
+    amount,
     reason: 'Lifecycle verification payment',
   }),
 })
 if (!pay.json.data?.payment) console.log('PAY DEBUG:', pay.status, JSON.stringify(pay.json).slice(0, 300))
 let payment = pay.json.data?.payment
-if (pay.json.error?.code === 'DUPLICATE_PAYMENT') {
-  const list = await call('/api/payments?q=PMT-')
-  payment = list.json.data.payments.find((p) => p.reference === pay.json.error.details.duplicateReference)
-  console.log('  reusing existing pending payment from prior run (duplicate guard worked)')
-}
-log(!!payment?.status, 'payment present with valid lifecycle state (created fresh or reused via duplicate guard)', `${payment?.reference} = ${payment?.status}`)
+log(!!payment?.id, 'payment created fresh', `${payment?.reference} = ${payment?.status}`)
+// Duplicate guard: replaying the identical request must be refused and point
+// at the original payment (idempotency protection on financial intents).
+const replay = await call('/api/payments', {
+  method: 'POST',
+  body: JSON.stringify({
+    sourceWalletId: wallet.id,
+    destination: address,
+    mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    amount,
+    reason: 'Lifecycle verification payment',
+  }),
+})
+log(replay.json.error?.code === 'DUPLICATE_PAYMENT' && replay.json.error?.details?.duplicateReference === payment?.reference, 'identical replay refused by duplicate guard', String(replay.json.error?.code))
 
 // separation of duties: creator cannot approve a 2-approver payment
 const selfApprove = await call(`/api/payments/${payment.id}/approve`, { method: 'POST', body: JSON.stringify({ decision: 'APPROVED' }) })
