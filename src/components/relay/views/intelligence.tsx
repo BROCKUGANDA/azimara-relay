@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useApi, api } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { PageHeader, EmptyState, ErrorState, SectionCard } from '../ui'
+import { PanelSkeleton } from '../states'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -129,22 +130,27 @@ export function IntelligenceView() {
         description="Contextual AI treasury assistant. Every proposal carries evidence, deterministic checks and a human approval handoff."
         breadcrumb={['Relay', 'Assurance', 'Relay Intelligence']}
       />
+      {sessions.isError ? <ErrorState message={String(sessions.error)} retry={() => sessions.refetch()} /> : null}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
         {/* Sessions */}
         <div className="max-h-64 space-y-3 overflow-y-auto lg:max-h-none">
           <SectionCard title="Conversations">
             <div className="space-y-1">
-              {(sessions.data?.sessions ?? []).map((s) => (
+              {sessions.isLoading ? (
+                <PanelSkeleton count={3} />
+              ) : (sessions.data?.sessions ?? []).map((s) => (
                 <button key={s.id} onClick={() => loadSession(s.id)} className={`block w-full truncate rounded-lg px-2.5 py-2 text-left text-xs hover:bg-[#142135] ${sessionId === s.id ? 'bg-[#142135] text-[#35D6C0]' : 'text-secondary'}`}>
                   {s.title}
                 </button>
               ))}
-              {(sessions.data?.sessions ?? []).length === 0 ? <div className="text-xs text-dim">No conversations yet.</div> : null}
+              {!sessions.isLoading && (sessions.data?.sessions ?? []).length === 0 ? <div className="text-xs text-dim">No conversations yet.</div> : null}
             </div>
           </SectionCard>
           <SectionCard title="Proposals">
             <div className="space-y-1.5">
-              {(sessions.data?.proposals ?? []).slice(0, 6).map((p) => (
+              {sessions.isLoading ? (
+                <PanelSkeleton count={2} />
+              ) : (sessions.data?.proposals ?? []).slice(0, 6).map((p) => (
                 <div key={p.id} className="rounded-lg border border-[#26374C] bg-[#0B1220] p-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate text-xs">{p.title}</span>
@@ -152,7 +158,7 @@ export function IntelligenceView() {
                   </div>
                 </div>
               ))}
-              {(sessions.data?.proposals ?? []).length === 0 ? <div className="text-xs text-dim">No proposals yet.</div> : null}
+              {!sessions.isLoading && (sessions.data?.proposals ?? []).length === 0 ? <div className="text-xs text-dim">No proposals yet.</div> : null}
             </div>
           </SectionCard>
         </div>

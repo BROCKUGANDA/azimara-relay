@@ -5,6 +5,7 @@ import { useApi, api } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { timeAgo, shortAddress, formatAmount } from '@/lib/client/format'
 import { PageHeader, StatusBadge, EmptyState, SectionCard, ErrorState, DataTable, SetupRequiredState } from '../ui'
+import { CardSkeleton } from '../states'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -195,7 +196,11 @@ export function WalletsView() {
         </div>
       ) : null}
 
-      {(wallets.data?.wallets ?? []).length === 0 && !wallets.isLoading ? (
+      {wallets.isLoading ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
+        </div>
+      ) : (wallets.data?.wallets ?? []).length === 0 ? (
         <EmptyState
           icon={<Wallet className="h-8 w-8" />}
           title="No wallets registered"

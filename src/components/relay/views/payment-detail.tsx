@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/client/hooks'
 import { formatAmount, shortAddress, shortHash, formatDateTime, timeAgo } from '@/lib/client/format'
 import { PageHeader, StatusBadge, Amount, SectionCard, ErrorState, SetupRequiredState } from '../ui'
+import { DetailSkeleton } from '../states'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { ArrowLeft, CheckCircle2, Circle, XCircle, ExternalLink, Quote, RefreshCw, Play, FileSignature, ShieldCheck, Ban } from 'lucide-react'
@@ -102,7 +103,10 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
       </div>
       {detail.isError ? <ErrorState message={String(detail.error)} retry={() => detail.refetch()} /> : null}
       {!d ? (
-        <div className="h-64 animate-pulse rounded-xl bg-[#0E1725]" />
+        <div className="mt-6 space-y-4" aria-hidden>
+          <div className="h-8 w-64 rounded bg-[#142135] relay-shimmer" />
+          <DetailSkeleton />
+        </div>
       ) : (
         <>
           <PageHeader

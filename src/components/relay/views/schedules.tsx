@@ -135,6 +135,7 @@ export function SchedulesView() {
       {schedules.isError ? <ErrorState message={String(schedules.error)} retry={() => schedules.refetch()} /> : null}
 
       <DataTable
+        loading={schedules.isLoading}
         keyOf={(s) => s.id}
         rows={schedules.data?.schedules ?? []}
         empty={

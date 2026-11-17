@@ -110,6 +110,7 @@ export function ApiKeysView() {
       {keys.isError ? <ErrorState message={String(keys.error)} retry={() => keys.refetch()} /> : null}
 
       <DataTable
+        loading={keys.isLoading}
         keyOf={(k) => k.id}
         rows={keys.data?.keys ?? []}
         empty={<EmptyState icon={<KeyRound className="h-8 w-8" />} title="No API keys" description="Create scoped keys for payments and recipients operations from your own systems." />}

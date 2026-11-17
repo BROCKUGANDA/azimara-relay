@@ -145,6 +145,7 @@ export function RecipientsView() {
       {recipients.isError ? <ErrorState message={String(recipients.error)} retry={() => recipients.refetch()} /> : null}
 
       <DataTable
+        loading={recipients.isLoading}
         keyOf={(r) => r.id}
         rows={recipients.data?.recipients ?? []}
         empty={

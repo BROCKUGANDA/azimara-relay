@@ -38,6 +38,7 @@ export function AuditView() {
       <Input placeholder="Search action, resource…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} className="mb-4 w-full border-[#26374C] bg-[#0B1220] sm:w-64" />
       {audit.isError ? <ErrorState message={String(audit.error)} retry={() => audit.refetch()} /> : null}
       <DataTable
+        loading={audit.isLoading}
         keyOf={(e) => e.id}
         rows={audit.data?.entries ?? []}
         empty={<EmptyState title="No audit entries match" description="Actions appear as soon as operations run." />}

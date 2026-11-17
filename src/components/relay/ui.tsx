@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { formatAmount } from '@/lib/client/format'
+import { TableSkeleton } from './states'
 
 // Payment status tones per PRD §8.6 — every state visually distinct.
 const TONES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
@@ -113,7 +114,7 @@ export function SetupRequiredState({ title, detail, action }: { title: string; d
   )
 }
 
-export function DataTable<T>({ rows, columns, empty, keyOf, minWidth = 640 }: {
+export function DataTable<T>({ rows, columns, empty, keyOf, minWidth = 640, loading, skeletonRows, skeletonCols }: {
   rows: T[]
   columns: { key: string; header: string; render: (row: T) => React.ReactNode; className?: string }[]
   empty?: React.ReactNode
@@ -121,7 +122,13 @@ export function DataTable<T>({ rows, columns, empty, keyOf, minWidth = 640 }: {
   // min-width of the scrollable table: dense 6-8 column tables must scroll
   // horizontally on phones instead of compressing into unreadable columns.
   minWidth?: number
+  // While the first load is in flight, render a shimmer skeleton shaped like
+  // the table instead of flashing the empty state before data arrives.
+  loading?: boolean
+  skeletonRows?: number
+  skeletonCols?: number
 }) {
+  if (loading) return <TableSkeleton rows={skeletonRows} cols={skeletonCols ?? Math.min(columns.length, 5)} minWidth={minWidth} />
   if (rows.length === 0 && empty) return <>{empty}</>
   return (
     <div className="overflow-x-auto rounded-xl border border-[#26374C]">

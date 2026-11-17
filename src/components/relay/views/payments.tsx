@@ -87,6 +87,7 @@ export function PaymentsView() {
       {payments.isError ? <ErrorState message={String(payments.error)} retry={() => payments.refetch()} /> : null}
 
       <DataTable
+        loading={payments.isLoading}
         keyOf={(p) => p.id}
         rows={payments.data?.payments ?? []}
         empty={

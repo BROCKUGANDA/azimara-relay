@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useApi } from '@/lib/client/hooks'
 import { PageHeader, MetricCard, EmptyState, ErrorState, SectionCard } from '../ui'
+import { MetricSkeleton, ChartSkeleton } from '../states'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StatusBadge } from '../ui'
 import { BarChart3 } from 'lucide-react'
@@ -44,15 +45,19 @@ export function AnalyticsView() {
 
       {data.isError ? <ErrorState message={String(data.error)} retry={() => data.refetch()} /> : null}
 
+      {data.isLoading ? <MetricSkeleton /> : (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Payments" value={data.data?.totals?.payments ?? 0} accent="teal" sub={`${data.data?.totals?.completed ?? 0} completed · ${data.data?.totals?.failed ?? 0} failed`} />
         <MetricCard label="Ledger entries" value={data.data?.totals?.ledgerEntries ?? 0} accent="blue" sub="Observed events only" />
         <MetricCard label="Batch completion" value={data.data?.batchCompletion?.total ? `${Math.round((data.data.batchCompletion.completed / data.data.batchCompletion.total) * 100)}%` : '0%'} accent="purple" sub={`${data.data?.batchCompletion?.completed ?? 0}/${data.data?.batchCompletion?.total ?? 0} batches`} />
         <MetricCard label="Avg settlement" value={data.data?.avgSettlementHours ? `${Math.max(0, data.data.avgSettlementHours).toFixed(1)}h` : '—'} accent="amber" sub="Creation → verified settlement" />
       </div>
+      )}
 
       <SectionCard className="mt-5" title="Payment volume over time" description="Daily totals from payment records. Tooltips show completed vs failed counts.">
-        {(data.data?.timeline ?? []).length === 0 ? (
+        {data.isLoading ? (
+          <ChartSkeleton />
+        ) : (data.data?.timeline ?? []).length === 0 ? (
           <EmptyState icon={<BarChart3 className="h-7 w-7" />} title="No payment activity in range" description="Charts populate from real records as operations run." />
         ) : (
           <div>

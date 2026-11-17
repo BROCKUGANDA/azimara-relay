@@ -73,17 +73,29 @@ export function ReconciliationView() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {[['Matched', s?.matched ?? 0, 'text-[#36C995]'], ['Mismatched', s?.mismatched ?? 0, 'text-[#F27683]'], ['Unreconciled', s?.unreconciled ?? 0, 'text-[#F2BB62]'], ['Failed', s?.failed ?? 0, 'text-[#F27683]'], ['Rejected webhooks', s?.webhookRejected ?? 0, 'text-[#F2BB62]']].map(([label, value, color]) => (
-          <div key={label as string} className="rounded-xl border border-[#26374C] bg-[#0E1725] p-4">
-            <div className="text-[10px] uppercase tracking-wide text-dim">{label}</div>
-            <div className={`mt-1 text-2xl font-semibold tabular-nums ${color}`}>{value}</div>
-          </div>
-        ))}
-      </div>
+      {recon.isLoading ? (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5" aria-hidden>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-[#26374C] bg-[#0E1725] p-4">
+              <div className="h-2 w-16 rounded bg-[#1B2A40] relay-shimmer" style={{ animationDelay: `${i * 80}ms` }} />
+              <div className="mt-2.5 h-7 w-12 rounded bg-[#142135] relay-shimmer" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {[['Matched', s?.matched ?? 0, 'text-[#36C995]'], ['Mismatched', s?.mismatched ?? 0, 'text-[#F27683]'], ['Unreconciled', s?.unreconciled ?? 0, 'text-[#F2BB62]'], ['Failed', s?.failed ?? 0, 'text-[#F27683]'], ['Rejected webhooks', s?.webhookRejected ?? 0, 'text-[#F2BB62]']].map(([label, value, color]) => (
+            <div key={label as string} className="rounded-xl border border-[#26374C] bg-[#0E1725] p-4">
+              <div className="text-[10px] uppercase tracking-wide text-dim">{label}</div>
+              <div className={`mt-1 text-2xl font-semibold tabular-nums ${color}`}>{value}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <SectionCard className="mt-5" title="Reconciliation records" description="Provider + chain evidence per payment.">
         <DataTable
+          loading={recon.isLoading}
           keyOf={(r) => r.id}
           rows={recon.data?.records ?? []}
           empty={<EmptyState icon={<GitCompareArrows className="h-8 w-8" />} title="Nothing to reconcile yet" description="Records appear as payments move through execution and settlement." />}

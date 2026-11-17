@@ -6,6 +6,7 @@ import { useSession, useRouter } from '@/lib/client/store'
 import { PublicSite } from './public'
 import { AuthView } from './auth'
 import { AppShell } from './app-shell'
+import { BootSplash } from './states'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15_000, refetchOnWindowFocus: false } },
@@ -48,16 +49,7 @@ function RelayRoot() {
     }
   }, [session.authenticated, path])
 
-  if (session.loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080D17]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#26374C] border-t-[#35D6C0]" />
-          <div className="text-sm text-dim">Loading AZIMARA RELAY…</div>
-        </div>
-      </div>
-    )
-  }
+  if (session.loading) return <BootSplash />
 
   if (path.startsWith('/invite/')) {
     return <AuthView mode="invite" token={path.slice('/invite/'.length)} />

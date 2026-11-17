@@ -80,6 +80,7 @@ export function BatchesView({ initialBatchId }: { initialBatchId?: string }) {
       {batches.isError ? <ErrorState message={String(batches.error)} retry={() => batches.refetch()} /> : null}
 
       <DataTable
+        loading={batches.isLoading}
         keyOf={(b) => b.id}
         rows={batches.data?.batches ?? []}
         empty={

@@ -5,6 +5,7 @@ import { useApi, api } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { timeAgo, shortAddress } from '@/lib/client/format'
 import { PageHeader, StatusBadge, EmptyState, ErrorState, DataTable, Amount } from '../ui'
+import { ListSkeleton } from '../states'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
@@ -58,7 +59,9 @@ export function ApprovalsView() {
         breadcrumb={['Relay', 'Payments', 'Approval center']}
       />
       {queue.isError ? <ErrorState message={String(queue.error)} retry={() => queue.refetch()} /> : null}
-      {(queue.data?.items ?? []).length === 0 ? (
+      {queue.isLoading ? (
+        <ListSkeleton rows={4} />
+      ) : (queue.data?.items ?? []).length === 0 ? (
         <EmptyState icon={<CheckCircle2 className="h-8 w-8" />} title="Approval queue is clear" description="New payment requests appear here with policy evidence, recipient history and payload hashes." />
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

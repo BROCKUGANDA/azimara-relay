@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import { useApi, api } from '@/lib/client/hooks'
 import { PageHeader, EmptyState, ErrorState, SectionCard, SetupRequiredState } from '../ui'
+import { PanelSkeleton } from '../states'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatDateTime } from '@/lib/client/format'
 import { toast } from 'sonner'
-import { Blocks, RefreshCw, Trash2, CheckCircle2, XCircle, ShieldCheck } from 'lucide-react'
+import { Blocks, RefreshCw, Trash2, CheckCircle2, XCircle, ShieldCheck, Wallet, Droplets, ArrowRightLeft } from 'lucide-react'
 
 type Status = {
   multihopper: { configured: boolean; environment: string; status: string; statusDetail: string | null; lastCheckAt: string | null; capability: { maxDestinations: number }; webhookConfigured: boolean; baseUrl: string; verificationNote: string }
@@ -27,6 +28,13 @@ export function IntegrationsView() {
   const [apiKey, setApiKey] = useState('')
   const [webhookSecret, setWebhookSecret] = useState('')
   const [busy, setBusy] = useState(false)
+  const [destCount, setDestCount] = useState(5)
+
+  // Documented mainnet screening fee per destination wallet (provider agentic
+  // integration guide). Exact pre-charge is always confirmed from the live
+  // create-transfer response before any broadcast.
+  const SCREENING_FEE_SOL = 0.002
+  const screeningEstimate = Math.max(0, destCount) * SCREENING_FEE_SOL
 
   async function save() {
     setBusy(true)
@@ -150,8 +158,60 @@ export function IntegrationsView() {
         </SectionCard>
 
         <div className="space-y-5">
+          <SectionCard
+            title="Wallet funding requirements"
+            description="What the provider's agentic integration guide requires before a transfer can execute."
+          >
+            <div className="space-y-2">
+              {[
+                'Transfer amount — must sit on the source wallet at deploy time.',
+                'Keeper up-front funding — requiredSolUpFrontLamports, returned by the provider per transfer, must be present before broadcasting.',
+                'Gas — every transaction in the sequence (keeper funding → route init → orchestrator init → session init → dispersion init) is signed by you and paid from the wallet.',
+                'Screening fee — 0.002 SOL per destination wallet on mainnet, non-refundable, charged per wallet screened.',
+              ].map((line, i) => (
+                <div key={i} className="flex items-start gap-2 rounded-lg border border-[#26374C] bg-[#0B1220] px-3 py-2 text-xs text-secondary">
+                  <Wallet className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#35D6C0]" />
+                  <span>{line}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
+              <Label>Screening fee estimate</Label>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <Input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={destCount}
+                  onChange={(e) => setDestCount(Number(e.target.value) || 0)}
+                  className="w-24 border-[#26374C] bg-[#0B1220]"
+                  aria-label="Destination wallets"
+                />
+                <span className="text-xs text-dim">destination wallets ×</span>
+                <span className="font-mono text-xs text-secondary">{SCREENING_FEE_SOL} SOL</span>
+                <span className="text-[#26374C]">=</span>
+                <span className="font-mono text-sm font-semibold text-[#35D6C0]">{screeningEstimate.toFixed(4)} SOL</span>
+              </div>
+              <p className="mt-2 text-[10px] text-dim">Estimate only — excludes transfer amount, keeper up-front lamports and gas. The provider returns exact requirements before anything is broadcast, and Relay surfaces them for approval first. Destinations are capped at {s?.multihopper?.capability?.maxDestinations ?? 20} per route.</p>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              <div className="flex items-start gap-2 rounded-lg border border-[#36C995]/30 bg-[#36C995]/5 px-3 py-2 text-xs text-[#36C995]">
+                <Droplets className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span><span className="font-medium">No real funds needed to validate the flow:</span> devnet uses mh_test_ keys — acquire devnet SOL from the Solana faucet and run the full create → sign → broadcast → monitor sequence with zero mainnet exposure.</span>
+              </div>
+              <div className="flex items-start gap-2 rounded-lg border border-[#658CFF]/30 bg-[#658CFF]/5 px-3 py-2 text-xs text-[#658CFF]">
+                <ArrowRightLeft className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span><span className="font-medium">Alternative without MultiHopper:</span> direct SOL/SPL transfers to registered recipients need only ordinary gas on your own wallet — no keeper funding, no screening fee. Enable the provider rail later; nothing is simulated in the meantime.</span>
+              </div>
+            </div>
+          </SectionCard>
+
           <SectionCard title="Solana RPC" description="Public RPC connectivity for balances and confirmation checks.">
-            {s ? (
+            {status.isLoading ? (
+              <PanelSkeleton count={1} />
+            ) : s ? (
               <div className="flex items-center justify-between rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
                 <div>
                   <div className="text-sm font-medium">{s.solana.network}</div>
@@ -162,7 +222,9 @@ export function IntegrationsView() {
             ) : null}
           </SectionCard>
           <SectionCard title="Relay Intelligence" description="AI provider state.">
-            {s ? (
+            {status.isLoading ? (
+              <PanelSkeleton count={1} />
+            ) : s ? (
               <div className="flex items-center justify-between rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
                 <div>
                   <div className="text-sm font-medium">{s.intelligence.provider} provider</div>

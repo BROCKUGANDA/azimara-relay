@@ -234,6 +234,45 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 ::-webkit-scrollbar-thumb { background: #26374C; border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: #35D6C0; }
 
+/* ─── Custom state layers: shimmer, boot progress, view transitions ─────── */
+
+/* Skeleton shimmer sweep — a teal-tinted highlight passes over each bar. */
+.relay-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.relay-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(53, 214, 192, 0.09), transparent);
+  animation: relay-sweep 1.6s ease-in-out infinite;
+}
+@keyframes relay-sweep {
+  100% { transform: translateX(100%); }
+}
+
+/* Boot splash indeterminate progress bar. */
+.relay-progress-bar {
+  animation: relay-progress 1.5s ease-in-out infinite;
+}
+@keyframes relay-progress {
+  0% { transform: translateX(-110%); }
+  60% { transform: translateX(60%); }
+  100% { transform: translateX(320%); }
+}
+
+/* Hash-route view transitions: content settles in with a short rise+fade.
+   Keyed remounting on path change re-triggers the animation per navigation. */
+.view-enter {
+  animation: view-enter 220ms ease-out both;
+}
+@keyframes view-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

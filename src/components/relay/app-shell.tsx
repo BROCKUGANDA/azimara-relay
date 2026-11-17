@@ -18,6 +18,7 @@ import {
   GitCompareArrows, BrainCircuit, BarChart3, KeyRound, Blocks, UserCog, ScrollText, CreditCard, Command,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ViewBoundary } from './states'
 
 // View registry — mirrors the PRD authenticated route table, implemented as
 // internal hash routes because the environment exposes a single page route.
@@ -336,7 +337,14 @@ export function AppShell() {
             size tracks the widest table's min-content and inflates the whole
             shell horizontally on narrow screens. */}
         <main className="mx-auto w-full min-w-0 max-w-[1600px] flex-1 p-4 sm:p-8">
-          <AppView path={path} navigate={navigate} />
+          {/* Keyed by path: navigation remounts the boundary (clearing any
+              caught error) and re-triggers the view transition. A crash inside
+              one view is contained here — sidebar, topbar and session survive. */}
+          <div key={path} className="view-enter">
+            <ViewBoundary navigate={navigate}>
+              <AppView path={path} navigate={navigate} />
+            </ViewBoundary>
+          </div>
         </main>
       </div>
     </div>

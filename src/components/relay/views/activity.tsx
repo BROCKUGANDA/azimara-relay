@@ -4,6 +4,7 @@ import { useApi, api } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { timeAgo } from '@/lib/client/format'
 import { PageHeader, EmptyState, ErrorState, SectionCard } from '../ui'
+import { ListSkeleton } from '../states'
 import { History, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -49,7 +50,9 @@ export function ActivityView() {
       />
       {activity.isError ? <ErrorState message={String(activity.error)} retry={() => activity.refetch()} /> : null}
       <SectionCard title="Recent events">
-        {(activity.data?.events ?? []).length === 0 ? (
+        {activity.isLoading ? (
+          <ListSkeleton rows={6} />
+        ) : (activity.data?.events ?? []).length === 0 ? (
           <EmptyState icon={<History className="h-8 w-8" />} title="No activity yet" description="Organization events appear here as operations run." />
         ) : (
           <ol className="relative ml-3 space-y-0 border-l border-[#26374C]">

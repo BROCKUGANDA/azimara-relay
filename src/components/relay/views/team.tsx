@@ -132,6 +132,7 @@ export function TeamView() {
       {members.isError ? <ErrorState message={String(members.error)} retry={() => members.refetch()} /> : null}
 
       <DataTable
+        loading={members.isLoading}
         keyOf={(m) => m.id}
         rows={members.data?.members ?? []}
         columns={[

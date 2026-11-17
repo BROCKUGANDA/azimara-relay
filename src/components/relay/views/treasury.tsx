@@ -5,6 +5,7 @@ import { useRouter } from '@/lib/client/store'
 import { useApi } from '@/lib/client/hooks'
 import { formatAmount, timeAgo, shortAddress } from '@/lib/client/format'
 import { PageHeader, MetricCard, StatusBadge, EmptyState, SectionCard, ErrorState, Amount, DataTable } from '../ui'
+import { TableSkeleton } from '../states'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RefreshCw, Wallet as WalletIcon, AlertTriangle } from 'lucide-react'
@@ -165,7 +166,9 @@ export function TreasuryView() {
       </SectionCard>
 
       <SectionCard className="mt-6" title="Recent payments" description="Latest 12 across the organization.">
-        {(treasury.data?.recentPayments ?? []).length === 0 ? (
+        {treasury.isLoading ? (
+          <TableSkeleton rows={4} cols={4} />
+        ) : (treasury.data?.recentPayments ?? []).length === 0 ? (
           <EmptyState title="No payments yet" />
         ) : (
           <DataTable
