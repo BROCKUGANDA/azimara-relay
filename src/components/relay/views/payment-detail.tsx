@@ -6,8 +6,10 @@ import { api } from '@/lib/client/hooks'
 import { formatAmount, shortAddress, shortHash, formatDateTime, timeAgo } from '@/lib/client/format'
 import { PageHeader, StatusBadge, Amount, SectionCard, ErrorState, SetupRequiredState } from '../ui'
 import { DetailSkeleton } from '../states'
+import { ProgressFlow } from '../motion'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { haptic } from '@/lib/client/motion'
 import { ArrowLeft, CheckCircle2, Circle, XCircle, ExternalLink, Quote, RefreshCw, Play, FileSignature, ShieldCheck, Ban } from 'lucide-react'
 
 type Detail = {
@@ -58,6 +60,18 @@ type Detail = {
 
 const LIFECYCLE_STEPS = ['PENDING_APPROVAL', 'APPROVED', 'QUOTED', 'AWAITING_SIGNATURE', 'FUNDING_BROADCAST', 'FUNDING_CONFIRMED', 'INITIALIZATION_BROADCAST', 'PROCESSING', 'SETTLEMENT_VERIFICATION', 'COMPLETED']
 
+// Condensed 5-node pipeline position for the ProgressFlow widget. Unknown
+// states (terminal failures, refunds) clamp to the last node they could
+// have reached; the tone color communicates the outcome instead.
+function flowIndex(status: string): number {
+  if (['DRAFT', 'VALIDATING'].includes(status)) return 0
+  if (['PENDING_APPROVAL'].includes(status)) return 0
+  if (['APPROVED', 'QUOTED', 'QUOTE_EXPIRED'].includes(status)) return 1
+  if (['AWAITING_SIGNATURE'].includes(status)) return 2
+  if (['FUNDING_BROADCAST', 'FUNDING_CONFIRMED', 'INITIALIZATION_BROADCAST', 'PROCESSING'].includes(status)) return 3
+  return 4 // SETTLEMENT_VERIFICATION, COMPLETED, terminal states
+}
+
 export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; navigate: (to: string) => void }) {
   const detail = useQuery<Detail>({
     queryKey: ['payment', paymentId],
@@ -78,11 +92,14 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
 
   async function act(action: string, body?: Record<string, unknown>, method: string = 'POST') {
     setBusy(action)
+    haptic('tap')
     try {
       await api(`/api/payments/${paymentId}/${action}`, { method, json: body })
+      haptic('success')
       toast.success(`${action.replace('-', ' ')} completed`)
       detail.refetch()
     } catch (err) {
+      haptic('error')
       toast.error(err instanceof Error ? err.message : 'Action failed')
     } finally {
       setBusy(null)
@@ -93,6 +110,9 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
     const reason = decision === 'REJECTED' ? window.prompt('Rejection reason:') : window.prompt('Approval note (optional):')
     if (reason === null) return
     if (decision === 'REJECTED' && !reason) return
+    // Two-step confirm gets its own deliberate pattern — the same triple-pulse
+    // used for the duties-separation moment in the approval center.
+    haptic('approve')
     await act('approve', { decision, reason: reason || undefined })
   }
 
@@ -155,6 +175,19 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
               </div>
             }
           />
+
+          {/* Condensed lifecycle pipeline — position derives from the same
+              state machine that gates server actions, not from decoration. */}
+          {d.payment.status !== 'DRAFT' ? (
+            <div className="mt-1 mb-6 overflow-x-auto rounded-xl border border-[#26374C] bg-[#0B1220]/60 px-4 py-3">
+              <ProgressFlow
+                steps={['Request', 'Approve', 'Quote', 'Sign', 'Settle']}
+                current={flowIndex(d.payment.status)}
+                tone={d.payment.status === 'COMPLETED' ? 'green' : ['REJECTED', 'CANCELLED', 'FAILED'].includes(d.payment.status) ? 'red' : ['RECOVERABLE', 'RECONCILIATION_REQUIRED', 'MANUAL_REVIEW', 'QUOTE_EXPIRED'].includes(d.payment.status) ? 'amber' : 'teal'}
+                className="min-w-[420px]"
+              />
+            </div>
+          ) : null}
 
           {d.payment.statusReason === 'PROVIDER_SETUP_REQUIRED' ? (
             <div className="mb-5">

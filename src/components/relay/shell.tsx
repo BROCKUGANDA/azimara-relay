@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useSession, useRouter } from '@/lib/client/store'
+import { hydrateMotionPrefs } from '@/lib/client/motion'
 import { PublicSite } from './public'
 import { AuthView } from './auth'
 import { AppShell } from './app-shell'
@@ -23,6 +24,12 @@ export default function RelayApp() {
 function RelayRoot() {
   const session = useSession()
   const { path, navigate, sync } = useRouter()
+
+  // Motion preferences (animations/haptics/depth) gate every decorative
+  // effect — hydrate them onto <html> before first paint of any surface.
+  useEffect(() => {
+    hydrateMotionPrefs()
+  }, [])
 
   useEffect(() => {
     sync()

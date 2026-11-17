@@ -13,6 +13,8 @@ import {
   Shield, Landmark, Workflow, BrainCircuit, Blocks, Lock, ArrowRight, Check,
   Wallet, FileCheck2, Webhook, KeyRound, Banknote, ChevronRight, Terminal, Building2, Send,
 } from 'lucide-react'
+import { Reveal, Tilt3D, MagneticButton, PulseDot } from './motion'
+import { LogoGlyph, GlyphShield } from './glyphs'
 
 const NAV: { path: string; label: string }[] = [
   { path: '/product', label: 'Product' },
@@ -29,11 +31,7 @@ const NAV: { path: string; label: string }[] = [
 function Logo({ size = 28 }: { size?: number }) {
   return (
     <span className="flex items-center gap-2.5">
-      <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
-        <rect x="1.5" y="1.5" width="29" height="29" rx="8" stroke="#35D6C0" strokeWidth="1.6" />
-        <path d="M9 20.5 16 8l7 12.5" stroke="#35D6C0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M12.2 17.4h7.6" stroke="#658CFF" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
+      <LogoGlyph size={size} />
       <span className="text-[15px] font-semibold tracking-tight">
         AZIMARA <span className="text-[#35D6C0]">RELAY</span>
       </span>
@@ -141,12 +139,103 @@ function Footer() {
 
 function Hero({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: string }) {
   return (
-    <div className="relay-radial border-b border-[#1A293D]">
+    <div className="relay-radial relative overflow-hidden border-b border-[#1A293D]">
+      {/* Ambient aurora wash — breathes between 55% and 100% opacity. */}
+      <div className="relay-aurora" aria-hidden />
       <div className="relay-grid-bg">
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
-          <Badge variant="outline" className="border-[#35D6C0]/40 bg-[#35D6C0]/10 text-[#35D6C0]">{eyebrow}</Badge>
-          <h1 className="mt-5 text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">{title}</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-secondary sm:text-base">{sub}</p>
+        <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          {/* Copy column — staggered entrance choreography. */}
+          <div className="text-center lg:text-left">
+            <Reveal variant="fade">
+              <Badge variant="outline" className="border-[#35D6C0]/40 bg-[#35D6C0]/10 text-[#35D6C0]">
+                <PulseDot className="mr-1.5" color="#35D6C0" size={6} /> {eyebrow}
+              </Badge>
+            </Reveal>
+            <Reveal variant="rise" delay={80}>
+              <h1 className="relay-gradient-text mt-5 text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">{title}</h1>
+            </Reveal>
+            <Reveal variant="rise" delay={160}>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-secondary sm:text-base lg:mx-0">{sub}</p>
+            </Reveal>
+          </div>
+          {/* 3D scene column — layered perspective composition. */}
+          <HeroScene />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Layered 3D hero scene: an orbiting relay ring system around a floating
+// payment console, with a payment beam lane beneath. Pure CSS animation
+// (opacity/transform) — no canvas, no WebGL, no runtime cost beyond compositing.
+function HeroScene() {
+  return (
+    <div className="relative mx-auto hidden h-[340px] w-full max-w-md select-none lg:block" aria-hidden>
+      {/* Perspective container */}
+      <div style={{ perspective: '1100px' }} className="absolute inset-0">
+        {/* Orbit ring system */}
+        <div className="absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2">
+          <svg viewBox="0 0 320 320" className="relay-orbit h-full w-full opacity-60">
+            <ellipse cx="160" cy="160" rx="150" ry="58" fill="none" stroke="#35D6C0" strokeOpacity="0.28" strokeWidth="1" strokeDasharray="2 6" />
+          </svg>
+          <svg viewBox="0 0 320 320" className="relay-orbit-rev absolute inset-0 h-full w-full opacity-40">
+            <ellipse cx="160" cy="160" rx="120" ry="104" fill="none" stroke="#658CFF" strokeOpacity="0.3" strokeWidth="1" strokeDasharray="3 9" />
+          </svg>
+          {/* Nodes riding the orbits */}
+          <span className="absolute left-[6%] top-[46%] h-2.5 w-2.5 rounded-full bg-[#35D6C0] shadow-[0_0_12px_rgba(53,214,192,0.9)]" />
+          <span className="absolute right-[9%] top-[24%] h-2 w-2 rounded-full bg-[#658CFF] shadow-[0_0_10px_rgba(101,140,255,0.9)]" />
+        </div>
+        {/* Floating payment console */}
+        <div className="relay-float absolute left-1/2 top-1/2 w-[290px] -translate-x-1/2 -translate-y-1/2" style={{ transform: 'translate(-50%, -50%)' }}>
+          <div
+            className="relay-glow-border rounded-2xl border border-[#26374C] bg-[#0E1725]/90 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.5)] backdrop-blur"
+            style={{ transform: 'rotateX(7deg) rotateY(-6deg)', transformStyle: 'preserve-3d' }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LogoGlyph size={20} />
+                <span className="text-[11px] font-semibold tracking-tight">AZIMARA <span className="text-[#35D6C0]">RELAY</span></span>
+              </div>
+              <span className="rounded-full border border-[#36C995]/30 bg-[#36C995]/10 px-2 py-0.5 text-[9px] font-medium text-[#36C995]">SETTLED</span>
+            </div>
+            <div className="mt-4 rounded-lg border border-[#1A293D] bg-[#0B1220] p-3">
+              <div className="flex items-center justify-between text-[10px] text-dim">
+                <span>Relay payment · RPY-8841</span>
+                <span className="font-mono">USDC</span>
+              </div>
+              <div className="mt-2 flex items-end justify-between">
+                <div>
+                  <div className="text-xl font-semibold tabular-nums text-[#35D6C0]">24,850.00</div>
+                  <div className="mt-0.5 text-[10px] text-dim">Vendor distribution · 12 recipients</div>
+                </div>
+                <svg width="92" height="30" viewBox="0 0 92 30" fill="none">
+                  <path d="M2 24 C 14 22, 18 12, 30 14 S 52 20, 62 12 S 82 4, 90 6" stroke="#35D6C0" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+            {/* Approval chain — the maker-checker story in miniature. */}
+            <div className="mt-3 flex items-center gap-1.5">
+              {['Built', 'Approved ×2', 'Signed', 'Settled'].map((s, i) => (
+                <div key={s} className="flex flex-1 items-center gap-1.5">
+                  <span
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: i < 3 ? '#36C995' : '#26374C', boxShadow: i < 3 ? '0 0 6px rgba(54,201,149,0.8)' : 'none' }}
+                  />
+                  <span className="text-[9px] text-dim">{s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* Floating satellite tiles */}
+        <div className="relay-float-slow absolute left-[2%] top-[12%] rounded-xl border border-[#26374C] bg-[#0E1725]/85 px-3 py-2 shadow-lg backdrop-blur" style={{ animationDelay: '0.8s' }}>
+          <div className="text-[9px] text-dim">Policy engine</div>
+          <div className="mt-0.5 text-[11px] font-semibold text-[#A18BEB]">2-of-3 approvers</div>
+        </div>
+        <div className="relay-float-slow absolute bottom-[8%] right-[2%] rounded-xl border border-[#26374C] bg-[#0E1725]/85 px-3 py-2 shadow-lg backdrop-blur" style={{ animationDelay: '1.6s' }}>
+          <div className="text-[9px] text-dim">Non-custodial</div>
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-[#36C995]"><GlyphShield size={11} /> Keys stay yours</div>
         </div>
       </div>
     </div>
@@ -156,13 +245,56 @@ function Hero({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: st
 function FeatureGrid({ items }: { items: { icon: React.ReactNode; title: string; body: string }[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      {items.map((f) => (
-        <Card key={f.title} className="border-[#26374C] bg-[#0E1725] p-5 transition-colors duration-150 hover:bg-[#142135]">
-          <div className="text-[#35D6C0]">{f.icon}</div>
-          <h3 className="mt-3 text-sm font-semibold">{f.title}</h3>
-          <p className="mt-1.5 text-xs leading-relaxed text-dim">{f.body}</p>
-        </Card>
+      {items.map((f, i) => (
+        <Reveal key={f.title} variant="rise" delay={(i % 3) * 90} as="div">
+          <Tilt3D max={4} glare className="h-full">
+            <Card className="h-full border-[#26374C] bg-[#0E1725] p-5 transition-colors duration-150 hover:border-[#35D6C0]/25 hover:bg-[#142135]">
+              <div className="text-[#35D6C0] drop-shadow-[0_0_10px_rgba(53,214,192,0.4)]">{f.icon}</div>
+              <h3 className="mt-3 text-sm font-semibold">{f.title}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-dim">{f.body}</p>
+            </Card>
+          </Tilt3D>
+        </Reveal>
       ))}
+    </div>
+  )
+}
+
+// Trust strip — continuously scrolling capability chips. The track renders
+// the sequence twice (aria-hidden duplicate) and translates -50%, giving a
+// seamless loop with pure transform animation. Pauses on hover.
+const TRUST_ITEMS = [
+  'Solana mainnet-beta & devnet isolation',
+  'USDC · USDT · SOL settlement',
+  'MultiHopper routed transfers',
+  '23-state payment lifecycle',
+  'Maker-checker approval policies',
+  'Payload-hash approval binding',
+  'HMAC-verified webhooks',
+  'TOTP multi-factor authentication',
+  'Organization RBAC — 7 roles',
+  'Immutable audit trail',
+  'AES-256-GCM secrets at rest',
+  'CSV reconciliation exports',
+]
+
+function TrustMarquee() {
+  const chip = (text: string, hidden = false) => (
+    <span
+      key={`${text}-${hidden ? 'dup' : 'orig'}`}
+      aria-hidden={hidden || undefined}
+      className="mx-2 inline-flex shrink-0 items-center gap-2 rounded-full border border-[#26374C] bg-[#0E1725]/80 px-3.5 py-1.5 text-[11px] text-secondary"
+    >
+      <PulseDot color="#35D6C0" size={5} />
+      {text}
+    </span>
+  )
+  return (
+    <div className="relay-marquee border-b border-[#1A293D] bg-[#0B1220]/70 py-3" role="presentation">
+      <div className="relay-marquee-track">
+        {TRUST_ITEMS.map((t) => chip(t))}
+        {TRUST_ITEMS.map((t) => chip(t, true))}
+      </div>
     </div>
   )
 }
@@ -170,12 +302,21 @@ function FeatureGrid({ items }: { items: { icon: React.ReactNode; title: string;
 function Cta({ title, sub, primary, secondary }: { title: string; sub: string; primary: string; secondary: string }) {
   const { navigate } = useRouter()
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
-      <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-      <p className="mx-auto mt-2 max-w-xl text-sm text-secondary">{sub}</p>
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <Button onClick={() => navigate('/register')} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">{primary}</Button>
-        <Button variant="outline" onClick={() => navigate('/contact')} className="border-[#26374C] text-secondary hover:text-foreground">{secondary}</Button>
+    <div className="relative overflow-hidden">
+      <div className="relay-aurora" aria-hidden />
+      <div className="relative mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
+        <Reveal variant="scale">
+          <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-secondary">{sub}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <MagneticButton onClick={() => navigate('/register')} hapticEvent="select" className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#35D6C0] px-4 text-sm font-medium text-[#062A26] shadow-[0_0_24px_rgba(53,214,192,0.3)] transition-colors hover:bg-[#35D6C0]/90">
+              {primary} <ArrowRight className="h-4 w-4" />
+            </MagneticButton>
+            <MagneticButton onClick={() => navigate('/contact')} strength={5} className="inline-flex h-10 items-center justify-center rounded-md border border-[#26374C] bg-transparent px-4 text-sm font-medium text-secondary transition-colors hover:text-foreground">
+              {secondary}
+            </MagneticButton>
+          </div>
+        </Reveal>
       </div>
     </div>
   )
@@ -278,6 +419,7 @@ function Home() {
         title="Move money through software. Keep control over authorization. Make every payment accountable."
         sub="AZIMARA RELAY is a financial operations platform for businesses: recurring payments, vendor distributions, contractor payouts, treasury movements and multi-recipient settlements from one secure application."
       />
+      <TrustMarquee />
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <FeatureGrid
           items={[

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useApi } from '@/lib/client/hooks'
 import { PageHeader, MetricCard, EmptyState, ErrorState, SectionCard } from '../ui'
 import { MetricSkeleton, ChartSkeleton } from '../states'
+import { MiniBars } from '../widgets'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StatusBadge } from '../ui'
 import { BarChart3 } from 'lucide-react'
@@ -82,13 +83,18 @@ export function AnalyticsView() {
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <SectionCard title="Lifecycle distribution" description="Payments by current state.">
           <div className="space-y-2">
-            {(data.data?.byStatus ?? []).length === 0 ? <div className="text-xs text-dim">No data yet.</div> : null}
-            {(data.data?.byStatus ?? []).map((s) => (
-              <div key={s.status} className="flex items-center justify-between gap-2">
-                <StatusBadge status={s.status} />
-                <span className="font-mono text-xs tabular-nums">{s.count}</span>
-              </div>
-            ))}
+            {(data.data?.byStatus ?? []).length === 0 ? <div className="text-xs text-dim">No data yet.</div> : (
+              <>
+                {/* Relative magnitude of each state at a glance. */}
+                <MiniBars data={(data.data?.byStatus ?? []).map((s) => s.count)} color="#A18BEB" height={36} label="Payments per lifecycle state" />
+                {(data.data?.byStatus ?? []).map((s) => (
+                  <div key={s.status} className="flex items-center justify-between gap-2">
+                    <StatusBadge status={s.status} />
+                    <span className="font-mono text-xs tabular-nums">{s.count}</span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </SectionCard>
         <SectionCard title="Asset distribution" description="Completed volume per asset.">

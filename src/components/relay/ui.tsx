@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { formatAmount } from '@/lib/client/format'
 import { TableSkeleton } from './states'
+import { Tilt3D, CountUp } from './motion'
 
 // Payment status tones per PRD §8.6 — every state visually distinct.
 const TONES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
@@ -30,11 +31,20 @@ const STATUS_TONE: Record<string, string> = {
 export function StatusBadge({ status, label }: { status: string; label?: string }) {
   const tone = TONES[STATUS_TONE[status] ?? 'grey']
   const text = label ?? status.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+  const live = ['PENDING_APPROVAL', 'AWAITING_SIGNATURE', 'FUNDING_BROADCAST', 'PROCESSING', 'VALIDATING', 'QUOTING', 'EXECUTING'].includes(status)
   return (
     // max-w + truncate: long lifecycle labels (e.g. "Settlement verification")
     // must not blow out narrow table cells or overview list rows on mobile.
     <span className={cn('inline-flex max-w-[11rem] items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium', tone.bg, tone.text, tone.border)}>
-      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', tone.dot)} />
+      {live ? (
+        // In-flight states get a breathing beacon instead of a static dot.
+        <span className="relative flex h-1.5 w-1.5 shrink-0">
+          <span className="absolute inset-0 rounded-full animate-ping" style={{ backgroundColor: 'currentColor', opacity: 0.5, animationDuration: '1.6s' }} />
+          <span className="relative h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'currentColor' }} />
+        </span>
+      ) : (
+        <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', tone.dot)} />
+      )}
       <span className="truncate">{text}</span>
     </span>
   )
@@ -44,14 +54,37 @@ export function Amount({ base, decimals, symbol, className }: { base: string; de
   return <span className={cn('font-mono tabular-nums', className)}>{formatAmount(base, decimals, symbol)}</span>
 }
 
-export function MetricCard({ label, value, sub, accent }: { label: string; value: React.ReactNode; sub?: React.ReactNode; accent?: 'teal' | 'purple' | 'amber' | 'red' | 'blue' }) {
+const METRIC_GLOW: Record<string, string> = {
+  teal: 'rgba(53, 214, 192, 0.10)',
+  purple: 'rgba(161, 139, 235, 0.10)',
+  amber: 'rgba(242, 187, 98, 0.10)',
+  red: 'rgba(242, 118, 131, 0.10)',
+  blue: 'rgba(101, 140, 255, 0.10)',
+}
+
+export function MetricCard({ label, value, sub, accent, countUp = false }: { label: string; value: React.ReactNode; sub?: React.ReactNode; accent?: 'teal' | 'purple' | 'amber' | 'red' | 'blue'; countUp?: boolean }) {
   const accentClass = accent === 'teal' ? 'text-[#35D6C0]' : accent === 'purple' ? 'text-[#A18BEB]' : accent === 'amber' ? 'text-[#F2BB62]' : accent === 'red' ? 'text-[#F27683]' : accent === 'blue' ? 'text-[#658CFF]' : 'text-foreground'
+  const glow = accent ? METRIC_GLOW[accent] : 'rgba(240, 245, 250, 0.05)'
+  const numeric = typeof value === 'number'
   return (
-    <div className="rounded-xl border border-[#26374C] bg-[#0E1725] p-4 transition-colors duration-150 hover:bg-[#142135]">
+    <Tilt3D
+      max={3}
+      glare
+      className="group relative rounded-xl border border-[#26374C] bg-[#0E1725] p-4 transition-colors duration-150 hover:border-[#35D6C0]/25 hover:bg-[#142135]"
+      style={{ boxShadow: `inset 0 1px 0 rgba(255,255,255,0.02)` }}
+    >
       <div className="text-xs font-medium uppercase tracking-wide text-dim">{label}</div>
-      <div className={cn('mt-1.5 text-2xl font-semibold tabular-nums', accentClass)}>{value}</div>
+      <div className={cn('mt-1.5 text-2xl font-semibold tabular-nums', accentClass)}>
+        {numeric && countUp ? <CountUp value={value as number} /> : value}
+      </div>
       {sub ? <div className="mt-1 text-xs text-dim">{sub}</div> : null}
-    </div>
+      {/* Accent wash that brightens on hover — pure opacity animation. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{ background: `radial-gradient(120% 90% at 50% -10%, ${glow}, transparent 60%)` }}
+      />
+    </Tilt3D>
   )
 }
 
@@ -82,7 +115,11 @@ export function PageHeader({ title, description, actions, breadcrumb }: { title:
 export function EmptyState({ icon, title, description, action }: { icon?: React.ReactNode; title: string; description?: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#26374C] bg-[#0E1725]/50 px-6 py-14 text-center">
-      {icon ? <div className="mb-3 text-[#35D6C0]">{icon}</div> : null}
+      {icon ? (
+        // Glyph floats gently + casts a teal halo — the empty state feels
+        // alive instead of like a dead end.
+        <div className="relay-float mb-3 text-[#35D6C0] drop-shadow-[0_0_18px_rgba(53,214,192,0.35)]">{icon}</div>
+      ) : null}
       <div className="text-sm font-medium">{title}</div>
       {description ? <div className="mt-1 max-w-sm text-xs text-dim">{description}</div> : null}
       {action ? <div className="mt-4">{action}</div> : null}

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import { haptic } from '@/lib/client/motion'
 import { ShieldCheck, CheckCircle2, AlertTriangle, Building2 } from 'lucide-react'
 
 type Mode = 'login' | 'register' | 'verify' | 'mfa' | 'create-org' | 'invite'
@@ -102,6 +103,7 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
       const link = `#/verify/${res.emailDelivery.verificationToken}`
       setDevVerifyLink(link)
       toast.success('Account created. Verify your email to continue.')
+      haptic('success')
       if (orgName) await session.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Registration failed')
@@ -113,6 +115,7 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
   async function login() {
     if (!email.trim() || !password) return toast.error('Email and password are required')
     setBusy(true)
+    haptic('tap')
     try {
       const res = await api<{ mfaRequired: boolean }>('/api/auth/login', { json: { email: email.trim(), password } })
       await session.refresh()
@@ -121,9 +124,11 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
         toast.info('Enter your authenticator code')
       } else {
         navigate('/app')
+        haptic('success')
         toast.success('Welcome back')
       }
     } catch (err) {
+      haptic('error')
       toast.error(err instanceof Error ? err.message : 'Sign in failed')
     } finally {
       setBusy(false)
@@ -137,8 +142,10 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
       await api('/api/auth/mfa', { json: { action: 'challenge', code: otp } })
       await session.refresh()
       navigate('/app')
+      haptic('success')
       toast.success('Signed in')
     } catch (err) {
+      haptic('error')
       toast.error(err instanceof Error ? err.message : 'Invalid code')
     } finally {
       setBusy(false)
@@ -292,7 +299,7 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
           <Label htmlFor="password">Password</Label>
           <Input id="password" type="password" placeholder={isRegister ? 'Minimum 10 characters' : '••••••••••'} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => {
             // IME-composition Enter (CJK candidates confirm) must not submit.
-            if (e.key === 'Enter' && !(e.nativeEvent instanceof KeyboardEvent && e.nativeEvent.isComposing)) (isRegister ? register() : login())
+            if (e.key === 'Enter' && !(e.nativeEvent instanceof KeyboardEvent && e.nativeEvent.isComposing)) { if (isRegister) register(); else login() }
           }} className="mt-1.5 border-[#26374C] bg-[#0B1220]" />
         </div>
         {isRegister && (

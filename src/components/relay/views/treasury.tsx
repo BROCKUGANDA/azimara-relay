@@ -6,6 +6,8 @@ import { useApi } from '@/lib/client/hooks'
 import { formatAmount, timeAgo, shortAddress } from '@/lib/client/format'
 import { PageHeader, MetricCard, StatusBadge, EmptyState, SectionCard, ErrorState, Amount, DataTable } from '../ui'
 import { TableSkeleton } from '../states'
+import { Sparkline } from '../widgets'
+import { Reveal } from '../motion'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RefreshCw, Wallet as WalletIcon, AlertTriangle } from 'lucide-react'
@@ -93,14 +95,28 @@ export function TreasuryView() {
       {treasury.isError ? <ErrorState message={String(treasury.error)} retry={() => treasury.refetch()} /> : null}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Payments (30d)" value={analytics.data?.totals?.payments ?? analytics.data?.timeline.reduce((a, t) => a + t.count, 0) ?? 0} accent="teal" sub="All payment records" />
-        <MetricCard label="Pending approvals" value={m?.pendingApprovals ?? 0} accent="purple" />
-        <MetricCard label="In flight" value={m?.activeTransfers ?? 0} accent="blue" />
-        <MetricCard label="Failed / attention" value={m?.failedPayments ?? 0} accent="red" />
+        <Reveal variant="rise" as="div"><MetricCard label="Payments (30d)" value={analytics.data?.totals?.payments ?? analytics.data?.timeline.reduce((a, t) => a + t.count, 0) ?? 0} accent="teal" countUp sub="All payment records" /></Reveal>
+        <Reveal variant="rise" delay={70} as="div"><MetricCard label="Pending approvals" value={m?.pendingApprovals ?? 0} accent="purple" countUp /></Reveal>
+        <Reveal variant="rise" delay={140} as="div"><MetricCard label="In flight" value={m?.activeTransfers ?? 0} accent="blue" countUp /></Reveal>
+        <Reveal variant="rise" delay={210} as="div"><MetricCard label="Failed / attention" value={m?.failedPayments ?? 0} accent="red" countUp /></Reveal>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <SectionCard title="Payment volume — last 30 days" description="Real payment records; intermediate hops are never counted as volume.">
+        <SectionCard
+          title="Payment volume — last 30 days"
+          description="Real payment records; intermediate hops are never counted as volume."
+          actions={
+            analytics.data?.timeline?.length ? (
+              <Sparkline
+                data={analytics.data.timeline.map((t) => t.count)}
+                width={96}
+                height={28}
+                color="#35D6C0"
+                label="Payment count trend"
+              />
+            ) : null
+          }
+        >
           {analytics.isLoading ? <Skeleton className="h-36 bg-[#142135]" /> : analytics.data ? <ExpenditureChart timeline={analytics.data.timeline} /> : null}
         </SectionCard>
         <SectionCard title="Asset distribution" description="Completed payment volume per asset.">

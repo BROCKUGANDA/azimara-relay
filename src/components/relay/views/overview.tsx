@@ -3,7 +3,9 @@
 import { useRouter, useSession } from '@/lib/client/store'
 import { useApi } from '@/lib/client/hooks'
 import { formatAmount, timeAgo } from '@/lib/client/format'
+import { haptic } from '@/lib/client/motion'
 import { PageHeader, MetricCard, StatusBadge, EmptyState, SectionCard, ErrorState, Amount } from '../ui'
+import { Reveal, MagneticButton } from '../motion'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CheckCircle2, Circle, ArrowRight, Landmark, CheckCheck, Send, Layers, Blocks, Wallet, Users, ShieldCheck } from 'lucide-react'
@@ -35,9 +37,9 @@ export function OverviewView() {
         title={`Welcome back, ${session.user?.name?.split(' ')[0] ?? 'operator'}`}
         description="Your payment operations at a glance. Everything below is real application state — nothing simulated."
         actions={
-          <Button onClick={() => navigate('/app/payments/new')} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
-            <Send className="mr-1.5 h-4 w-4" /> New payment
-          </Button>
+          <MagneticButton onClick={() => navigate('/app/payments/new')} hapticEvent="select" className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#35D6C0] px-4 text-sm font-medium text-[#062A26] shadow-[0_0_18px_rgba(53,214,192,0.25)] transition-colors hover:bg-[#35D6C0]/90">
+            <Send className="h-4 w-4" /> New payment
+          </MagneticButton>
         }
       />
 
@@ -61,10 +63,10 @@ export function OverviewView() {
         <ErrorState message={treasury.error instanceof Error ? treasury.error.message : 'Something went wrong'} retry={() => treasury.refetch()} />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Pending approvals" value={m?.pendingApprovals ?? 0} accent="purple" sub={m?.pendingApprovals ? 'Needs review' : 'Nothing waiting'} />
-          <MetricCard label="Transfers in flight" value={m?.activeTransfers ?? 0} accent="blue" sub="Signing → settlement" />
-          <MetricCard label="Completed this month" value={m?.completedThisMonth ?? 0} accent="teal" sub="Verified settlements" />
-          <MetricCard label="Failed / attention" value={m?.failedPayments ?? 0} accent="red" sub="Failed or recoverable" />
+          <Reveal variant="rise" as="div"><MetricCard label="Pending approvals" value={m?.pendingApprovals ?? 0} accent="purple" countUp sub={m?.pendingApprovals ? 'Needs review' : 'Nothing waiting'} /></Reveal>
+          <Reveal variant="rise" delay={70} as="div"><MetricCard label="Transfers in flight" value={m?.activeTransfers ?? 0} accent="blue" countUp sub="Signing → settlement" /></Reveal>
+          <Reveal variant="rise" delay={140} as="div"><MetricCard label="Completed this month" value={m?.completedThisMonth ?? 0} accent="teal" countUp sub="Verified settlements" /></Reveal>
+          <Reveal variant="rise" delay={210} as="div"><MetricCard label="Failed / attention" value={m?.failedPayments ?? 0} accent="red" countUp sub="Failed or recoverable" /></Reveal>
         </div>
       )}
 
@@ -126,12 +128,17 @@ export function OverviewView() {
           { icon: <Users className="h-5 w-5" />, label: 'Add recipients', route: '/app/recipients' },
           { icon: <Layers className="h-5 w-5" />, label: 'Batch payouts', route: '/app/batches' },
           { icon: <Landmark className="h-5 w-5" />, label: 'Treasury detail', route: '/app/treasury' },
-        ].map((a) => (
-          <button key={a.route} onClick={() => navigate(a.route)} className="flex items-center gap-3 rounded-xl border border-[#26374C] bg-[#0E1725] p-4 text-left transition-colors duration-150 hover:bg-[#142135]">
-            <span className="text-[#35D6C0]">{a.icon}</span>
-            <span className="flex-1 text-sm">{a.label}</span>
-            <ArrowRight className="h-4 w-4 text-dim" />
-          </button>
+        ].map((a, i) => (
+          <Reveal key={a.route} variant="scale" delay={i * 60} as="div">
+            <button
+              onClick={() => { haptic('tap'); navigate(a.route) }}
+              className="group flex w-full items-center gap-3 rounded-xl border border-[#26374C] bg-[#0E1725] p-4 text-left transition-all duration-150 hover:border-[#35D6C0]/25 hover:bg-[#142135]"
+            >
+              <span className="text-[#35D6C0] transition-transform duration-300 group-hover:scale-110">{a.icon}</span>
+              <span className="flex-1 text-sm">{a.label}</span>
+              <ArrowRight className="h-4 w-4 text-dim transition-transform duration-300 group-hover:translate-x-1 group-hover:text-[#35D6C0]" />
+            </button>
+          </Reveal>
         ))}
       </div>
 

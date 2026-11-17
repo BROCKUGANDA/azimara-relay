@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { ShieldCheck, KeyRound, LogOut, Building2 } from 'lucide-react'
 import { setupTotpClient, enableTotpClient } from '@/lib/client/mfa'
+import { getMotionPrefs, setMotionPref, haptic, hapticsSupported, subscribeMotionPrefs, type MotionPrefs } from '@/lib/client/motion'
 
 type OrgData = {
   id: string
@@ -19,6 +21,24 @@ type OrgData = {
   role: string
   settings: { network?: string; defaultApprovalExpiryDays?: number }
   counts: { wallets: number; recipients: number; payments: number }
+}
+
+export function PrefRow({ title, detail, checked, onChange, disabled }: { title: string; detail: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
+      <div className="min-w-0">
+        <div className="text-sm">{title}</div>
+        <div className="mt-0.5 text-[11px] leading-relaxed text-dim">{detail}</div>
+      </div>
+      <Switch
+        checked={checked}
+        onCheckedChange={onChange}
+        disabled={disabled}
+        className="data-[state=checked]:bg-[#35D6C0]"
+        aria-label={title}
+      />
+    </div>
+  )
 }
 
 export function SettingsView() {
@@ -32,6 +52,15 @@ export function SettingsView() {
   const [busy, setBusy] = useState(false)
 
   const isOwner = session.activeOrg?.role === 'OWNER'
+
+  // Motion & haptics preferences — device-local (localStorage), subscribable.
+  const [motionPrefs, setMotionPrefsState] = useState<MotionPrefs>(() => getMotionPrefs())
+  useEffect(() => subscribeMotionPrefs(setMotionPrefsState), [])
+
+  function updateMotionPref<K extends keyof MotionPrefs>(key: K, value: MotionPrefs[K]) {
+    setMotionPref(key, value)
+    haptic('toggle')
+  }
 
   // Initialize the editable org name once, when data first arrives (never clobber user edits).
   const orgName = org.data?.name
@@ -182,6 +211,33 @@ export function SettingsView() {
             >
               Create new organization
             </Button>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Motion & haptics" description="Interface feedback preferences. Stored on this device only.">
+          <div className="space-y-3">
+            <PrefRow
+              title="Interface animations"
+              detail="Micro-interactions, reveals and view transitions. Off disables all decorative motion."
+              checked={motionPrefs.animations}
+              onChange={(v) => updateMotionPref('animations', v)}
+            />
+            <PrefRow
+              title="3D depth effects"
+              detail="Perspective tilt, parallax layers and the hero scene. Desktop pointers only."
+              checked={motionPrefs.depth}
+              onChange={(v) => updateMotionPref('depth', v)}
+            />
+            <PrefRow
+              title={hapticsSupported() ? 'Haptic feedback' : 'Haptic feedback (not on this device)'}
+              detail={hapticsSupported() ? 'Vibration taps for navigation, approvals and notifications (supported browsers).' : 'Your browser does not expose the Vibration API — iOS Safari has none; Android Chrome does.'}
+              checked={motionPrefs.haptics && hapticsSupported()}
+              disabled={!hapticsSupported()}
+              onChange={(v) => updateMotionPref('haptics', v)}
+            />
+            <div className="rounded-lg border border-[#26374C] bg-[#0B1220] p-3 text-[11px] leading-relaxed text-dim">
+              Your OS “reduce motion” setting always wins: when it is on, animations and haptics are disabled regardless of these toggles (WCAG 2.3.3).
+            </div>
           </div>
         </SectionCard>
 

@@ -6,7 +6,7 @@ import { setActiveOrg } from './api'
 export type SessionUser = { id: string; email: string; name: string }
 export type SessionOrg = { id: string; name: string; slug: string; role: string; status: string; plan: string; planStatus: string }
 
-type SessionState = {
+export type SessionState = {
   loading: boolean
   authenticated: boolean
   mfaPassed: boolean
