@@ -1,0 +1,169 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+  /* AZIMARA RELAY — Precision Infrastructure (PRD §8.2) */
+  --background: #080D17;
+  --foreground: #F0F5FA;
+  --card: #0E1725;
+  --card-foreground: #F0F5FA;
+  --popover: #142135;
+  --popover-foreground: #F0F5FA;
+  --primary: #35D6C0;
+  --primary-foreground: #062A26;
+  --secondary: #142135;
+  --secondary-foreground: #F0F5FA;
+  --muted: #142135;
+  --muted-foreground: #74849A;
+  --accent: #1B2A40;
+  --accent-foreground: #F0F5FA;
+  --destructive: #F27683;
+  --border: #26374C;
+  --input: #1A293D;
+  --ring: #35D6C0;
+  --chart-1: #35D6C0;
+  --chart-2: #A18BEB;
+  --chart-3: #658CFF;
+  --chart-4: #36C995;
+  --chart-5: #F2BB62;
+  --sidebar: #0B1220;
+  --sidebar-foreground: #F0F5FA;
+  --sidebar-primary: #35D6C0;
+  --sidebar-primary-foreground: #062A26;
+  --sidebar-accent: #142135;
+  --sidebar-accent-foreground: #F0F5FA;
+  --sidebar-border: #1A293D;
+  --sidebar-ring: #35D6C0;
+  /* Relay semantic tokens */
+  --surface-1: #0E1725;
+  --surface-2: #142135;
+  --surface-3: #1B2A40;
+  --border-subtle: #1A293D;
+  --text-secondary: #A0AEC0;
+  --text-muted: #74849A;
+  --brand-teal: #35D6C0;
+  --brand-blue: #658CFF;
+  --brand-purple: #A18BEB;
+  --relay-success: #36C995;
+  --relay-warning: #F2BB62;
+  --relay-danger: #F27683;
+  --relay-info: #62A8F4;
+}
+
+.dark {
+  --background: #080D17;
+  --foreground: #F0F5FA;
+  --card: #0E1725;
+  --card-foreground: #F0F5FA;
+  --popover: #142135;
+  --popover-foreground: #F0F5FA;
+  --primary: #35D6C0;
+  --primary-foreground: #062A26;
+  --secondary: #142135;
+  --secondary-foreground: #F0F5FA;
+  --muted: #142135;
+  --muted-foreground: #74849A;
+  --accent: #1B2A40;
+  --accent-foreground: #F0F5FA;
+  --destructive: #F27683;
+  --border: #26374C;
+  --input: #1A293D;
+  --ring: #35D6C0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+}
+
+/* Financial figures align vertically — PRD §8.3 */
+.tabular-nums, .font-mono { font-variant-numeric: tabular-nums; }
+
+.text-secondary { color: var(--text-secondary); }
+.text-dim { color: var(--text-muted); }
+
+/* Fine architectural grid pattern for public pages */
+.relay-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(53, 214, 192, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(53, 214, 192, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.relay-radial {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(53, 214, 192, 0.10) 0%, transparent 70%),
+    radial-gradient(40% 40% at 80% 20%, rgba(101, 140, 255, 0.07) 0%, transparent 70%);
+}
+.relay-glow-border {
+  position: relative;
+}
+.relay-glow-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(53, 214, 192, 0.35), rgba(101, 140, 255, 0.18), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #26374C; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #35D6C0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

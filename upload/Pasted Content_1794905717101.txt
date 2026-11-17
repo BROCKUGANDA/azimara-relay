@@ -1,0 +1,1368 @@
+# AZIMARA RELAY
+## STAFF SOFTWARE ENGINEERING MASTER IMPLEMENTATION PROMPT
+
+**Role:** Staff+ Software Engineer, Principal Architect, Fintech Systems Engineer, Solana Integration Engineer, Product Designer and Security Lead.
+
+**Project:** AZIMARA RELAY  
+**Parent organization:** AI Azimara  
+**Product category:** Non-custodial treasury operations and onchain payment orchestration.  
+**Primary blockchain:** Solana.  
+**Primary routing integration:** MultiHopper.  
+**Delivery standard:** Commercial production readiness.
+
+---
+
+# 1. MISSION
+
+Build AZIMARA RELAY as a complete, functional, commercial-grade financial operations platform.
+
+Do not build a static website, UI-only prototype, hackathon mockup, demonstration dashboard or collection of disconnected components.
+
+Build the actual product, with a functioning frontend, backend, database, authentication, wallet integration, payment orchestration, AI assistance, real transaction lifecycle, auditability, monitoring, billing foundations and deployment infrastructure.
+
+The product must allow an organization to:
+
+1. Register and configure its workspace.
+2. Connect and verify supported Solana wallets.
+3. Manage treasury wallet records.
+4. Register recipients and business payment obligations.
+5. Create individual and batch payments.
+6. Import payment information through CSV.
+7. Validate amounts, recipients and token mints.
+8. Apply business approval policies.
+9. Obtain actual MultiHopper quotes.
+10. Prepare and authorize real Solana transactions through user-controlled wallets.
+11. Broadcast transactions in the documented sequence.
+12. Monitor settlement.
+13. Recover interrupted operations.
+14. Reconcile completed payments.
+15. Generate real receipts and reports.
+16. Use AI to prepare, analyze and explain financial operations.
+17. Manage organizational users and permissions.
+18. Operate the product through a subscription-based business model.
+
+The final result must be deployable and operable by a real business.
+
+# 2. NON-NEGOTIABLE ENGINEERING RULES
+
+These rules take precedence over speed and visual convenience.
+
+## 2.1 No fake functionality
+
+Do not use:
+- Fake payment records in production.
+- Hardcoded wallet balances.
+- Fabricated transaction signatures.
+- Simulated successful transfers.
+- Fake settlement confirmations.
+- Mock MultiHopper responses in production.
+- Placeholder API integrations presented as complete.
+- Fake AI recommendations presented as verified facts.
+- Synthetic volume in business analytics.
+- Buttons without working actions.
+
+Mock fixtures may be used in unit tests and explicitly labelled development previews. They must never enter production execution paths.
+
+When a dependency is not configured, expose a genuine setup or unavailable state.
+
+## 2.2 No unauthorized financial execution
+
+The system must never:
+- Request seed phrases.
+- Store private keys.
+- Sign on behalf of customers without their explicit wallet authorization.
+- Silently submit payments.
+- Bypass approval policies.
+- Change recipients after approval.
+- Repeat an uncertain payment blindly.
+- Treat API acceptance as proof of onchain completion.
+- Treat an AI response as permission to transfer funds.
+
+Every financially material action must be validated and authorized.
+
+## 2.3 Do not invent APIs
+
+Inspect the official MultiHopper OpenAPI specification, latest documentation, SDKs and current API response schemas before implementation.
+
+Use actual documented endpoints and payloads.
+
+The documentation currently describes:
+
+- `POST /api/v1/transfers`
+- `POST /api/v1/transfers/{transferId}/prepare`
+- `POST /api/v1/transfers/{transferId}/confirm-broadcast`
+- `GET /api/v1/transfers/{transferId}`
+- The documented webhook registration and lifecycle interfaces.
+
+Verify all current paths and requirements before writing the production adapter.
+
+Do not assume the previous documentation response examples are a complete API schema.
+
+## 2.4 Build for failure
+
+Every external dependency may be unavailable.
+
+Design for:
+- RPC outages.
+- Provider API outages.
+- Wallet disconnections.
+- Expired blockhashes.
+- User rejection.
+- Partial transaction broadcasts.
+- Duplicate webhook delivery.
+- Missing webhook delivery.
+- Database transaction failures.
+- Queue worker restarts.
+- Browser refreshes.
+- Network timeouts.
+- Incomplete settlements.
+- Rate limiting.
+- Stale quotes.
+- Provider status inconsistencies.
+
+Never silently report success following an uncertain operation.
+
+# 3. REPOSITORY AND ARCHITECTURE
+
+First inspect the existing repository.
+
+Preserve useful working implementation, existing configuration and established conventions. Do not discard functioning code merely to impose a preferred architecture.
+
+Where a suitable foundation does not exist, use a TypeScript monorepo.
+
+## 3.1 Proposed technology stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js, React, TypeScript |
+| Styling | Tailwind CSS |
+| Components | Accessible reusable component library |
+| Data fetching | TanStack Query |
+| Forms | React Hook Form + Zod |
+| Authentication | Secure authentication adapter with MFA/passkey support |
+| Wallet connectivity | Solana Wallet Adapter |
+| Solana SDK | Solana web3 transaction tooling compatible with current provider bundles |
+| Backend | Node.js + TypeScript + Fastify |
+| Database | PostgreSQL |
+| ORM | Drizzle ORM |
+| Queue | Redis + BullMQ |
+| AI | Provider-agnostic LLM adapter |
+| Validation | Zod |
+| Testing | Vitest + Playwright |
+| Monitoring | OpenTelemetry-compatible instrumentation |
+| Logging | Structured JSON logging |
+| Deployment | Containerized services |
+
+Pin compatible dependencies. Do not automatically install the newest major package versions without checking interoperability and maintained APIs.
+
+## 3.2 Monorepo structure
+
+Create or adapt the following:
+
+```text
+azimara-relay/
+│
+├── apps/
+│   ├── web/
+│   │   ├── app/
+│   │   ├── components/
+│   │   ├── features/
+│   │   ├── hooks/
+│   │   ├── lib/
+│   │   ├── styles/
+│   │   └── tests/
+│   │
+│   ├── api/
+│   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   ├── organizations/
+│   │   │   ├── memberships/
+│   │   │   ├── wallets/
+│   │   │   ├── recipients/
+│   │   │   ├── payments/
+│   │   │   ├── batches/
+│   │   │   ├── approvals/
+│   │   │   ├── treasury/
+│   │   │   ├── multihopper/
+│   │   │   ├── webhooks/
+│   │   │   ├── reconciliation/
+│   │   │   ├── analytics/
+│   │   │   ├── intelligence/
+│   │   │   ├── notifications/
+│   │   │   ├── billing/
+│   │   │   └── audit/
+│   │   ├── middleware/
+│   │   ├── plugins/
+│   │   └── tests/
+│   │
+│   └── worker/
+│       ├── jobs/
+│       ├── processors/
+│       ├── schedules/
+│       └── tests/
+│
+├── packages/
+│   ├── ui/
+│   ├── domain/
+│   ├── database/
+│   ├── schemas/
+│   ├── multihopper-client/
+│   ├── solana/
+│   ├── ai/
+│   ├── permissions/
+│   ├── observability/
+│   └── config/
+│
+├── infrastructure/
+│   ├── docker/
+│   ├── deployment/
+│   ├── monitoring/
+│   └── scripts/
+│
+├── docs/
+│   ├── architecture/
+│   ├── api/
+│   ├── security/
+│   ├── operations/
+│   ├── integrations/
+│   └── runbooks/
+│
+├── scripts/
+├── .env.example
+├── docker-compose.yml
+├── package.json
+├── pnpm-workspace.yaml
+└── README.md
+```
+
+Keep business logic inside domain and service layers, not directly in page components or route handlers.
+
+# 4. DATABASE DESIGN
+
+Design and migrate a properly normalized PostgreSQL schema.
+
+All organization-owned records must be tenant-scoped.
+
+Required tables:
+
+## Identity and tenancy
+
+- `users`
+- `sessions`
+- `organizations`
+- `organization_memberships`
+- `organization_invitations`
+- `roles`
+- `permissions`
+
+## Wallets and recipients
+
+- `wallets`
+- `wallet_verifications`
+- `supported_assets`
+- `recipients`
+- `recipient_groups`
+- `recipient_change_history`
+
+## Payment operations
+
+- `payment_requests`
+- `payment_batches`
+- `payment_batch_items`
+- `payment_schedules`
+- `payment_quotes`
+- `payment_approvals`
+- `approval_policies`
+- `approval_policy_rules`
+- `approval_events`
+
+## MultiHopper integration
+
+- `provider_integrations`
+- `provider_transfers`
+- `provider_transfer_events`
+- `provider_webhook_endpoints`
+- `webhook_inbox`
+- `transaction_signatures`
+- `provider_reconciliation_records`
+
+## Accounting and reporting
+
+- `ledger_entries`
+- `fee_records`
+- `settlement_records`
+- `financial_exports`
+- `analytics_snapshots`
+
+The ledger is an immutable record of observed payment and settlement events. Do not represent user-controlled funds as if AZIMARA holds them on its own balance sheet.
+
+## AI
+
+- `ai_sessions`
+- `ai_messages`
+- `ai_proposals`
+- `ai_tool_invocations`
+- `ai_evidence_references`
+
+## Business operations
+
+- `notifications`
+- `api_credentials`
+- `api_access_logs`
+- `subscriptions`
+- `billing_events`
+- `audit_logs`
+- `idempotency_records`
+
+## Database rules
+
+1. Use UUIDs for internal identifiers where appropriate.
+2. Store financial amounts as exact integer base units or precise decimal representations.
+3. Never use JavaScript floating-point numbers for authoritative token calculations.
+4. Enforce unique organization-scoped external references.
+5. Enforce wallet and transaction uniqueness where applicable.
+6. Use database transactions for financially material state changes.
+7. Index common organization, date, status and reference queries.
+8. Apply tenant isolation at the query layer and, where appropriate, PostgreSQL Row Level Security.
+9. Keep an immutable audit trail.
+10. Use migrations and maintain rollback procedures.
+
+Define relationships and delete behavior explicitly.
+
+Do not use cascading deletion for financial records that must be preserved for audit purposes.
+
+# 5. CORE DOMAIN AND PAYMENT STATE MACHINE
+
+Implement a centralized payment domain service.
+
+Suggested internal states:
+
+```text
+DRAFT
+  ↓
+VALIDATING
+  ↓
+PENDING_APPROVAL
+  ↓
+APPROVED
+  ↓
+QUOTING
+  ↓
+QUOTED
+  ↓
+AWAITING_SIGNATURE
+  ↓
+FUNDING_BROADCAST
+  ↓
+FUNDING_CONFIRMED
+  ↓
+INITIALIZATION_BROADCAST
+  ↓
+PROCESSING
+  ↓
+SETTLEMENT_VERIFICATION
+  ↓
+COMPLETED
+```
+
+Additional states:
+
+```text
+REJECTED
+CANCELLED
+QUOTE_EXPIRED
+TRANSFER_EXPIRED
+FAILED
+REFUNDED
+RECOVERABLE
+RESCUED
+MANUAL_REVIEW
+RECONCILIATION_REQUIRED
+```
+
+Provider statuses must be mapped to internal statuses without losing the original provider response.
+
+Implement:
+
+- Explicit allowed transitions.
+- Invalid-transition rejection.
+- Optimistic concurrency handling.
+- State-change audit events.
+- Reconciliation before uncertain state transitions.
+- Recovery paths.
+
+A payment must not move from `PROCESSING` to `COMPLETED` merely because an API request returned HTTP 200.
+
+# 6. SOLANA AND MULTIHOPPER IMPLEMENTATION
+
+## 6.1 Provider configuration
+
+Create a server-side configuration module.
+
+Required environment variables:
+
+```env
+NODE_ENV=
+APP_URL=
+DATABASE_URL=
+REDIS_URL=
+
+AUTH_SECRET=
+
+SOLANA_NETWORK=
+SOLANA_RPC_URL=
+
+MULTIHOPPER_ENVIRONMENT=
+MULTIHOPPER_API_KEY=
+
+MULTIHOPPER_WEBHOOK_SECRET=
+
+AI_PROVIDER=
+AI_API_KEY=
+
+ENCRYPTION_KEY=
+
+LOG_LEVEL=
+```
+
+Add optional billing-provider credentials only when that module is implemented.
+
+Validate environment variables on application startup.
+
+Fail fast for missing mandatory production credentials.
+
+Never return server-side credentials in browser bundles.
+
+Never commit real secrets.
+
+## 6.2 Provider client
+
+Implement:
+
+```text
+MultiHopperClient
+├── estimate()
+├── createTransfer()
+├── prepareTransfer()
+├── confirmBroadcast()
+├── getTransfer()
+├── registerWebhook()
+├── verifyWebhook()
+└── normalizeError()
+```
+
+Add:
+
+- Request timeouts.
+- Safe retries for eligible idempotent operations.
+- Exponential backoff with jitter.
+- Rate-limit handling.
+- Structured error reporting.
+- Request correlation IDs.
+- API response validation.
+
+Never retry a transfer creation with a new external ID merely because the original request timed out.
+
+## 6.3 Wallet signing
+
+Use supported wallet adapters.
+
+Requirements:
+
+1. Verify connected wallet.
+2. Verify expected network.
+3. Validate that the sending wallet matches `sourceOwner`.
+4. Decode prepared transactions.
+5. Validate transaction structure.
+6. Verify transaction freshness.
+7. Present authorization information.
+8. Request wallet signing.
+9. Broadcast in documented order.
+10. Record signatures.
+11. Wait for actual confirmation.
+12. Submit provider confirmation calls.
+
+Support both applicable legacy and versioned transactions as returned in the prepared bundle.
+
+Do not modify transaction instructions to change provider-generated financial semantics.
+
+The customer must see what they are signing through an intelligible transaction preview and the wallet's own authorization screen.
+
+## 6.4 MultiHopper sequence
+
+Implement exactly the documented prepare and confirm-broadcast lifecycle.
+
+Important requirements:
+
+- If `keeperFundingTx` exists, broadcast it first.
+- Immediately make the intermediate confirmation call with the keeper funding signature and empty `routeInitSignatures`.
+- Broadcast route initialization transactions.
+- Broadcast orchestrator initialization where present.
+- Broadcast session initialization transactions.
+- Handle dispersion initialization for applicable multi-destination transfers.
+- Wait for actual chain confirmation.
+- Submit the final confirmation request.
+- Verify resulting transfer status.
+- Persist the transaction signatures and progress.
+
+Implement resume logic.
+
+The prepare endpoint exposes onchain progress and may omit transaction groups that have already been initialized. Use this information after interruptions rather than replaying already-confirmed transactions.
+
+When an operation becomes uncertain, reconcile against the provider and Solana chain before deciding whether to continue, retry or escalate.
+
+## 6.5 Asset support
+
+Build an explicit supported-asset registry.
+
+Each asset must have:
+
+- Chain.
+- Mint address.
+- Decimals.
+- Symbol.
+- Display name.
+- Verification status.
+- Provider eligibility.
+- Enabled state.
+
+Do not trust token symbols alone.
+
+Validate token mints against the supported configuration and actual provider support.
+
+Never silently substitute one token for another.
+
+## 6.6 Fee handling
+
+Always show fresh provider quotes.
+
+Keep separate records for:
+
+- Payment principal.
+- Percentage fee.
+- Per-hop charges.
+- Network transaction costs.
+- Screening fees where applicable.
+- Estimated recipient proceeds.
+- Confirmed provider fees.
+- Actual settlement outcomes.
+
+The currently published MultiHopper documentation describes a mainnet screening charge in the prepare workflow. Verify current fees using the provider's estimate and quote responses, never a fixed hardcoded amount.
+
+# 7. WEBHOOKS AND BACKGROUND WORKERS
+
+Create independent background workers for:
+
+- Webhook ingestion.
+- Webhook processing.
+- Transfer reconciliation.
+- Scheduled payment preparation.
+- Quote expiration.
+- Approval expiration.
+- Transaction confirmation.
+- Failed operation detection.
+- Notification delivery.
+- Financial export generation.
+- Analytics aggregation.
+
+Use BullMQ or an equivalent durable queue.
+
+Implement:
+
+- Retries with exponential backoff and jitter.
+- Dead-letter queues.
+- Job deduplication.
+- Concurrency limits.
+- Job leases or appropriate locking.
+- Visibility into failed jobs.
+- Safe manual replay.
+- Idempotent job processors.
+
+Do not assume webhook events arrive in order.
+
+Store incoming events before processing.
+
+Acknowledge valid events quickly and process them asynchronously.
+
+Provide a regular reconciliation worker for transfers whose webhook status is missing, delayed or inconsistent.
+
+# 8. APPROVAL AND POLICY ENGINE
+
+Build deterministic approval evaluation.
+
+Example policy:
+
+```text
+Payment request
+      ↓
+Validate wallet and recipient
+      ↓
+Evaluate organizational policies
+      ↓
+Determine required approvers
+      ↓
+Wait for independent approval
+      ↓
+Freeze approved financial payload
+      ↓
+Create quote
+      ↓
+Revalidate material fields and quote
+      ↓
+Request wallet authorization
+      ↓
+Execute transaction
+```
+
+Requirements:
+
+- Policy versioning.
+- Amount thresholds.
+- Recipient allowlists.
+- New-recipient approval requirements.
+- Multiple approvers.
+- Approver independence.
+- Expiring approvals.
+- Approval revocation.
+- Policy-change history.
+- Organization-specific rules.
+
+An administrator must not silently alter a policy and then reuse an approval issued under the previous policy.
+
+Implement clear separation of duties.
+
+# 9. AI IMPLEMENTATION
+
+Create an AI service abstraction.
+
+Suggested interface:
+
+```typescript
+interface RelayIntelligence {
+  analyzeInvoice(input: InvoiceInput): Promise<InvoiceAnalysis>;
+
+  detectDuplicates(
+    input: PaymentBatchInput
+  ): Promise<DuplicateAnalysis>;
+
+  analyzePayments(
+    input: PaymentContext
+  ): Promise<PaymentAnalysis>;
+
+  proposeBatch(
+    input: PaymentRequestInput
+  ): Promise<PaymentProposal>;
+
+  explainFailure(
+    input: FailureContext
+  ): Promise<FailureExplanation>;
+
+  reconcileSummary(
+    input: ReconciliationContext
+  ): Promise<ReconciliationSummary>;
+}
+```
+
+All outputs must be validated against typed schemas.
+
+AI capabilities:
+
+- Invoice extraction.
+- Duplicate analysis.
+- Expense categorization.
+- Recipient matching suggestions.
+- Treasury summaries.
+- Anomaly detection assistance.
+- Payment proposal generation.
+- Natural-language reporting.
+
+AI restrictions:
+
+- No private-key access.
+- No transaction signing.
+- No unrestricted wallet operation.
+- No approval bypass.
+- No autonomous recipient substitution.
+- No unsupported claims of sanctions clearance.
+- No unapproved payment execution.
+
+Use deterministic services for calculations, policy evaluation and state changes.
+
+Implement prompt-injection defenses for uploaded documents and imported payment instructions.
+
+Treat documents, wallet metadata and external records as untrusted input.
+
+# 10. FRONTEND IMPLEMENTATION
+
+Build every route identified in the PRD.
+
+The authenticated application must contain:
+
+- Persistent sidebar.
+- Workspace navigation.
+- Header and breadcrumbs.
+- Global search.
+- Notifications.
+- Profile menu.
+- Responsive layouts.
+- Contextual help.
+- Consistent empty states.
+- Error boundaries.
+
+## Required high-priority experiences
+
+### Experience A: Onboarding
+
+Complete organization setup.
+
+Wallet connection.
+
+Asset support check.
+
+Recipient creation.
+
+Initial approval policy.
+
+Integration health check.
+
+### Experience B: Treasury dashboard
+
+Real balance information from connected wallet sources.
+
+Payment metrics from persisted application records.
+
+Pending approvals.
+
+Unsettled transfers.
+
+Recent transactions.
+
+Fee analytics.
+
+### Experience C: Payment builder
+
+Multi-step process:
+
+1. Source wallet.
+2. Asset.
+3. Recipients.
+4. Amount allocation.
+5. Business purpose.
+6. Routing configuration.
+7. Fees and quote.
+8. Approval policy.
+9. Review.
+
+### Experience D: Approval center
+
+Provide an approval queue with:
+
+- Payment details.
+- Recipient history.
+- Amount and asset.
+- Business reason.
+- Original request creator.
+- Policy requirements.
+- Evidence.
+- Approve/reject actions.
+
+### Experience E: Transaction detail
+
+Provide a complete chronological timeline.
+
+Display actual transaction signatures and link to the appropriate verified Solana explorer.
+
+Do not fabricate explorer URLs or transaction identities.
+
+### Experience F: AI assistant
+
+Provide conversational analysis and structured action proposals.
+
+Allow users to inspect the data behind recommendations.
+
+### Experience G: Reconciliation center
+
+Show:
+
+- Provider references.
+- Onchain signatures.
+- Actual settlement status.
+- Expected and observed amounts.
+- Fee differences.
+- Failed or unmatched records.
+- Exportable reports.
+
+# 11. API DESIGN
+
+Expose versioned, documented application APIs.
+
+Example:
+
+```text
+/api/v1/organizations
+/api/v1/wallets
+/api/v1/recipients
+/api/v1/payments
+/api/v1/payments/:id/quote
+/api/v1/payments/:id/approve
+/api/v1/payments/:id/prepare
+/api/v1/payments/:id/transactions
+/api/v1/batches
+/api/v1/approvals
+/api/v1/transfers
+/api/v1/treasury
+/api/v1/reconciliation
+/api/v1/analytics
+/api/v1/intelligence
+/api/v1/webhooks/multihopper
+/api/v1/audit
+/api/v1/billing
+```
+
+These are application endpoints. They are not representations of MultiHopper API paths.
+
+Every endpoint needs:
+
+- Authentication.
+- Authorization.
+- Tenant isolation.
+- Input validation.
+- Output schema.
+- Error handling.
+- Rate limiting.
+- Request tracing.
+- Audit logging where necessary.
+
+Use a consistent error shape:
+
+```json
+{
+  "error": {
+    "code": "PAYMENT_VALIDATION_FAILED",
+    "message": "The payment could not be validated.",
+    "requestId": "request-reference",
+    "details": []
+  }
+}
+```
+
+Never expose internal stack traces or provider secrets.
+
+Generate an OpenAPI specification for our own API.
+
+# 12. SECURITY ENGINEERING
+
+Implement a formal threat model.
+
+Mandatory controls:
+
+- Secure session handling.
+- CSRF protection where applicable.
+- XSS prevention.
+- CSP.
+- Strict CORS configuration.
+- Request validation.
+- Rate limiting.
+- SSRF protection.
+- Secure secret storage.
+- Encryption of sensitive information.
+- Access control on every sensitive operation.
+- Wallet ownership verification.
+- Multi-tenant isolation.
+- Immutable audit events.
+- Webhook HMAC verification.
+- Timing-safe comparisons.
+- Dependency scanning.
+- Security headers.
+- Secure file upload handling.
+- Data retention policies.
+- Backup and recovery testing.
+
+Use least privilege for backend credentials.
+
+Never log:
+- API keys.
+- Webhook secrets.
+- Authentication tokens.
+- Private financial credentials.
+- Raw sensitive documents.
+- Unnecessary personal data.
+
+Build a security event system for unusual access patterns and repeated authorization failures.
+
+# 13. FAILURE MODES AND RECOVERY
+
+Implement and test at least the following:
+
+1. API request times out after successful transfer creation.
+2. User disconnects wallet mid-signing.
+3. User rejects wallet authorization.
+4. Blockhash expires.
+5. Keeper funding succeeds but intermediate confirmation request fails.
+6. Route initialization succeeds but backend crashes.
+7. A worker executes the same job twice.
+8. A webhook is delivered twice.
+9. A webhook is received out of order.
+10. A webhook signature is invalid.
+11. Provider reports processing but chain state is incomplete.
+12. Chain confirms a transaction but provider indexing is delayed.
+13. Quote expires before signing.
+14. Fee tier changes before preparation.
+15. SOL balance is insufficient for required transaction operations.
+16. A destination receives less than required rent-exempt minimum.
+17. One recipient in an independently tracked batch fails.
+18. Recipient address changes after approval.
+19. Approval expires while waiting for execution.
+20. A transfer becomes recoverable.
+21. Database loses connectivity during reconciliation.
+22. Redis is unavailable.
+23. RPC provider returns stale data.
+24. Browser refreshes during an active transfer.
+25. User opens the same transfer from two sessions.
+26. An organization is suspended while payments are pending.
+27. Customer loses wallet access.
+28. AI receives hostile or conflicting invoice instructions.
+29. User exports incomplete reconciliation data.
+30. Provider fees disagree with initial application estimates.
+
+For every scenario specify:
+
+- Detection mechanism.
+- State transition.
+- User-facing message.
+- Backend remediation.
+- Whether automatic recovery is permitted.
+- Whether human intervention is required.
+- Audit evidence.
+
+# 14. OBSERVABILITY AND OPERATIONS
+
+Implement structured logging and distributed tracing.
+
+Required metrics:
+
+- API latency.
+- API error rate.
+- Quote success rate.
+- Transfer creation success rate.
+- Signing completion rate.
+- Broadcast confirmation rate.
+- Settlement completion rate.
+- Transfer failure rate.
+- Webhook processing latency.
+- Webhook failure count.
+- Queue backlog.
+- Reconciliation mismatch count.
+- RPC availability.
+- Wallet connection errors.
+- AI request failures.
+
+Alert on:
+
+- Unexplained payment state changes.
+- Duplicate transfer attempts.
+- Reconciliation mismatches.
+- Large failure spikes.
+- Repeated webhook signature failures.
+- Provider outages.
+- Stuck transfers.
+- Missing settlement confirmation.
+- Abnormal queue growth.
+
+Provide operational runbooks.
+
+# 15. TESTING REQUIREMENTS
+
+Do not claim production readiness because compilation succeeds.
+
+## Unit tests
+
+Test:
+
+- Amount calculations.
+- Decimal conversions.
+- Fee display calculations.
+- Policy evaluation.
+- Permission evaluation.
+- Status mappings.
+- Idempotency logic.
+- Webhook signatures.
+- CSV parsing.
+- Recipient validation.
+- State transitions.
+- Batch allocation validation.
+
+## Integration tests
+
+Test:
+
+- PostgreSQL persistence.
+- Tenant isolation.
+- Authentication.
+- MultiHopper client against supported sandbox/devnet.
+- Webhook ingestion.
+- Queue processing.
+- Solana transaction decoding.
+- Wallet signing integration.
+- Reconciliation.
+
+## End-to-end tests
+
+Test:
+
+1. New organization registration.
+2. Workspace configuration.
+3. Wallet connection.
+4. Recipient creation.
+5. Batch import.
+6. Duplicate recipient detection.
+7. Approval request.
+8. Approval.
+9. Quote retrieval.
+10. Wallet signing.
+11. Transaction preparation.
+12. Transfer lifecycle.
+13. Webhook processing.
+14. Settlement verification.
+15. Financial reporting.
+16. User permissions.
+17. Failed payment recovery.
+
+Use local fixtures and official sandbox/devnet environments for tests.
+
+No unit test or end-to-end test may broadcast a real mainnet payment by default.
+
+Use isolated test wallets and explicitly funded development accounts when genuine devnet execution is required.
+
+# 16. COMMERCIAL IMPLEMENTATION
+
+Prepare the product for recurring revenue.
+
+Create subscription infrastructure with:
+
+- Account plans.
+- Usage entitlements.
+- User seats.
+- Payment batch limits.
+- API access.
+- Reporting capabilities.
+- Feature access.
+- Subscription states.
+- Billing events.
+- Upgrade/downgrade handling.
+
+Initial pricing hypotheses:
+
+| Tier | Monthly price |
+|---|---:|
+| Starter | $49 |
+| Growth | $199 |
+| Business | $499 |
+| Enterprise | Custom |
+
+These are proposed pricing experiments, not established market prices.
+
+Do not activate payment collection in production without a configured billing provider and approved commercial terms.
+
+Track MultiHopper partner revenue separately.
+
+Build:
+
+- Integration attribution records.
+- Transfer fee records.
+- Provider reward references.
+- Revenue reconciliation.
+- Partner payout status.
+- Revenue analytics.
+
+Never infer earned partner revenue solely from gross transaction volume.
+
+Use actual provider-reported fees and contractual revenue-sharing terms.
+
+# 17. IMPLEMENTATION PHASES
+
+Work in controlled, testable phases.
+
+## Phase 0: Repository audit
+
+Inspect:
+- Existing code.
+- Existing dependencies.
+- Existing database.
+- Existing integrations.
+- Authentication.
+- Existing deployments.
+- Technical debt.
+- Security weaknesses.
+
+Deliver:
+- Repository map.
+- Architecture review.
+- Missing capabilities.
+- Dependency risks.
+- Implementation plan.
+
+Do not destroy functioning existing features.
+
+## Phase 1: Foundations
+
+Implement:
+- Monorepo or existing architecture cleanup.
+- Environment validation.
+- Authentication.
+- Organization management.
+- Database schema.
+- Migration framework.
+- UI foundation.
+- Design tokens.
+- Observability.
+
+Acceptance: A user can register and create an isolated workspace.
+
+## Phase 2: Wallet and recipient operations
+
+Implement:
+- Wallet connection.
+- Ownership verification.
+- Wallet records.
+- Recipient directory.
+- CSV import.
+- Address validation.
+- Token configuration.
+
+Acceptance: Users can securely connect wallets and manage real recipient records.
+
+## Phase 3: Payment operations
+
+Implement:
+- Payment requests.
+- Batch builder.
+- Payment validation.
+- Fee estimates.
+- Approval engine.
+- Payment state machine.
+
+Acceptance: A complete proposed payment can move through validation and approval without being executed prematurely.
+
+## Phase 4: MultiHopper integration
+
+Implement:
+- Environment-aware client.
+- Actual provider requests.
+- Transfer creation.
+- Preparation.
+- Wallet authorization.
+- Ordered broadcast.
+- Intermediate and final confirmations.
+- Status retrieval.
+- Webhook ingestion.
+- Recovery.
+
+Acceptance: A supported devnet transfer completes end-to-end with verifiable provider and chain evidence.
+
+## Phase 5: AI treasury assistant
+
+Implement:
+- Context-aware assistant.
+- Invoice extraction.
+- Duplicate detection.
+- Proposed batch generation.
+- Policy validation.
+- Evidence references.
+- Explainable outputs.
+
+Acceptance: The assistant generates useful, structured proposals without independently authorizing payments.
+
+## Phase 6: Reconciliation and analytics
+
+Implement:
+- Provider status synchronization.
+- Onchain evidence.
+- Transaction ledger.
+- Reconciliation dashboard.
+- CSV and PDF exports.
+- Historical analytics.
+
+Acceptance: Every completed payment can be traced to actual evidence.
+
+## Phase 7: Security hardening
+
+Implement:
+- Threat modelling.
+- Access control testing.
+- Tenant isolation tests.
+- Transaction flow review.
+- Dependency scanning.
+- Secret scanning.
+- Abuse prevention.
+- Recovery testing.
+- Backup restoration tests.
+
+Acceptance: No unresolved critical or high-severity security findings remain.
+
+## Phase 8: Commercial release
+
+Implement:
+- Billing.
+- Plan entitlements.
+- Customer onboarding.
+- Support tooling.
+- Legal page infrastructure.
+- Monitoring dashboards.
+- Production deployment documentation.
+
+Acceptance: An organization can use the product through a real customer workflow.
+
+Mainnet access remains subject to the separate protocol-security and business-risk launch gate.
+
+# 18. PRODUCTION ACCEPTANCE GATES
+
+Do not mark the application as production-ready until all of the following hold.
+
+**Engineering**
+- TypeScript checks pass.
+- Lint checks pass.
+- Production build passes.
+- Migrations work on a clean database.
+- Unit tests pass.
+- Integration tests pass.
+- E2E tests pass.
+- No critical security vulnerabilities remain.
+
+**Financial operations**
+- Amounts use exact precision.
+- Provider quotes are real.
+- Wallet signatures are real.
+- Transfers are reconciled.
+- Duplicate payments are prevented.
+- Approvals cannot be bypassed.
+- Uncertain operations are recoverable.
+- Financial reports use verifiable data.
+
+**Infrastructure**
+- Production secrets are configured securely.
+- Database backup and restore are tested.
+- Redis and workers are operational.
+- Monitoring and alerting are working.
+- Rate limits are enabled.
+- Webhook verification is functional.
+- Devnet and production are isolated.
+
+**Commercial**
+- Subscription entitlements work.
+- Pricing and legal disclosures have been reviewed.
+- Customer support workflow exists.
+- Data retention is documented.
+- Customer-facing security information is accurate.
+
+**Protocol and deployment**
+- MultiHopper deployment and supported assets are verified.
+- Program identifiers and network configuration are recorded.
+- Current audit and security information is reviewed.
+- Recovery procedures are documented.
+- Production use limits are defined.
+- Any remaining risk is explicitly disclosed and approved.
+
+Never claim a third-party protocol has been independently audited when it has not.
+
+# 19. REQUIRED DELIVERABLES
+
+At completion, produce:
+
+1. Complete working source code.
+2. Production frontend.
+3. Backend API.
+4. Database schema and migrations.
+5. Background workers.
+6. Real MultiHopper integration.
+7. Real Solana wallet integration.
+8. Working transaction lifecycle.
+9. AI treasury assistant.
+10. Approval and policy engine.
+11. Recipient and batch management.
+12. Reconciliation system.
+13. Analytics.
+14. Subscription architecture.
+15. Test suite.
+16. Security review report.
+17. Threat model.
+18. OpenAPI specification.
+19. Environment configuration template.
+20. Docker and deployment configuration.
+21. Database backup and recovery instructions.
+22. Operational runbooks.
+23. End-user documentation.
+24. Developer integration documentation.
+25. Production readiness report.
+
+Do not substitute screenshots for functioning features.
+
+# 20. REQUIRED FINAL ENGINEERING REPORT
+
+After implementation, provide a truthful report containing:
+
+**A. What was implemented**
+- Features.
+- Modules.
+- Routes.
+- APIs.
+- Integrations.
+
+**B. What genuinely works**
+- Tested functionality.
+- Real provider connectivity.
+- Successful devnet evidence.
+- Automated test results.
+
+**C. What is not finished**
+- Missing dependencies.
+- Incomplete integrations.
+- Outstanding bugs.
+- Unverified functionality.
+
+**D. Security**
+- Threat model.
+- Findings.
+- Resolved issues.
+- Remaining risks.
+- External protocol dependencies.
+
+**E. Financial operations**
+- Transfer lifecycle results.
+- Failure recovery tests.
+- Idempotency validation.
+- Reconciliation evidence.
+
+**F. Deployment**
+- Environment requirements.
+- Infrastructure.
+- Secrets.
+- Migration commands.
+- Start commands.
+- Monitoring configuration.
+
+**G. Commercial readiness**
+- Subscription functionality.
+- User onboarding.
+- Operational limitations.
+- Outstanding legal and commercial approvals.
+
+Never report an unverified feature as completed.
+
+# FINAL INSTRUCTION
+
+Operate as the accountable staff engineer for a serious fintech infrastructure business.
+
+Prioritize correctness, financial safety, maintainability, explainability and real customer utility.
+
+Build complete working functionality before polishing secondary features. However, the design system and user experience must remain consistently enterprise-grade throughout development.
+
+Do not stop at architecture recommendations. Inspect the repository, create the implementation, run tests, fix defects and validate each phase.
+
+When blocked by unavailable third-party credentials, document the precise missing configuration and finish all work that can be independently validated. Do not replace the missing integration with a fake production implementation.
+
+Do not deploy, authorize or broadcast real mainnet transactions without explicit authorization from the designated operator.
+
+**The outcome is a product that businesses can trust with their payment workflows, subscribe to, use repeatedly and recommend to other businesses.**
+
+Build AZIMARA RELAY as a business, not as a demo.
