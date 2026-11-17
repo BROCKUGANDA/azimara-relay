@@ -123,9 +123,9 @@ export function WalletsView() {
         actions={
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90"><Wallet className="mr-1.5 h-4 w-4" /> Register wallet</Button>
+              <Button className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"><Wallet className="mr-1.5 h-4 w-4" /> Register wallet</Button>
             </DialogTrigger>
-            <DialogContent className="border-[#26374C] bg-[#0E1725]">
+            <DialogContent className="border-[#2E2540] bg-[#15111D]">
               <DialogHeader>
                 <DialogTitle>Register a wallet</DialogTitle>
                 <DialogDescription>
@@ -135,18 +135,18 @@ export function WalletsView() {
               <div className="space-y-3">
                 <div>
                   <Label>Label</Label>
-                  <Input placeholder="Main treasury" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} className="mt-1 border-[#26374C] bg-[#0B1220]" />
+                  <Input placeholder="Main treasury" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} className="mt-1 border-[#2E2540] bg-[#100D16]" />
                 </div>
                 <div>
                   <Label>Address (read-only mode)</Label>
-                  <Input placeholder="Solana public key" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1 border-[#26374C] bg-[#0B1220] font-mono text-xs" />
+                  <Input placeholder="Solana public key" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1 border-[#2E2540] bg-[#100D16] font-mono text-xs" />
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Network</Label>
                     <Select value={form.network} onValueChange={(v) => setForm({ ...form, network: v })}>
-                      <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
-                      <SelectContent className="border-[#26374C] bg-[#142135]">
+                      <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
+                      <SelectContent className="border-[#2E2540] bg-[#1d1826]">
                         <SelectItem value="devnet">Devnet</SelectItem>
                         <SelectItem value="mainnet-beta">Mainnet-beta</SelectItem>
                       </SelectContent>
@@ -155,8 +155,8 @@ export function WalletsView() {
                   <div>
                     <Label>Kind</Label>
                     <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v })}>
-                      <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
-                      <SelectContent className="border-[#26374C] bg-[#142135]">
+                      <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
+                      <SelectContent className="border-[#2E2540] bg-[#1d1826]">
                         <SelectItem value="TREASURY">Treasury</SelectItem>
                         <SelectItem value="OPERATIONAL">Operational</SelectItem>
                       </SelectContent>
@@ -164,10 +164,10 @@ export function WalletsView() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 pt-1 sm:flex-row">
-                  <Button disabled={busy || !form.label.trim()} onClick={() => registerWallet('WALLET')} className="flex-1 bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+                  <Button disabled={busy || !form.label.trim()} onClick={() => registerWallet('WALLET')} className="flex-1 bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
                     <PenLine className="mr-1.5 h-3.5 w-3.5" /> Connect {walletAvailable() ? walletName() : 'wallet'}
                   </Button>
-                  <Button disabled={busy || !form.label.trim() || !form.address.trim()} onClick={() => registerWallet('READ_ONLY')} variant="outline" className="flex-1 border-[#26374C]">
+                  <Button disabled={busy || !form.label.trim() || !form.address.trim()} onClick={() => registerWallet('READ_ONLY')} variant="outline" className="flex-1 border-[#2E2540]">
                     Register read-only
                   </Button>
                 </div>
@@ -187,12 +187,12 @@ export function WalletsView() {
             title="Ownership challenge ready"
             detail="Sign the displayed message with the wallet to complete verification. The message is NOT a transaction and authorizes nothing."
             action={
-              <Button size="sm" onClick={() => verifyOwnership(verifyMsg.walletId)} disabled={verifying} className="bg-[#35D6C0] font-medium text-[#062A26]">
+              <Button size="sm" onClick={() => verifyOwnership(verifyMsg.walletId)} disabled={verifying} className="bg-[#E7B458] font-medium text-[#221202]">
                 <ShieldCheck className="mr-1.5 h-3.5 w-3.5" /> Sign challenge
               </Button>
             }
           />
-          <pre className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg border border-[#26374C] bg-[#0B1220] p-3 font-mono text-[11px] text-secondary">{verifyMsg.message}</pre>
+          <pre className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg border border-[#2E2540] bg-[#100D16] p-3 font-mono text-[11px] text-secondary">{verifyMsg.message}</pre>
         </div>
       ) : null}
 
@@ -209,12 +209,12 @@ export function WalletsView() {
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {(wallets.data?.wallets ?? []).map((w) => (
-            <div key={w.id} className={`rounded-xl border bg-[#0E1725] p-4 ${w.revokedAt ? 'border-[#26374C]/50 opacity-60' : 'border-[#26374C]'}`}>
+            <div key={w.id} className={`rounded-xl border bg-[#15111D] p-4 ${w.revokedAt ? 'border-[#2E2540]/50 opacity-60' : 'border-[#2E2540]'}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">{w.label}</span>
-                  <span className="rounded bg-[#142135] px-1.5 py-0.5 text-[10px] text-dim">{w.kind}</span>
-                  <span className="rounded bg-[#142135] px-1.5 py-0.5 text-[10px] text-dim">{w.network}</span>
+                  <span className="rounded bg-[#1d1826] px-1.5 py-0.5 text-[10px] text-dim">{w.kind}</span>
+                  <span className="rounded bg-[#1d1826] px-1.5 py-0.5 text-[10px] text-dim">{w.network}</span>
                 </div>
                 <StatusBadge
                   status={w.revokedAt ? 'CANCELLED' : w.ownershipStatus === 'VERIFIED' ? 'COMPLETED' : 'AWAITING_SIGNATURE'}
@@ -223,8 +223,8 @@ export function WalletsView() {
               </div>
               <div className="mt-2 font-mono text-xs text-secondary">{shortAddress(w.address, 8)}</div>
               {w.balance?.available ? (
-                <div className="mt-3 rounded-lg border border-[#1A293D] bg-[#0B1220] p-3">
-                  <div className="font-mono text-sm tabular-nums text-[#35D6C0]">{formatAmount(w.balance.sol?.lamports ?? '0', 9)} SOL</div>
+                <div className="mt-3 rounded-lg border border-[#231C30] bg-[#100D16] p-3">
+                  <div className="font-mono text-sm tabular-nums text-[#E7B458]">{formatAmount(w.balance.sol?.lamports ?? '0', 9)} SOL</div>
                   {(w.balance.tokens ?? []).slice(0, 6).map((t) => (
                     <div key={t.mint} className="mt-1 font-mono text-xs tabular-nums text-secondary">{formatAmount(t.amount, t.decimals ?? 6)} · {shortAddress(t.mint, 3)}</div>
                   ))}
@@ -240,7 +240,7 @@ export function WalletsView() {
                 </div>
                 <div className="flex gap-1.5">
                   {!w.revokedAt && w.ownershipStatus !== 'VERIFIED' ? (
-                    <Button size="sm" variant="outline" className="h-9 border-[#26374C] px-3 text-xs" onClick={() => verifyOwnership(w.id)} disabled={verifying}>
+                    <Button size="sm" variant="outline" className="h-9 border-[#2E2540] px-3 text-xs" onClick={() => verifyOwnership(w.id)} disabled={verifying}>
                       <ShieldCheck className="mr-1 h-3 w-3" /> Verify
                     </Button>
                   ) : null}

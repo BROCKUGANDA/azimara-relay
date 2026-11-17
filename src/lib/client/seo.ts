@@ -28,7 +28,7 @@ export const PUBLIC_SEO: Record<string, RouteSeo> = {
   '/product': {
     title: 'Product — One Application for the Entire Payment Operation',
     description:
-      'AZIMARA RELAY models every step of an onchain payment: organization and RBAC, verified wallets, recipient directory, approval engine, MultiHopper routing, Relay Intelligence and reconciliation.',
+      'AZIMARA RELAY models every step of an onchain payment: organization and RBAC, verified wallets, recipient directory, approval engine, smart payment routing, Relay Intelligence and reconciliation.',
     crumbs: ['Product'],
   },
   '/treasury': {
@@ -50,9 +50,9 @@ export const PUBLIC_SEO: Record<string, RouteSeo> = {
     crumbs: ['Relay Intelligence'],
   },
   '/integrations': {
-    title: 'Integrations — Solana Wallets, MultiHopper, API & Webhooks',
+    title: 'Integrations — Solana Wallets, Payment Routing, API & Webhooks',
     description:
-      'Environment-isolated MultiHopper credentials, Phantom and injected wallet connections with ed25519 ownership verification, scoped API keys and HMAC-verified webhooks.',
+      'Environment-isolated routing credentials, Phantom and injected wallet connections with ed25519 ownership verification, scoped API keys and HMAC-verified webhooks.',
     crumbs: ['Integrations'],
   },
   '/developers': {

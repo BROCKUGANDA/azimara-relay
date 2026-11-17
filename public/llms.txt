@@ -10,7 +10,7 @@ AZIMARA RELAY (by AI Azimara, Dubai UAE) combines a recipient directory, determi
 - [Treasury operations](https://relay.azimara.ae/#/treasury): institutional visibility over balances, obligations, in-flight transfers and expenditure.
 - [Batch payouts](https://relay.azimara.ae/#/payouts): pay twenty or two thousand recipients with per-item accountability, CSV import and exact-integer math.
 - [Relay Intelligence](https://relay.azimara.ae/#/intelligence): AI assistant with no signing authority and no custody; proposals require human approval.
-- [Integrations](https://relay.azimara.ae/#/integrations): Solana wallets (ed25519 ownership verification), environment-isolated MultiHopper, scoped API keys, HMAC webhooks.
+- [Integrations](https://relay.azimara.ae/#/integrations): Solana wallets (ed25519 ownership verification), environment-isolated payment routing, scoped API keys, HMAC webhooks.
 - [Developers](https://relay.azimara.ae/#/developers): documented versioned REST API with OpenAPI specification.
 - [Security](https://relay.azimara.ae/#/security): non-custodial architecture, RBAC, MFA, audit trail, risk disclosures.
 - [Pricing](https://relay.azimara.ae/#/pricing): Starter $49/mo, Growth $199/mo, Business $499/mo, custom Enterprise.
@@ -21,7 +21,7 @@ AZIMARA RELAY (by AI Azimara, Dubai UAE) combines a recipient directory, determi
 
 - Custody: non-custodial; funds never sit in an AZIMARA-controlled wallet; seed phrases and private keys never requested or stored.
 - Blockchain: Solana (SOL and SPL tokens such as USDC and USDT).
-- Routing: MultiHopper integration, environment-isolated (devnet mh_test_ / live mh_live_), lifecycle quote → create → prepare → sign → broadcast → confirm → settle → reconcile.
+- Routing: environment-isolated payment routing layer; lifecycle quote → create → prepare → sign → broadcast → confirm → settle → reconcile.
 - Approvals: deterministic policy engine; thresholds, multiple independent approvers, new-recipient review; approvals bind a SHA-256 hash of the exact payment payload and die when material fields change.
 - AI: Relay Intelligence prepares batches, detects duplicates, explains failures; deterministic validation; zero signing authority.
 - Availability: built and operated from Dubai, United Arab Emirates; designed for UAE and GCC businesses; customers remain responsible for their own VARA/CBUAE and other regulatory obligations.

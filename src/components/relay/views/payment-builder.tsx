@@ -137,20 +137,20 @@ export function PaymentBuilderView() {
   if (created) {
     return (
       <div className="mx-auto max-w-lg">
-        <Card className="border-[#36C995]/40 bg-[#0E1725] p-8 text-center">
-          <CheckCircle2 className="mx-auto h-12 w-12 text-[#36C995]" />
+        <Card className="border-[#43D48E]/40 bg-[#15111D] p-8 text-center">
+          <CheckCircle2 className="mx-auto h-12 w-12 text-[#43D48E]" />
           <h2 className="mt-4 text-lg font-semibold">Payment {created.reference} submitted</h2>
           <p className="mt-2 text-sm text-secondary">
             Validation passed and the policy engine evaluated your organization&apos;s rules. The payment now needs <strong>{created.approvalsRequired} approver{created.approvalsRequired > 1 ? 's' : ''}</strong> before quoting and execution.
           </p>
-          <div className="mt-4 rounded-lg border border-[#26374C] bg-[#0B1220] p-3 text-left text-xs text-dim">
+          <div className="mt-4 rounded-lg border border-[#2E2540] bg-[#100D16] p-3 text-left text-xs text-dim">
             <div>Next steps: approval → provider quote → wallet signature → onchain settlement → reconciliation.</div>
             <div className="mt-1">The approved payload is hash-frozen; any material change restarts approval.</div>
           </div>
           <div className="mt-5 flex gap-2">
-            <Button variant="outline" className="flex-1 border-[#26374C]" onClick={() => navigate(`/app/payments/${created.id}`)}>View payment</Button>
+            <Button variant="outline" className="flex-1 border-[#2E2540]" onClick={() => navigate(`/app/payments/${created.id}`)}>View payment</Button>
             <Button
-              className="flex-1 bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90"
+              className="flex-1 bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"
               onClick={() => {
                 setCreated(null)
                 setStep(0)
@@ -180,24 +180,24 @@ export function PaymentBuilderView() {
             <button
               onClick={() => i < step && setStep(i)}
               disabled={i > step}
-              className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs transition-colors ${i === step ? 'bg-[#142135] text-[#35D6C0]' : i < step ? 'text-[#36C995] hover:bg-[#142135]' : 'text-dim'}`}
+              className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs transition-colors ${i === step ? 'bg-[#1d1826] text-[#E7B458]' : i < step ? 'text-[#43D48E] hover:bg-[#1d1826]' : 'text-dim'}`}
               aria-current={i === step ? 'step' : undefined}
             >
               {i < step ? <CheckCircle2 className="h-3.5 w-3.5" /> : s.icon}
               {s.label}
             </button>
-            {i < STEPS.length - 1 ? <div className="h-px w-4 bg-[#26374C]" /> : null}
+            {i < STEPS.length - 1 ? <div className="h-px w-4 bg-[#2E2540]" /> : null}
           </div>
         ))}
       </div>
 
-      <Card className="border-[#26374C] bg-[#0E1725] p-6">
+      <Card className="border-[#2E2540] bg-[#15111D] p-6">
         {step === 0 && (
           <div>
             <h3 className="text-sm font-semibold">Choose the source wallet</h3>
             <p className="mt-1 text-xs text-dim">Only verified wallets can source payments. The wallet owner signs every transfer — Relay never can.</p>
             {wallets.data?.wallets.length === 0 ? (
-              <EmptyState title="No wallets yet" description="Register and verify a wallet first." action={<Button size="sm" onClick={() => navigate('/app/wallets')} className="bg-[#35D6C0] text-[#062A26]">Go to wallets</Button>} />
+              <EmptyState title="No wallets yet" description="Register and verify a wallet first." action={<Button size="sm" onClick={() => navigate('/app/wallets')} className="bg-[#E7B458] text-[#221202]">Go to wallets</Button>} />
             ) : (
               <div className="mt-4 space-y-2">
                 {(wallets.data?.wallets ?? []).filter((w) => !w.revokedAt).map((w) => (
@@ -205,14 +205,14 @@ export function PaymentBuilderView() {
                     key={w.id}
                     onClick={() => w.ownershipStatus === 'VERIFIED' && setWalletId(w.id)}
                     disabled={w.ownershipStatus !== 'VERIFIED'}
-                    className={`flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors ${walletId === w.id ? 'border-[#35D6C0] bg-[#35D6C0]/5' : 'border-[#26374C] hover:bg-[#142135]'} ${w.ownershipStatus !== 'VERIFIED' ? 'cursor-not-allowed opacity-50' : ''}`}
+                    className={`flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors ${walletId === w.id ? 'border-[#E7B458] bg-[#E7B458]/5' : 'border-[#2E2540] hover:bg-[#1d1826]'} ${w.ownershipStatus !== 'VERIFIED' ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     <div>
                       <div className="text-sm font-medium">{w.label}</div>
                       <div className="font-mono text-[11px] text-dim">{shortAddress(w.address, 6)} · {w.network}</div>
                     </div>
                     {w.ownershipStatus === 'VERIFIED' ? (
-                      walletId === w.id ? <CheckCircle2 className="h-5 w-5 text-[#35D6C0]" /> : <span className="text-[10px] text-dim">verified</span>
+                      walletId === w.id ? <CheckCircle2 className="h-5 w-5 text-[#E7B458]" /> : <span className="text-[10px] text-dim">verified</span>
                     ) : (
                       <span className="flex items-center gap-1 text-[10px] text-[#F2BB62]"><AlertTriangle className="h-3 w-3" /> unverified</span>
                     )}
@@ -232,7 +232,7 @@ export function PaymentBuilderView() {
                 <button
                   key={a.mint}
                   onClick={() => setMint(a.mint)}
-                  className={`flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors ${mint === a.mint ? 'border-[#35D6C0] bg-[#35D6C0]/5' : 'border-[#26374C] hover:bg-[#142135]'}`}
+                  className={`flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors ${mint === a.mint ? 'border-[#E7B458] bg-[#E7B458]/5' : 'border-[#2E2540] hover:bg-[#1d1826]'}`}
                 >
                   <div>
                     <div className="text-sm font-medium">{a.symbol} <span className="text-xs text-dim">· {a.name}</span></div>
@@ -250,10 +250,10 @@ export function PaymentBuilderView() {
             <h3 className="text-sm font-semibold">Select the recipient</h3>
             <p className="mt-1 text-xs text-dim">Registered recipients match against your directory; addresses can never be silently changed after approval.</p>
             <div className="mt-3 flex gap-2">
-              <Button size="sm" variant={mode === 'REGISTERED' ? 'secondary' : 'outline'} onClick={() => setMode('REGISTERED')} className={mode === 'REGISTERED' ? 'bg-[#142135] text-[#35D6C0]' : 'border-[#26374C]'}>
+              <Button size="sm" variant={mode === 'REGISTERED' ? 'secondary' : 'outline'} onClick={() => setMode('REGISTERED')} className={mode === 'REGISTERED' ? 'bg-[#1d1826] text-[#E7B458]' : 'border-[#2E2540]'}>
                 From directory
               </Button>
-              <Button size="sm" variant={mode === 'NEW' ? 'secondary' : 'outline'} onClick={() => setMode('NEW')} className={mode === 'NEW' ? 'bg-[#142135] text-[#35D6C0]' : 'border-[#26374C]'}>
+              <Button size="sm" variant={mode === 'NEW' ? 'secondary' : 'outline'} onClick={() => setMode('NEW')} className={mode === 'NEW' ? 'bg-[#1d1826] text-[#E7B458]' : 'border-[#2E2540]'}>
                 New recipient
               </Button>
             </div>
@@ -263,13 +263,13 @@ export function PaymentBuilderView() {
                   <button
                     key={r.id}
                     onClick={() => setRecipientId(r.id)}
-                    className={`flex w-full items-center justify-between rounded-lg border p-3 text-left ${recipientId === r.id ? 'border-[#35D6C0] bg-[#35D6C0]/5' : 'border-[#26374C] hover:bg-[#142135]'}`}
+                    className={`flex w-full items-center justify-between rounded-lg border p-3 text-left ${recipientId === r.id ? 'border-[#E7B458] bg-[#E7B458]/5' : 'border-[#2E2540] hover:bg-[#1d1826]'}`}
                   >
                     <div>
                       <div className="text-sm">{r.name}</div>
                       <div className="font-mono text-[10px] text-dim">{shortAddress(r.address, 6)}{r.category ? ` · ${r.category}` : ''}</div>
                     </div>
-                    {recipientId === r.id ? <CheckCircle2 className="h-4 w-4 text-[#35D6C0]" /> : null}
+                    {recipientId === r.id ? <CheckCircle2 className="h-4 w-4 text-[#E7B458]" /> : null}
                   </button>
                 ))}
                 {(recipients.data?.recipients ?? []).length === 0 ? <EmptyState title="Directory is empty" description="Add recipients first, or create a new one here." /> : null}
@@ -278,11 +278,11 @@ export function PaymentBuilderView() {
               <div className="mt-3 space-y-3">
                 <div>
                   <Label>Recipient name</Label>
-                  <Input value={newRecipient.name} onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })} className="mt-1 border-[#26374C] bg-[#0B1220]" placeholder="Who is being paid" />
+                  <Input value={newRecipient.name} onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })} className="mt-1 border-[#2E2540] bg-[#100D16]" placeholder="Who is being paid" />
                 </div>
                 <div>
                   <Label>Solana address</Label>
-                  <Input value={newRecipient.address} onChange={(e) => setNewRecipient({ ...newRecipient, address: e.target.value })} className={`mt-1 border-[#26374C] bg-[#0B1220] font-mono text-xs ${newRecipient.address && !validAddress(newRecipient.address) ? 'border-[#F27683]' : ''}`} placeholder="Base58 public key" />
+                  <Input value={newRecipient.address} onChange={(e) => setNewRecipient({ ...newRecipient, address: e.target.value })} className={`mt-1 border-[#2E2540] bg-[#100D16] font-mono text-xs ${newRecipient.address && !validAddress(newRecipient.address) ? 'border-[#F27683]' : ''}`} placeholder="Base58 public key" />
                   {newRecipient.address && !validAddress(newRecipient.address) ? <p className="mt-1 text-[11px] text-[#F27683]">Not a valid Solana public key</p> : null}
                 </div>
                 <p className="text-[11px] text-dim">This creates a directory entry first, so future payments and duplicate detection benefit immediately.</p>
@@ -299,7 +299,7 @@ export function PaymentBuilderView() {
               <div>
                 <Label>Amount ({asset?.symbol ?? ''})</Label>
                 <div className="relative mt-1">
-                  <Input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} className={`border-[#26374C] bg-[#0B1220] pr-28 font-mono ${amount && !baseAmount ? 'border-[#F27683]' : ''}`} placeholder="0.00" />
+                  <Input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} className={`border-[#2E2540] bg-[#100D16] pr-28 font-mono ${amount && !baseAmount ? 'border-[#F27683]' : ''}`} placeholder="0.00" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-dim">{asset?.symbol}</span>
                 </div>
                 {amount && baseAmount ? <p className="mt-1 font-mono text-[11px] text-dim">= {BigInt(baseAmount).toLocaleString('en-US')} base units ({decimals} decimals)</p> : null}
@@ -313,11 +313,11 @@ export function PaymentBuilderView() {
               </div>
               <div>
                 <Label>Business reason</Label>
-                <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className="mt-1 border-[#26374C] bg-[#0B1220]" placeholder="e.g. March contributor distributions" />
+                <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className="mt-1 border-[#2E2540] bg-[#100D16]" placeholder="e.g. March contributor distributions" />
               </div>
               <div>
                 <Label>Invoice / document reference (optional)</Label>
-                <Input value={invoiceRef} onChange={(e) => setInvoiceRef(e.target.value)} className="mt-1 border-[#26374C] bg-[#0B1220]" placeholder="INV-2026-014" />
+                <Input value={invoiceRef} onChange={(e) => setInvoiceRef(e.target.value)} className="mt-1 border-[#2E2540] bg-[#100D16]" placeholder="INV-2026-014" />
               </div>
             </div>
           </div>
@@ -327,7 +327,7 @@ export function PaymentBuilderView() {
           <div>
             <h3 className="text-sm font-semibold">Review and submit</h3>
             <p className="mt-1 text-xs text-dim">Approving users will see exactly these fields. Any later change to destination, token, amount or wallet invalidates approvals.</p>
-            <div className="mt-4 space-y-2 rounded-lg border border-[#26374C] bg-[#0B1220] p-4 text-sm">
+            <div className="mt-4 space-y-2 rounded-lg border border-[#2E2540] bg-[#100D16] p-4 text-sm">
               <Row k="Source wallet" v={`${wallet?.label ?? ''} · ${shortAddress(wallet?.address ?? '', 4)} (${wallet?.network})`} />
               <Row k="Destination" v={recipientName ? `${recipientName} · ${shortAddress(destination, 6)}` : shortAddress(destination, 6)} />
               <Row k="Token" v={`${asset?.symbol ?? ''} · ${shortAddress(mint, 4)}`} />
@@ -335,9 +335,9 @@ export function PaymentBuilderView() {
               <Row k="Reason" v={reason || '—'} />
               {invoiceRef ? <Row k="Invoice ref" v={invoiceRef} /> : null}
             </div>
-            <div className="mt-4 rounded-lg border border-[#A18BEB]/30 bg-[#A18BEB]/5 p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-[#A18BEB]"><ShieldCheck className="h-4 w-4" /> Policy preview</div>
-              <p className="mt-1.5 text-xs text-[#A18BEB]/80">
+            <div className="mt-4 rounded-lg border border-[#B79BF0]/30 bg-[#B79BF0]/5 p-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-[#B79BF0]"><ShieldCheck className="h-4 w-4" /> Policy preview</div>
+              <p className="mt-1.5 text-xs text-[#B79BF0]/80">
                 Active policy: <strong>{activePolicy?.name ?? 'Default policy'}</strong> (v{activePolicy?.version ?? 1}) — approximately <strong>{estimatedApprovers} independent approver{estimatedApprovers > 1 ? 's' : ''}</strong> required for this amount.
               </p>
               <ul className="mt-2 space-y-1 text-[11px] text-dim">
@@ -346,22 +346,22 @@ export function PaymentBuilderView() {
                 ))}
               </ul>
             </div>
-            <div className="mt-4 rounded-lg border border-[#26374C] bg-[#0B1220] p-3 text-[11px] leading-relaxed text-dim">
+            <div className="mt-4 rounded-lg border border-[#2E2540] bg-[#100D16] p-3 text-[11px] leading-relaxed text-dim">
               On submission: validation runs → policy evaluates → payment enters <StatusBadge status="PENDING_APPROVAL" />. Quoting happens only after approval, using live provider quotes. The quote is authoritative — never a stale estimate.
             </div>
           </div>
         )}
 
         <div className="mt-6 flex justify-between">
-          <Button variant="outline" disabled={step === 0} onClick={() => setStep(step - 1)} className="border-[#26374C]">
+          <Button variant="outline" disabled={step === 0} onClick={() => setStep(step - 1)} className="border-[#2E2540]">
             <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
           </Button>
           {step < STEPS.length - 1 ? (
-            <Button disabled={!canContinue} onClick={() => setStep(step + 1)} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+            <Button disabled={!canContinue} onClick={() => setStep(step + 1)} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
               Continue <ArrowRight className="ml-1.5 h-4 w-4" />
             </Button>
           ) : (
-            <Button disabled={busy || !baseAmount} onClick={submit} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+            <Button disabled={busy || !baseAmount} onClick={submit} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
               <Send className="mr-1.5 h-4 w-4" /> {busy ? 'Submitting…' : 'Submit for approval'}
             </Button>
           )}
@@ -375,7 +375,7 @@ function Row({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <span className="shrink-0 text-xs text-dim">{k}</span>
-      <span className={`text-right text-xs ${mono ? 'font-mono tabular-nums text-[#35D6C0]' : 'text-secondary'}`}>{v}</span>
+      <span className={`text-right text-xs ${mono ? 'font-mono tabular-nums text-[#E7B458]' : 'text-secondary'}`}>{v}</span>
     </div>
   )
 }

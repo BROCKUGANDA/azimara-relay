@@ -152,25 +152,25 @@ export function AppShell() {
   )
 
   return (
-    <div className="flex min-h-screen bg-[#080D17]">
+    <div className="flex min-h-screen bg-[#0C0A12]">
       {/* Desktop sidebar — md covers tablets (768-1023px) too, which previously
           fell back to the cramped phone drawer. */}
-      <aside className={cn('sticky top-0 hidden h-screen shrink-0 border-r border-[#1A293D] bg-[#0B1220] transition-[width] duration-300 md:block', collapsed ? 'w-[72px]' : 'w-[248px]')}>
+      <aside className={cn('sticky top-0 hidden h-screen shrink-0 border-r border-[#231C30] bg-[#100D16] transition-[width] duration-300 md:block', collapsed ? 'w-[72px]' : 'w-[248px]')}>
         {SidebarContent()}
       </aside>
       {/* Mobile drawer */}
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="relay-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="relay-drawer absolute left-0 top-0 h-full w-[260px] border-r border-[#1A293D] bg-[#0B1220]">{SidebarContent(true)}</aside>
+          <aside className="relay-drawer absolute left-0 top-0 h-full w-[260px] border-r border-[#231C30] bg-[#100D16]">{SidebarContent(true)}</aside>
         </div>
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar */}
-        <header className="sticky top-0 z-30 flex h-[68px] items-center justify-between gap-3 border-b border-[#1A293D] bg-[#080D17]/90 px-4 backdrop-blur sm:px-6">
+        <header className="relay-sticky-safe sticky top-0 z-30 flex h-[68px] items-center justify-between gap-3 border-b border-[#231C30] bg-[#0C0A12]/90 px-4 backdrop-blur sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
-            <button className="relay-press rounded-lg p-2 text-secondary hover:bg-[#142135] hover:text-foreground md:hidden" onClick={() => { haptic('tap'); setMobileOpen(true) }} aria-label="Open navigation">
+            <button className="relay-press rounded-lg p-2 text-secondary hover:bg-[#1d1826] hover:text-foreground md:hidden" onClick={() => { haptic('tap'); setMobileOpen(true) }} aria-label="Open navigation">
               <Menu className="h-5 w-5" />
             </button>
             <Breadcrumbs path={path} navigate={go} />
@@ -179,16 +179,16 @@ export function AppShell() {
             {/* Command palette trigger — the shell's global launcher. */}
             <button
               onClick={() => { haptic('select'); setPaletteOpen(true) }}
-              className="relay-press hidden items-center gap-2 rounded-lg border border-[#26374C] bg-[#0B1220] px-3 py-2 text-xs text-dim transition-colors hover:border-[#35D6C0]/40 hover:text-secondary lg:flex"
+              className="relay-press hidden items-center gap-2 rounded-lg border border-[#2E2540] bg-[#100D16] px-3 py-2 text-xs text-dim transition-colors hover:border-[#E7B458]/40 hover:text-secondary lg:flex"
               aria-label="Open command palette"
             >
               <GlyphSearchGlyph />
               Search…
-              <kbd className="rounded border border-[#26374C] bg-[#142135] px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+              <kbd className="rounded border border-[#2E2540] bg-[#1d1826] px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
             </button>
             <button
               onClick={() => { haptic('select'); setPaletteOpen(true) }}
-              className="relay-press rounded-lg border border-[#26374C] p-2.5 text-secondary hover:bg-[#142135] hover:text-foreground lg:hidden"
+              className="relay-press rounded-lg border border-[#2E2540] p-2.5 text-secondary hover:bg-[#1d1826] hover:text-foreground lg:hidden"
               aria-label="Search"
             >
               <GlyphSearchGlyph />
@@ -197,27 +197,27 @@ export function AppShell() {
               size="sm"
               onClick={() => go('/app/payments/new')}
               aria-label="New payment"
-              className="relay-press-sm bg-[#35D6C0] font-medium text-[#062A26] shadow-[0_0_18px_rgba(53,214,192,0.25)] hover:bg-[#35D6C0]/90 hover:shadow-[0_0_26px_rgba(53,214,192,0.4)] md:hidden"
+              className="relay-press-sm bg-[#E7B458] font-medium text-[#221202] shadow-[0_0_18px_rgba(231,180,88,0.25)] hover:bg-[#E7B458]/90 hover:shadow-[0_0_26px_rgba(231,180,88,0.4)] md:hidden"
             >
               <Send className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               onClick={() => go('/app/payments/new')}
-              className="relay-press-sm hidden bg-[#35D6C0] font-medium text-[#062A26] shadow-[0_0_18px_rgba(53,214,192,0.25)] hover:bg-[#35D6C0]/90 hover:shadow-[0_0_26px_rgba(53,214,192,0.4)] md:inline-flex"
+              className="relay-press-sm hidden bg-[#E7B458] font-medium text-[#221202] shadow-[0_0_18px_rgba(231,180,88,0.25)] hover:bg-[#E7B458]/90 hover:shadow-[0_0_26px_rgba(231,180,88,0.4)] md:inline-flex"
             >
               <Send className="mr-1.5 h-3.5 w-3.5" /> New payment
             </Button>
             <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
               <DropdownMenuTrigger asChild>
-                <button className="relay-press relative rounded-lg border border-[#26374C] p-2.5 text-secondary hover:bg-[#142135] hover:text-foreground" aria-label="Notifications">
+                <button className="relay-press relative rounded-lg border border-[#2E2540] p-2.5 text-secondary hover:bg-[#1d1826] hover:text-foreground" aria-label="Notifications">
                   <span className={cn('block', bellSwing && 'relay-ring')}>
-                    <GlyphBell size={17} accent={unread > 0 ? '#F2BB62' : '#35D6C0'} />
+                    <GlyphBell size={17} accent={unread > 0 ? '#F2BB62' : '#E7B458'} />
                   </span>
-                  {unread > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F27683] px-1 text-[9px] font-bold text-[#080D17]">{unread}</span> : null}
+                  {unread > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F27683] px-1 text-[9px] font-bold text-[#0C0A12]">{unread}</span> : null}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))] border-[#26374C] bg-[#142135]">
+              <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))] border-[#2E2540] bg-[#1d1826]">
                 <DropdownMenuLabel className="text-xs">Notifications</DropdownMenuLabel>
                 <div className="max-h-80 overflow-y-auto">
                   {notifications.length === 0 ? (
@@ -226,7 +226,7 @@ export function AppShell() {
                     notifications.slice(0, 12).map((n) => (
                       <button
                         key={n.id}
-                        className={cn('relay-press-sm block w-full border-b border-[#1A293D] px-3 py-2.5 text-left last:border-0 hover:bg-[#1B2A40]', !n.readAt && 'bg-[#35D6C0]/5')}
+                        className={cn('relay-press-sm block w-full border-b border-[#231C30] px-3 py-2.5 text-left last:border-0 hover:bg-[#251E31]', !n.readAt && 'bg-[#E7B458]/5')}
                         onClick={async () => {
                           await api('/api/notifications', { json: { ids: [n.id], markRead: true } }).catch(() => undefined)
                           setNotifOpen(false)
@@ -246,23 +246,23 @@ export function AppShell() {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relay-press flex items-center gap-2 rounded-lg border border-[#26374C] px-2.5 py-2 hover:bg-[#142135]" aria-label="Account menu">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#658CFF]/15 text-[10px] font-bold text-[#658CFF]">
+                <button className="relay-press flex items-center gap-2 rounded-lg border border-[#2E2540] px-2.5 py-2 hover:bg-[#1d1826]" aria-label="Account menu">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#F17FA8]/15 text-[10px] font-bold text-[#F17FA8]">
                     {session.user?.name?.slice(0, 2).toUpperCase() ?? '??'}
                   </span>
                   <span className="hidden text-xs sm:inline">{session.user?.name}</span>
                   <ChevronsUpDown className="h-3 w-3 text-dim" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 border-[#26374C] bg-[#142135]">
+              <DropdownMenuContent align="end" className="w-56 border-[#2E2540] bg-[#1d1826]">
                 <DropdownMenuLabel className="text-xs">
                   {session.user?.email}
                   {!session.emailVerified ? <span className="mt-1 block text-[10px] font-normal text-[#F2BB62]">Email not verified</span> : null}
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-[#26374C]" />
+                <DropdownMenuSeparator className="bg-[#2E2540]" />
                 <DropdownMenuItem className="text-xs" onClick={() => go('/app/settings')}><GlyphSettings size={14} className="mr-2" /> Settings & security</DropdownMenuItem>
                 <DropdownMenuItem className="text-xs" onClick={() => go('/app/billing')}><GlyphBilling size={14} className="mr-2" /> Billing</DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-[#26374C]" />
+                <DropdownMenuSeparator className="bg-[#2E2540]" />
                 <DropdownMenuItem
                   className="text-xs text-[#F27683]"
                   onClick={async () => {
@@ -367,25 +367,25 @@ function SidebarInner({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center justify-between border-b border-[#1A293D] px-4">
+      <div className="flex h-16 items-center justify-between border-b border-[#231C30] px-4">
         <button onClick={() => handleNavigate('/app')} className="relay-press-sm group flex items-center gap-2.5" aria-label="Overview">
           <span className="transition-transform duration-500 group-hover:rotate-[8deg]">
             <LogoGlyph size={24} />
           </span>
-          {!collapsed && <span className="text-[13px] font-semibold tracking-tight">AZIMARA <span className="text-[#35D6C0]">RELAY</span></span>}
+          {!collapsed && <span className="text-[13px] font-semibold tracking-tight">AZIMARA <span className="text-[#E7B458]">RELAY</span></span>}
         </button>
         {!collapsed && (
-          <button className="relay-press rounded-lg p-2 text-dim hover:bg-[#142135] hover:text-foreground md:hidden" onClick={onNavigateDrawer} aria-label="Close navigation">
+          <button className="relay-press rounded-lg p-2 text-dim hover:bg-[#1d1826] hover:text-foreground md:hidden" onClick={onNavigateDrawer} aria-label="Close navigation">
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
       {/* Organization switcher */}
-      <div className="border-b border-[#1A293D] p-3">
+      <div className="border-b border-[#231C30] p-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn('relay-press-sm flex w-full items-center gap-2 rounded-lg border border-[#26374C] bg-[#0B1220] px-2.5 py-2 text-left hover:bg-[#142135] transition-colors', collapsed && 'justify-center px-0')} aria-label="Switch organization">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#35D6C0]/15 text-xs font-bold text-[#35D6C0]">{activeOrg.name.slice(0, 2).toUpperCase()}</span>
+            <button className={cn('relay-press-sm flex w-full items-center gap-2 rounded-lg border border-[#2E2540] bg-[#100D16] px-2.5 py-2 text-left hover:bg-[#1d1826] transition-colors', collapsed && 'justify-center px-0')} aria-label="Switch organization">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#E7B458]/15 text-xs font-bold text-[#E7B458]">{activeOrg.name.slice(0, 2).toUpperCase()}</span>
               {!collapsed && (
                 <>
                   <span className="min-w-0 flex-1">
@@ -397,16 +397,16 @@ function SidebarInner({
               )}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-[min(16rem,calc(100vw-3rem))] border-[#26374C] bg-[#142135]">
+          <DropdownMenuContent align="start" className="w-[min(16rem,calc(100vw-3rem))] border-[#2E2540] bg-[#1d1826]">
             <DropdownMenuLabel className="text-xs text-dim">Workspaces</DropdownMenuLabel>
             {session.organizations.map((o) => (
               <DropdownMenuItem key={o.id} onClick={() => session.setActive(o.id)} className="text-xs">
                 <Building2 className="mr-2 h-3.5 w-3.5 text-dim" />
                 <span className="flex-1">{o.name}</span>
-                {o.id === activeOrg.id && <Badge className="border-0 bg-[#35D6C0]/15 text-[10px] text-[#35D6C0]">Active</Badge>}
+                {o.id === activeOrg.id && <Badge className="border-0 bg-[#E7B458]/15 text-[10px] text-[#E7B458]">Active</Badge>}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator className="bg-[#26374C]" />
+            <DropdownMenuSeparator className="bg-[#2E2540]" />
             <DropdownMenuItem
               className="text-xs"
               onClick={async () => {
@@ -421,7 +421,7 @@ function SidebarInner({
                 }
               }}
             >
-              <Building2 className="mr-2 h-3.5 w-3.5 text-[#35D6C0]" /> Create new organization
+              <Building2 className="mr-2 h-3.5 w-3.5 text-[#E7B458]" /> Create new organization
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -448,7 +448,7 @@ function SidebarInner({
                       onClick={() => handleNavigate(item.path)}
                       className={cn(
                         'group relative mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors duration-150',
-                        active ? 'text-[#35D6C0]' : 'text-secondary hover:bg-[#142135]/60 hover:text-foreground',
+                        active ? 'text-[#E7B458]' : 'text-secondary hover:bg-[#1d1826]/60 hover:text-foreground',
                         collapsed && 'justify-center px-0',
                       )}
                       title={collapsed ? item.label : undefined}
@@ -459,7 +459,7 @@ function SidebarInner({
                       </span>
                       {!collapsed && <span className="truncate">{item.label}</span>}
                       {!collapsed && item.path === '/app/approvals' && <ApprovalsCountBadge />}
-                      {active && !collapsed ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#35D6C0] shadow-[0_0_8px_rgba(53,214,192,0.8)]" /> : null}
+                      {active && !collapsed ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E7B458] shadow-[0_0_8px_rgba(231,180,88,0.8)]" /> : null}
                     </button>
                   )
                 })}
@@ -467,18 +467,18 @@ function SidebarInner({
           ))}
         </div>
       </nav>
-      <div className="border-t border-[#1A293D] p-3">
+      <div className="border-t border-[#231C30] p-3">
         {!collapsed && (
-          <div className="mb-2 rounded-lg border border-[#26374C] bg-[#0B1220] p-2.5">
+          <div className="mb-2 rounded-lg border border-[#2E2540] bg-[#100D16] p-2.5">
             <div className="flex items-center gap-1.5 text-[10px] font-medium text-dim"><GlyphCommand size={12} /> SHORTCUT</div>
             <div className="mt-1 text-[11px] text-secondary">
-              Press <kbd className="rounded border border-[#26374C] bg-[#142135] px-1 font-mono">⌘K</kbd> for commands
+              Press <kbd className="rounded border border-[#2E2540] bg-[#1d1826] px-1 font-mono">⌘K</kbd> for commands
             </div>
           </div>
         )}
         <button
           onClick={() => { haptic('toggle'); onToggleCollapse() }}
-          className={cn('relay-press-sm hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-dim hover:bg-[#142135] hover:text-foreground md:flex', collapsed && 'justify-center px-0')}
+          className={cn('relay-press-sm hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-dim hover:bg-[#1d1826] hover:text-foreground md:flex', collapsed && 'justify-center px-0')}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <GlyphSettings size={15} />
@@ -504,7 +504,7 @@ function ApprovalsCountBadge() {
     return () => clearInterval(t)
   }, [])
   if (!count) return null
-  return <span className="ml-auto rounded-full bg-[#A18BEB]/15 px-2 py-0.5 text-[10px] font-semibold text-[#A18BEB]"><CountUp value={count} /></span>
+  return <span className="ml-auto rounded-full bg-[#B79BF0]/15 px-2 py-0.5 text-[10px] font-semibold text-[#B79BF0]"><CountUp value={count} /></span>
 }
 
 function Breadcrumbs({ path, navigate }: { path: string; navigate: (to: string) => void }) {
@@ -533,7 +533,7 @@ function Breadcrumbs({ path, navigate }: { path: string; navigate: (to: string) 
 }
 
 function ChevronSep() {
-  return <span className="text-[#26374C]">/</span>
+  return <span className="text-[#2E2540]">/</span>
 }
 
 function labelForPath(p: string): string {
@@ -602,8 +602,8 @@ function AppView({ path, navigate }: { path: string; navigate: (to: string) => v
 
 function NotFoundView({ navigate }: { navigate: (to: string) => void }) {
   return (
-    <div className="rounded-xl border border-dashed border-[#26374C] p-10 text-center text-sm text-dim">
-      Page not found — <button className="text-[#35D6C0] hover:underline" onClick={() => navigate('/app')}>back to overview</button>
+    <div className="rounded-xl border border-dashed border-[#2E2540] p-10 text-center text-sm text-dim">
+      Page not found — <button className="text-[#E7B458] hover:underline" onClick={() => navigate('/app')}>back to overview</button>
     </div>
   )
 }

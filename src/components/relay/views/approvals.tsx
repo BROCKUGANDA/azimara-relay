@@ -66,25 +66,25 @@ export function ApprovalsView() {
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {(queue.data?.items ?? []).map((item) => (
-            <Card key={item.id} className="border-[#26374C] bg-[#0E1725] p-5">
+            <Card key={item.id} className="border-[#2E2540] bg-[#15111D] p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <button className="font-mono text-sm text-[#35D6C0] hover:underline" onClick={() => navigate(`/app/payments/${item.id}`)}>{item.reference}</button>
+                  <button className="font-mono text-sm text-[#E7B458] hover:underline" onClick={() => navigate(`/app/payments/${item.id}`)}>{item.reference}</button>
                   <div className="mt-0.5 text-[11px] text-dim">submitted {timeAgo(item.createdAt)} · via {item.source}{item.createdByMe ? ' · created by you' : ''}</div>
                 </div>
                 <div className="text-right">
-                  <Amount base={item.amountBaseUnits} decimals={item.decimals} symbol={item.mintSymbol} className="text-base text-[#35D6C0]" />
+                  <Amount base={item.amountBaseUnits} decimals={item.decimals} symbol={item.mintSymbol} className="text-base text-[#E7B458]" />
                   <div className="mt-1"><StatusBadge status="PENDING_APPROVAL" /></div>
                 </div>
               </div>
-              <div className="mt-3 grid gap-2 rounded-lg border border-[#26374C] bg-[#0B1220] p-3 text-xs">
+              <div className="mt-3 grid gap-2 rounded-lg border border-[#2E2540] bg-[#100D16] p-3 text-xs">
                 <div className="flex justify-between"><span className="text-dim">Recipient</span><span className="min-w-0 truncate text-secondary">{item.recipientName ?? 'Unregistered'} · <span className="font-mono">{shortAddress(item.destination, 4)}</span></span></div>
                 <div className="flex justify-between"><span className="text-dim">Asset</span><span className="text-secondary">{item.mintSymbol}</span></div>
                 <div className="flex justify-between"><span className="text-dim">Wallet</span><span className="text-secondary">{item.walletLabel ?? '—'}</span></div>
                 {item.reason ? <div className="flex justify-between gap-4"><span className="shrink-0 text-dim">Reason</span><span className="text-right text-secondary">{item.reason}</span></div> : null}
               </div>
               <div className="mt-3 flex items-center gap-2 text-[11px] text-dim">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#A18BEB]" />
+                <ShieldCheck className="h-3.5 w-3.5 text-[#B79BF0]" />
                 {item.approvalsRequired} independent approver{item.approvalsRequired > 1 ? 's' : ''} required
                 {item.decidedByOthers.length > 0 ? ` · ${item.decidedByOthers.length} decision(s) recorded` : ''}
                 {item.waitingOn > 0 ? ` · waiting on ${item.waitingOn}` : ''}
@@ -92,7 +92,7 @@ export function ApprovalsView() {
               <div className="mt-3 flex gap-2">
                 {item.iCanDecide ? (
                   <>
-                    <Button size="sm" onClick={() => decide(item, 'APPROVED')} disabled={busy === item.id} className="h-9 px-4 bg-[#36C995] font-medium text-[#06221A] hover:bg-[#36C995]/90">
+                    <Button size="sm" onClick={() => decide(item, 'APPROVED')} disabled={busy === item.id} className="h-9 px-4 bg-[#43D48E] font-medium text-[#0A2413] hover:bg-[#43D48E]/90">
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Approve
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => decide(item, 'REJECTED')} disabled={busy === item.id} className="h-9 px-4 border-[#F27683]/40 text-[#F27683]">

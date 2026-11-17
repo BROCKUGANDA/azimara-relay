@@ -33,7 +33,7 @@ function Logo({ size = 28 }: { size?: number }) {
     <span className="flex items-center gap-2.5">
       <LogoGlyph size={size} />
       <span className="text-[15px] font-semibold tracking-tight">
-        AZIMARA <span className="text-[#35D6C0]">RELAY</span>
+        AZIMARA <span className="text-[#E7B458]">RELAY</span>
       </span>
     </span>
   )
@@ -43,7 +43,7 @@ function PublicHeader({ current }: { current: string }) {
   const { navigate } = useRouter()
   const session = useSession()
   return (
-    <header className="sticky top-0 z-40 border-b border-[#1A293D] bg-[#080D17]/85 backdrop-blur">
+    <header className="relay-sticky-safe sticky top-0 z-40 border-b border-[#231C30] bg-[#0C0A12]/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <button onClick={() => navigate('/')} aria-label="AZIMARA RELAY home" className="shrink-0">
           <Logo />
@@ -53,7 +53,7 @@ function PublicHeader({ current }: { current: string }) {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${current === item.path ? 'bg-[#142135] text-[#35D6C0]' : 'text-secondary hover:bg-[#142135] hover:text-foreground'}`}
+              className={`rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${current === item.path ? 'bg-[#1d1826] text-[#E7B458]' : 'text-secondary hover:bg-[#1d1826] hover:text-foreground'}`}
             >
               {item.label}
             </button>
@@ -61,15 +61,15 @@ function PublicHeader({ current }: { current: string }) {
         </nav>
         <div className="flex min-w-0 items-center gap-2">
           {session.authenticated ? (
-            <Button onClick={() => navigate('/app')} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+            <Button onClick={() => navigate('/app')} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
               Open app <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           ) : (
             <>
               {/* Hidden on the tightest phones: the nav strip and register CTA
                   keep the header within 360px. */}
-              <Button variant="ghost" onClick={() => navigate('/login')} className="hidden text-secondary hover:text-foreground sm:inline-flex">Sign in</Button>
-              <Button onClick={() => navigate('/register')} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+              <Button variant="ghost" onClick={() => navigate('/login')} className="px-2.5 text-xs text-secondary hover:text-foreground sm:px-4 sm:text-sm">Sign in</Button>
+              <Button onClick={() => navigate('/register')} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
                 Get started
               </Button>
             </>
@@ -78,13 +78,13 @@ function PublicHeader({ current }: { current: string }) {
       </div>
       {/* Scrollable chip strip: the 9-page top nav only fits at ≥1280px;
           everything smaller (phones + tablets) uses this strip. */}
-      <div className="flex gap-1 overflow-x-auto border-t border-[#1A293D] px-4 py-2 xl:hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex gap-1 overflow-x-auto border-t border-[#231C30] px-4 py-2 xl:hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
         {NAV.map((item) => (
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
             aria-current={current === item.path ? 'page' : undefined}
-            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-xs ${current === item.path ? 'bg-[#142135] text-[#35D6C0]' : 'text-secondary'}`}
+            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-xs ${current === item.path ? 'bg-[#1d1826] text-[#E7B458]' : 'text-secondary'}`}
           >
             {item.label}
           </button>
@@ -97,7 +97,7 @@ function PublicHeader({ current }: { current: string }) {
 function Footer() {
   const { navigate } = useRouter()
   return (
-    <footer className="mt-auto border-t border-[#1A293D] bg-[#0B1220]">
+    <footer className="mt-auto border-t border-[#231C30] bg-[#100D16]">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-4">
         <div>
           <Logo size={22} />
@@ -108,23 +108,23 @@ function Footer() {
         <div>
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary">Product</div>
           {[['/product', 'Product'], ['/treasury', 'Treasury'], ['/payouts', 'Batch payouts'], ['/intelligence', 'Relay Intelligence'], ['/pricing', 'Pricing']].map(([p, l]) => (
-            <button key={p} onClick={() => navigate(p)} className="block py-1 text-xs text-dim hover:text-[#35D6C0]">{l}</button>
+            <button key={p} onClick={() => navigate(p)} className="block py-1 text-xs text-dim hover:text-[#E7B458]">{l}</button>
           ))}
         </div>
         <div>
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary">Developers</div>
           {[['/integrations', 'Integrations'], ['/developers', 'API reference'], ['/security', 'Security']].map(([p, l]) => (
-            <button key={p} onClick={() => navigate(p)} className="block py-1 text-xs text-dim hover:text-[#35D6C0]">{l}</button>
+            <button key={p} onClick={() => navigate(p)} className="block py-1 text-xs text-dim hover:text-[#E7B458]">{l}</button>
           ))}
         </div>
         <div>
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary">Legal & company</div>
           {[['/legal/privacy', 'Privacy'], ['/legal/terms', 'Terms'], ['/company', 'AI Azimara'], ['/contact', 'Contact']].map(([p, l]) => (
-            <button key={p} onClick={() => navigate(p)} className="block py-1 text-xs text-dim hover:text-[#35D6C0]">{l}</button>
+            <button key={p} onClick={() => navigate(p)} className="block py-1 text-xs text-dim hover:text-[#E7B458]">{l}</button>
           ))}
         </div>
       </div>
-      <div className="border-t border-[#1A293D] px-4 py-4 text-center text-[11px] text-dim sm:px-6">
+      <div className="border-t border-[#231C30] px-4 py-4 text-center text-[11px] text-dim sm:px-6">
         {/* GEO: consistent entity + locality signal on every page. */}
         <address className="not-italic">
           AI Azimara · AZIMARA RELAY — Dubai, United Arab Emirates
@@ -139,7 +139,7 @@ function Footer() {
 
 function Hero({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: string }) {
   return (
-    <div className="relay-radial relative overflow-hidden border-b border-[#1A293D]">
+    <div className="relay-radial relative overflow-hidden border-b border-[#231C30]">
       {/* Ambient aurora wash — breathes between 55% and 100% opacity. */}
       <div className="relay-aurora" aria-hidden />
       <div className="relay-grid-bg">
@@ -147,8 +147,8 @@ function Hero({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: st
           {/* Copy column — staggered entrance choreography. */}
           <div className="text-center lg:text-left">
             <Reveal variant="fade">
-              <Badge variant="outline" className="border-[#35D6C0]/40 bg-[#35D6C0]/10 text-[#35D6C0]">
-                <PulseDot className="mr-1.5" color="#35D6C0" size={6} /> {eyebrow}
+              <Badge variant="outline" className="border-[#E7B458]/40 bg-[#E7B458]/10 text-[#E7B458]">
+                <PulseDot className="mr-1.5" color="#E7B458" size={6} /> {eyebrow}
               </Badge>
             </Reveal>
             <Reveal variant="rise" delay={80}>
@@ -177,40 +177,40 @@ function HeroScene() {
         {/* Orbit ring system */}
         <div className="absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2">
           <svg viewBox="0 0 320 320" className="relay-orbit h-full w-full opacity-60">
-            <ellipse cx="160" cy="160" rx="150" ry="58" fill="none" stroke="#35D6C0" strokeOpacity="0.28" strokeWidth="1" strokeDasharray="2 6" />
+            <ellipse cx="160" cy="160" rx="150" ry="58" fill="none" stroke="#E7B458" strokeOpacity="0.28" strokeWidth="1" strokeDasharray="2 6" />
           </svg>
           <svg viewBox="0 0 320 320" className="relay-orbit-rev absolute inset-0 h-full w-full opacity-40">
-            <ellipse cx="160" cy="160" rx="120" ry="104" fill="none" stroke="#658CFF" strokeOpacity="0.3" strokeWidth="1" strokeDasharray="3 9" />
+            <ellipse cx="160" cy="160" rx="120" ry="104" fill="none" stroke="#F17FA8" strokeOpacity="0.3" strokeWidth="1" strokeDasharray="3 9" />
           </svg>
           {/* Nodes riding the orbits */}
-          <span className="absolute left-[6%] top-[46%] h-2.5 w-2.5 rounded-full bg-[#35D6C0] shadow-[0_0_12px_rgba(53,214,192,0.9)]" />
-          <span className="absolute right-[9%] top-[24%] h-2 w-2 rounded-full bg-[#658CFF] shadow-[0_0_10px_rgba(101,140,255,0.9)]" />
+          <span className="absolute left-[6%] top-[46%] h-2.5 w-2.5 rounded-full bg-[#E7B458] shadow-[0_0_12px_rgba(231,180,88,0.9)]" />
+          <span className="absolute right-[9%] top-[24%] h-2 w-2 rounded-full bg-[#F17FA8] shadow-[0_0_10px_rgba(241,127,168,0.9)]" />
         </div>
         {/* Floating payment console */}
         <div className="relay-float absolute left-1/2 top-1/2 w-[290px] -translate-x-1/2 -translate-y-1/2" style={{ transform: 'translate(-50%, -50%)' }}>
           <div
-            className="relay-glow-border rounded-2xl border border-[#26374C] bg-[#0E1725]/90 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.5)] backdrop-blur"
+            className="relay-glow-border rounded-2xl border border-[#2E2540] bg-[#15111D]/90 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.5)] backdrop-blur"
             style={{ transform: 'rotateX(7deg) rotateY(-6deg)', transformStyle: 'preserve-3d' }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <LogoGlyph size={20} />
-                <span className="text-[11px] font-semibold tracking-tight">AZIMARA <span className="text-[#35D6C0]">RELAY</span></span>
+                <span className="text-[11px] font-semibold tracking-tight">AZIMARA <span className="text-[#E7B458]">RELAY</span></span>
               </div>
-              <span className="rounded-full border border-[#36C995]/30 bg-[#36C995]/10 px-2 py-0.5 text-[9px] font-medium text-[#36C995]">SETTLED</span>
+              <span className="rounded-full border border-[#43D48E]/30 bg-[#43D48E]/10 px-2 py-0.5 text-[9px] font-medium text-[#43D48E]">SETTLED</span>
             </div>
-            <div className="mt-4 rounded-lg border border-[#1A293D] bg-[#0B1220] p-3">
+            <div className="mt-4 rounded-lg border border-[#231C30] bg-[#100D16] p-3">
               <div className="flex items-center justify-between text-[10px] text-dim">
                 <span>Relay payment · RPY-8841</span>
                 <span className="font-mono">USDC</span>
               </div>
               <div className="mt-2 flex items-end justify-between">
                 <div>
-                  <div className="text-xl font-semibold tabular-nums text-[#35D6C0]">24,850.00</div>
+                  <div className="text-xl font-semibold tabular-nums text-[#E7B458]">24,850.00</div>
                   <div className="mt-0.5 text-[10px] text-dim">Vendor distribution · 12 recipients</div>
                 </div>
                 <svg width="92" height="30" viewBox="0 0 92 30" fill="none">
-                  <path d="M2 24 C 14 22, 18 12, 30 14 S 52 20, 62 12 S 82 4, 90 6" stroke="#35D6C0" strokeWidth="1.6" strokeLinecap="round" />
+                  <path d="M2 24 C 14 22, 18 12, 30 14 S 52 20, 62 12 S 82 4, 90 6" stroke="#E7B458" strokeWidth="1.6" strokeLinecap="round" />
                 </svg>
               </div>
             </div>
@@ -220,7 +220,7 @@ function HeroScene() {
                 <div key={s} className="flex flex-1 items-center gap-1.5">
                   <span
                     className="h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: i < 3 ? '#36C995' : '#26374C', boxShadow: i < 3 ? '0 0 6px rgba(54,201,149,0.8)' : 'none' }}
+                    style={{ backgroundColor: i < 3 ? '#43D48E' : '#2E2540', boxShadow: i < 3 ? '0 0 6px rgba(67,212,142,0.8)' : 'none' }}
                   />
                   <span className="text-[9px] text-dim">{s}</span>
                 </div>
@@ -229,13 +229,13 @@ function HeroScene() {
           </div>
         </div>
         {/* Floating satellite tiles */}
-        <div className="relay-float-slow absolute left-[2%] top-[12%] rounded-xl border border-[#26374C] bg-[#0E1725]/85 px-3 py-2 shadow-lg backdrop-blur" style={{ animationDelay: '0.8s' }}>
+        <div className="relay-float-slow absolute left-[2%] top-[12%] rounded-xl border border-[#2E2540] bg-[#15111D]/85 px-3 py-2 shadow-lg backdrop-blur" style={{ animationDelay: '0.8s' }}>
           <div className="text-[9px] text-dim">Policy engine</div>
-          <div className="mt-0.5 text-[11px] font-semibold text-[#A18BEB]">2-of-3 approvers</div>
+          <div className="mt-0.5 text-[11px] font-semibold text-[#B79BF0]">2-of-3 approvers</div>
         </div>
-        <div className="relay-float-slow absolute bottom-[8%] right-[2%] rounded-xl border border-[#26374C] bg-[#0E1725]/85 px-3 py-2 shadow-lg backdrop-blur" style={{ animationDelay: '1.6s' }}>
+        <div className="relay-float-slow absolute bottom-[8%] right-[2%] rounded-xl border border-[#2E2540] bg-[#15111D]/85 px-3 py-2 shadow-lg backdrop-blur" style={{ animationDelay: '1.6s' }}>
           <div className="text-[9px] text-dim">Non-custodial</div>
-          <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-[#36C995]"><GlyphShield size={11} /> Keys stay yours</div>
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-[#43D48E]"><GlyphShield size={11} /> Keys stay yours</div>
         </div>
       </div>
     </div>
@@ -248,8 +248,8 @@ function FeatureGrid({ items }: { items: { icon: React.ReactNode; title: string;
       {items.map((f, i) => (
         <Reveal key={f.title} variant="rise" delay={(i % 3) * 90} as="div">
           <Tilt3D max={4} glare className="h-full">
-            <Card className="h-full border-[#26374C] bg-[#0E1725] p-5 transition-colors duration-150 hover:border-[#35D6C0]/25 hover:bg-[#142135]">
-              <div className="text-[#35D6C0] drop-shadow-[0_0_10px_rgba(53,214,192,0.4)]">{f.icon}</div>
+            <Card className="h-full border-[#2E2540] bg-[#15111D] p-5 transition-colors duration-150 hover:border-[#E7B458]/25 hover:bg-[#1d1826]">
+              <div className="text-[#E7B458] drop-shadow-[0_0_10px_rgba(231,180,88,0.4)]">{f.icon}</div>
               <h3 className="mt-3 text-sm font-semibold">{f.title}</h3>
               <p className="mt-1.5 text-xs leading-relaxed text-dim">{f.body}</p>
             </Card>
@@ -266,7 +266,7 @@ function FeatureGrid({ items }: { items: { icon: React.ReactNode; title: string;
 const TRUST_ITEMS = [
   'Solana mainnet-beta & devnet isolation',
   'USDC · USDT · SOL settlement',
-  'MultiHopper routed transfers',
+  'Smart payment routing with environment isolation',
   '23-state payment lifecycle',
   'Maker-checker approval policies',
   'Payload-hash approval binding',
@@ -283,14 +283,14 @@ function TrustMarquee() {
     <span
       key={`${text}-${hidden ? 'dup' : 'orig'}`}
       aria-hidden={hidden || undefined}
-      className="mx-2 inline-flex shrink-0 items-center gap-2 rounded-full border border-[#26374C] bg-[#0E1725]/80 px-3.5 py-1.5 text-[11px] text-secondary"
+      className="mx-2 inline-flex shrink-0 items-center gap-2 rounded-full border border-[#2E2540] bg-[#15111D]/80 px-3.5 py-1.5 text-[11px] text-secondary"
     >
-      <PulseDot color="#35D6C0" size={5} />
+      <PulseDot color="#E7B458" size={5} />
       {text}
     </span>
   )
   return (
-    <div className="relay-marquee border-b border-[#1A293D] bg-[#0B1220]/70 py-3" role="presentation">
+    <div className="relay-marquee border-b border-[#231C30] bg-[#100D16]/70 py-3" role="presentation">
       <div className="relay-marquee-track">
         {TRUST_ITEMS.map((t) => chip(t))}
         {TRUST_ITEMS.map((t) => chip(t, true))}
@@ -309,10 +309,10 @@ function Cta({ title, sub, primary, secondary }: { title: string; sub: string; p
           <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-secondary">{sub}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <MagneticButton onClick={() => navigate('/register')} hapticEvent="select" className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#35D6C0] px-4 text-sm font-medium text-[#062A26] shadow-[0_0_24px_rgba(53,214,192,0.3)] transition-colors hover:bg-[#35D6C0]/90">
+            <MagneticButton onClick={() => navigate('/register')} hapticEvent="select" className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#E7B458] px-4 text-sm font-medium text-[#221202] shadow-[0_0_24px_rgba(231,180,88,0.3)] transition-colors hover:bg-[#E7B458]/90">
               {primary} <ArrowRight className="h-4 w-4" />
             </MagneticButton>
-            <MagneticButton onClick={() => navigate('/contact')} strength={5} className="inline-flex h-10 items-center justify-center rounded-md border border-[#26374C] bg-transparent px-4 text-sm font-medium text-secondary transition-colors hover:text-foreground">
+            <MagneticButton onClick={() => navigate('/contact')} strength={5} className="inline-flex h-10 items-center justify-center rounded-md border border-[#2E2540] bg-transparent px-4 text-sm font-medium text-secondary transition-colors hover:text-foreground">
               {secondary}
             </MagneticButton>
           </div>
@@ -324,7 +324,7 @@ function Cta({ title, sub, primary, secondary }: { title: string; sub: string; p
 
 function Page({ path, children }: { path: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#080D17]">
+    <div className="flex min-h-screen flex-col bg-[#0C0A12]">
       <PublicHeader current={path.replace('/', '')} />
       <main className="flex-1">{children}</main>
       <Footer />
@@ -356,7 +356,7 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: 'Which blockchains and tokens are supported?',
-    a: 'AZIMARA RELAY operates on Solana, supporting SOL and SPL tokens such as USDC and USDT through an environment-isolated MultiHopper integration with a quote, create, prepare, sign, broadcast, confirm, settle and reconcile lifecycle.',
+    a: 'AZIMARA RELAY operates on Solana, supporting SOL and SPL tokens such as USDC and USDT through an environment-isolated routing layer with a quote, create, prepare, sign, broadcast, confirm, settle and reconcile lifecycle.',
   },
   {
     q: 'Can AI approve or sign payments?',
@@ -389,11 +389,11 @@ function FaqSection() {
     }
   }, [])
   return (
-    <section className="border-y border-[#1A293D] bg-[#0B1220]" aria-labelledby="faq-heading">
+    <section className="border-y border-[#231C30] bg-[#100D16]" aria-labelledby="faq-heading">
       <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6">
         <h2 id="faq-heading" className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
         <p className="mt-2 text-sm text-secondary">Direct answers about custody, approvals, UAE availability, supported assets and pricing.</p>
-        <div className="mt-8 divide-y divide-[#1A293D]">
+        <div className="mt-8 divide-y divide-[#231C30]">
           {FAQ_ITEMS.map((f) => (
             <div key={f.q} className="py-5" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
               <h3 className="text-sm font-semibold" itemProp="name">{f.q}</h3>
@@ -415,7 +415,7 @@ function Home() {
   return (
     <Page path="/">
       <Hero
-        eyebrow="Non-custodial · Solana · MultiHopper"
+        eyebrow="Non-custodial · Solana mainnet-beta"
         title="Move money through software. Keep control over authorization. Make every payment accountable."
         sub="AZIMARA RELAY is a financial operations platform for businesses: recurring payments, vendor distributions, contractor payouts, treasury movements and multi-recipient settlements from one secure application."
       />
@@ -425,14 +425,14 @@ function Home() {
           items={[
             { icon: <Wallet className="h-6 w-6" />, title: 'Your keys, your treasury', body: 'Connect existing Solana wallets. No seed phrases, no private keys, no omnibus custody — funds never sit in an AZIMARA-controlled wallet.' },
             { icon: <Workflow className="h-6 w-6" />, title: 'Approvals that bind payloads', body: 'Configurable policy engine: thresholds, maker-checker separation, new-recipient review. Approvals hash the exact payment and die when material fields change.' },
-            { icon: <Blocks className="h-6 w-6" />, title: 'Programmable routing', body: 'MultiHopper-powered transfers with the documented lifecycle: estimate, create, prepare, sign, broadcast in order, confirm, settle, reconcile.' },
+            { icon: <Blocks className="h-6 w-6" />, title: 'Programmable routing', body: 'Direct SOL and SPL transfers through an environment-isolated routing layer: estimate, create, prepare, sign, broadcast in order, confirm, settle, reconcile.' },
             { icon: <BrainCircuit className="h-6 w-6" />, title: 'Relay Intelligence', body: 'AI assistant that prepares batches, detects duplicates and explains failures — with deterministic math, evidence references, and zero signing authority.' },
             { icon: <FileCheck2 className="h-6 w-6" />, title: 'Reconciliation built in', body: 'Every completed payment traces to provider evidence and onchain signatures. Ledger entries, settlement records, CSV exports.' },
             { icon: <Shield className="h-6 w-6" />, title: 'Enterprise controls', body: 'Organization RBAC enforced server-side, MFA, immutable audit trail, HMAC-verified webhooks, idempotent payment creation.' },
           ]}
         />
       </section>
-      <section className="border-y border-[#1A293D] bg-[#0B1220]">
+      <section className="border-y border-[#231C30] bg-[#100D16]">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
           {[
             ['The problem', 'Wallets, spreadsheets, chat approvals and block explorers create duplicate payments, invalid addresses, missing approvals and manual reconciliation.'],
@@ -441,7 +441,7 @@ function Home() {
             ['The standard', 'Built as commercial infrastructure: failure recovery, auditability, entitlements and deployment hygiene from day one.'],
           ].map(([t, b]) => (
             <div key={t}>
-              <div className="text-sm font-semibold text-[#35D6C0]">{t}</div>
+              <div className="text-sm font-semibold text-[#E7B458]">{t}</div>
               <p className="mt-2 text-xs leading-relaxed text-dim">{b}</p>
             </div>
           ))}
@@ -472,18 +472,18 @@ function ProductPage() {
             ['Recipient directory', 'Address-book management with validation, duplicate detection, groups, CSV import/export, and address-change controls that invalidate stale approvals.'],
             ['Payment management', 'One-off payments, multi-recipient batches, schedules, recurring instructions, invoice-linked requests and API-generated payments.'],
             ['Approval engine', 'Thresholds, multiple independent approvers, expiring approvals, revocation, policy versioning. Deterministic evaluation in code.'],
-            ['MultiHopper integration', 'Environment-isolated adapter (devnet/mainnet), quote → create → prepare → broadcast → confirm lifecycle, idempotent by design.'],
+            ['Payment routing', 'Environment-isolated routing adapter (devnet/production), quote → create → prepare → broadcast → confirm lifecycle, idempotent by design.'],
             ['Relay Intelligence', 'Natural-language operations with structured proposals, deterministic validation, evidence references and human approval handoff.'],
             ['Reconciliation & reporting', 'Provider sync, chain evidence, ledger entries, fee records, settlement records, exportable financial reports.'],
           ].map(([t, b]) => (
-            <Card key={t} className="border-[#26374C] bg-[#0E1725] p-5">
-              <h3 className="text-sm font-semibold text-[#35D6C0]">{t}</h3>
+            <Card key={t} className="border-[#2E2540] bg-[#15111D] p-5">
+              <h3 className="text-sm font-semibold text-[#E7B458]">{t}</h3>
               <p className="mt-1.5 text-xs leading-relaxed text-dim">{b}</p>
             </Card>
           ))}
         </div>
-        <div className="mt-10 rounded-xl border border-[#35D6C0]/30 bg-[#35D6C0]/5 p-5 text-sm text-secondary">
-          <span className="font-semibold text-[#35D6C0]">Non-custodial by construction:</span> no customer seed phrases or private keys are ever requested or stored; wallet connection is not transfer authorization; AI output is never payment permission.
+        <div className="mt-10 rounded-xl border border-[#E7B458]/30 bg-[#E7B458]/5 p-5 text-sm text-secondary">
+          <span className="font-semibold text-[#E7B458]">Non-custodial by construction:</span> no customer seed phrases or private keys are ever requested or stored; wallet connection is not transfer authorization; AI output is never payment permission.
         </div>
       </section>
       <Cta title="See the full lifecycle in your own workspace" sub="The free workspace includes the complete payment pipeline with plan-based limits." primary="Start now" secondary="Contact sales" />
@@ -523,15 +523,15 @@ function PayoutsPage() {
             ['Independently tracked routes', 'Provider capability limits are configuration: a transfer reference supports up to 20 destinations, so larger batches split into multiple independently tracked routes.'],
             ['Per-item outcomes', 'Error isolation means one failed payout never hides another. Every item carries its own payment record, signature history and settlement state.'],
           ].map(([t, b]) => (
-            <Card key={t} className="border-[#26374C] bg-[#0E1725] p-5">
-              <h3 className="text-sm font-semibold text-[#35D6C0]">{t}</h3>
+            <Card key={t} className="border-[#2E2540] bg-[#15111D] p-5">
+              <h3 className="text-sm font-semibold text-[#E7B458]">{t}</h3>
               <p className="mt-1.5 text-xs leading-relaxed text-dim">{b}</p>
             </Card>
           ))}
         </div>
-        <div className="mt-8 rounded-xl border border-[#26374C] bg-[#0E1725] p-5">
+        <div className="mt-8 rounded-xl border border-[#2E2540] bg-[#15111D] p-5">
           <div className="text-xs font-semibold uppercase tracking-wide text-dim">CSV format</div>
-          <pre className="mt-2 min-w-0 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-xs text-[#35D6C0]">name,address,amount
+          <pre className="mt-2 min-w-0 overflow-x-auto rounded-lg bg-[#0C0A12] p-3 font-mono text-xs text-[#E7B458]">name,address,amount
 Acme Contributions,9xQeWvG816bUx9EPjHmaTprYpRxpVkYnTdC8kP7d2wTE,1250.50
 Lab Services LLC,4Nd1mBQtrMJVYVfKf2PJy9NZBCZd2ZQhRZk3Z5nL6dWx,892.25</pre>
           <p className="mt-2 text-xs text-dim">Amounts are parsed as exact decimals in the token&apos;s base units — never floating point.</p>
@@ -547,14 +547,14 @@ function IntelligencePage() {
     <Page path="/intelligence">
       <Hero eyebrow="Relay Intelligence" title="An AI assistant with no signing authority and no custody" sub="Prepare approved contributor payments, flag duplicates, explain fees and failures — every proposal carries evidence and requires explicit human approval." />
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-        <Card className="mx-auto max-w-3xl border-[#A18BEB]/30 bg-[#0E1725] p-6">
-          <div className="text-xs font-semibold uppercase tracking-wide text-[#A18BEB]">Example request</div>
+        <Card className="mx-auto max-w-3xl border-[#B79BF0]/30 bg-[#15111D] p-6">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#B79BF0]">Example request</div>
           <p className="mt-2 font-mono text-sm text-secondary">“Prepare the approved contributor payments for this month, flag duplicate recipients and leave the required operating reserve untouched.”</p>
           <div className="mt-4 space-y-2 text-xs text-dim">
-            <div className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#36C995]" /> Reads only your authorized records, summarized deterministically.</div>
-            <div className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#36C995]" /> Proposes a batch; amounts recalculated in exact base units by code, never by the model.</div>
-            <div className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#36C995]" /> Validates against your approval policy before anything reaches the approval queue.</div>
-            <div className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#36C995]" /> Cannot sign, cannot approve, cannot bypass policy. Accept a proposal and it becomes normal payments — approvals still apply.</div>
+            <div className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#43D48E]" /> Reads only your authorized records, summarized deterministically.</div>
+            <div className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#43D48E]" /> Proposes a batch; amounts recalculated in exact base units by code, never by the model.</div>
+            <div className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#43D48E]" /> Validates against your approval policy before anything reaches the approval queue.</div>
+            <div className="flex items-start gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#43D48E]" /> Cannot sign, cannot approve, cannot bypass policy. Accept a proposal and it becomes normal payments — approvals still apply.</div>
           </div>
         </Card>
         <div className="mt-10">
@@ -582,14 +582,14 @@ function IntegrationsPage() {
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <FeatureGrid
           items={[
-            { icon: <Blocks className="h-6 w-6" />, title: 'MultiHopper', body: 'Devnet (mh_test_) and production (mh_live_) environments are never interchangeable. The adapter implements estimate, create, prepare, confirm-broadcast, status and webhooks.' },
+            { icon: <Blocks className="h-6 w-6" />, title: 'Payment routing', body: 'Devnet and production routing credentials are never interchangeable. The routing adapter implements estimate, create, prepare, confirm-broadcast, status and webhooks.' },
             { icon: <Wallet className="h-6 w-6" />, title: 'Solana wallets', body: 'Phantom and injected wallet adapters plus a read-only mode. Ownership verified with ed25519 message signatures; balances via public RPC.' },
             { icon: <KeyRound className="h-6 w-6" />, title: 'Developer API', body: 'Scoped API keys (rk_test_/rk_live_) with per-key rate limits, access logs and an OpenAPI specification for your own tooling.' },
             { icon: <Webhook className="h-6 w-6" />, title: 'Webhooks', body: 'HMAC-SHA256 signatures verified against the raw body with timing-safe comparison; every delivery persisted before processing; reconciliation jobs as the authoritative fallback.' },
           ]}
         />
         <div className="mt-8 rounded-xl border border-[#F2BB62]/30 bg-[#F2BB62]/5 p-4 text-xs text-[#F2BB62]">
-          Launch gate: meaningful mainnet balances require current provider audit reports, program deployment information, vulnerability-disclosure arrangements and recovery documentation. Until then Relay supports devnet end-to-end and production configuration is credential-gated.
+          Launch posture: subscription collection already settles on Solana mainnet-beta (USDC to the platform treasury, verified on-chain). Third-party payment routing stays credential-gated until current provider audit reports, program deployment information, vulnerability-disclosure arrangements and recovery documentation are in place — nothing is simulated in the meantime.
         </div>
       </section>
       <Cta title="Wire Relay into your operations" sub="Configure the provider connection from Settings → Integrations after signup." primary="Create workspace" secondary="Contact engineering" />
@@ -604,25 +604,25 @@ function DevelopersPage() {
       <Hero eyebrow="API" title="A documented, versioned API for your own tooling" sub="Session-scoped application endpoints plus key-scoped developer endpoints, both speaking the same error envelope." />
       <section className="mx-auto max-w-4xl px-4 py-14 sm:px-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Card className="border-[#26374C] bg-[#0E1725] p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold"><Terminal className="h-4 w-4 text-[#35D6C0]" /> Application API</div>
-            <p className="mt-2 text-xs text-dim">Cookie-session authenticated. Organization context via the <code className="font-mono text-[#35D6C0]">X-Organization-Id</code> header. RBAC enforced server-side.</p>
-            <pre className="mt-3 min-w-0 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] leading-relaxed text-[#A0AEC0]">GET /api/payments?status=PENDING_APPROVAL
+          <Card className="border-[#2E2540] bg-[#15111D] p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold"><Terminal className="h-4 w-4 text-[#E7B458]" /> Application API</div>
+            <p className="mt-2 text-xs text-dim">Cookie-session authenticated. Organization context via the <code className="font-mono text-[#E7B458]">X-Organization-Id</code> header. RBAC enforced server-side.</p>
+            <pre className="mt-3 min-w-0 overflow-x-auto rounded-lg bg-[#0C0A12] p-3 font-mono text-[11px] leading-relaxed text-[#ABA3BC]">GET /api/payments?status=PENDING_APPROVAL
 POST /api/payments
 POST /api/payments/:id/quote
 POST /api/payments/:id/approve
 POST /api/batches/preview</pre>
           </Card>
-          <Card className="border-[#26374C] bg-[#0E1725] p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="h-4 w-4 text-[#658CFF]" /> Developer API (v1)</div>
-            <p className="mt-2 text-xs text-dim">API keys with explicit scopes: <code className="font-mono text-[#658CFF]">payments:read</code>, <code className="font-mono text-[#658CFF]">payments:create</code>, <code className="font-mono text-[#658CFF]">recipients:read</code>, <code className="font-mono text-[#658CFF]">recipients:create</code>.</p>
-            <pre className="mt-3 min-w-0 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] leading-relaxed text-[#A0AEC0]">curl -H &quot;Authorization: Bearer rk_test_…&quot; \\
+          <Card className="border-[#2E2540] bg-[#15111D] p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="h-4 w-4 text-[#F17FA8]" /> Developer API (v1)</div>
+            <p className="mt-2 text-xs text-dim">API keys with explicit scopes: <code className="font-mono text-[#F17FA8]">payments:read</code>, <code className="font-mono text-[#F17FA8]">payments:create</code>, <code className="font-mono text-[#F17FA8]">recipients:read</code>, <code className="font-mono text-[#F17FA8]">recipients:create</code>.</p>
+            <pre className="mt-3 min-w-0 overflow-x-auto rounded-lg bg-[#0C0A12] p-3 font-mono text-[11px] leading-relaxed text-[#ABA3BC]">curl -H &quot;Authorization: Bearer rk_test_…&quot; \\
   /api/v1/recipients</pre>
           </Card>
         </div>
-        <Card className="mt-4 border-[#26374C] bg-[#0E1725] p-5">
+        <Card className="mt-4 border-[#2E2540] bg-[#15111D] p-5">
           <div className="text-sm font-semibold">Error envelope</div>
-          <pre className="mt-2 min-w-0 overflow-x-auto rounded-lg bg-[#080D17] p-3 font-mono text-[11px] text-[#A0AEC0]">{`{
+          <pre className="mt-2 min-w-0 overflow-x-auto rounded-lg bg-[#0C0A12] p-3 font-mono text-[11px] text-[#ABA3BC]">{`{
   "error": {
     "code": "PAYMENT_VALIDATION_FAILED",
     "message": "The payment could not be validated.",
@@ -630,10 +630,10 @@ POST /api/batches/preview</pre>
     "details": []
   }
 }`}</pre>
-          <p className="mt-2 text-xs text-dim">The full OpenAPI specification is served from <code className="font-mono text-[#35D6C0]">/api/openapi</code>. All requests are rate-limited and logged.</p>
+          <p className="mt-2 text-xs text-dim">The full OpenAPI specification is served from <code className="font-mono text-[#E7B458]">/api/openapi</code>. All requests are rate-limited and logged.</p>
         </Card>
         <div className="mt-6 text-center">
-          <Button onClick={() => navigate('/register')} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">Get API keys</Button>
+          <Button onClick={() => navigate('/register')} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">Get API keys</Button>
         </div>
       </section>
     </Page>
@@ -657,7 +657,7 @@ function SecurityPage() {
         />
         <div className="mt-8 space-y-3 text-xs leading-relaxed text-dim">
           <p><span className="font-semibold text-[#F2BB62]">Risk disclosures:</span> Routing does not guarantee anonymity or regulatory clearance; public-chain traceability remains. The interface makes no sanctions or legal-immunity claims. Digital assets are volatile and involve risk of loss.</p>
-          <p><span className="font-semibold text-[#F2BB62]">Protocol dependency:</span> Payment routing depends on MultiHopper smart contracts. Published provider security documentation has advised caution until audit reports are available; Relay gates mainnet support on current audit and recovery documentation. Relay never claims a third-party protocol is audited when it is not.</p>
+          <p><span className="font-semibold text-[#F2BB62]">Protocol dependency:</span> Payment routing depends on third-party routing programs. Published provider security documentation has advised caution until audit reports are available; Relay gates mainnet routing support on current audit and recovery documentation. Relay never claims a third-party protocol is audited when it is not.</p>
           <p><span className="font-semibold text-[#F2BB62]">Reporting:</span> Security issues can be reported through the contact page; we ask for responsible disclosure and will acknowledge receipt.</p>
         </div>
       </section>
@@ -683,8 +683,8 @@ function PricingPage() {
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {PLANS.map((p) => (
-            <Card key={p.id} className={`relative border p-5 ${p.featured ? 'border-[#35D6C0]/50 bg-[#0E1725]' : 'border-[#26374C] bg-[#0E1725]'}`}>
-              {p.featured ? <Badge className="absolute -top-2.5 right-4 border-0 bg-[#35D6C0] text-[#062A26]">Most popular</Badge> : null}
+            <Card key={p.id} className={`relative border p-5 ${p.featured ? 'border-[#E7B458]/50 bg-[#15111D]' : 'border-[#2E2540] bg-[#15111D]'}`}>
+              {p.featured ? <Badge className="absolute -top-2.5 right-4 border-0 bg-[#E7B458] text-[#221202]">Most popular</Badge> : null}
               <div className="text-sm font-semibold">{p.name}</div>
               <div className="mt-2 text-3xl font-semibold tabular-nums">
                 {p.price}<span className="text-sm font-normal text-dim">{p.price !== 'Custom' ? '/mo' : ''}</span>
@@ -693,14 +693,14 @@ function PricingPage() {
               <ul className="mt-4 space-y-1.5">
                 {p.items.map((i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-secondary">
-                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#36C995]" /> {i}
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#43D48E]" /> {i}
                   </li>
                 ))}
               </ul>
               <Button
                 onClick={() => navigate('/register')}
                 variant={p.featured ? 'default' : 'outline'}
-                className={`mt-5 w-full ${p.featured ? 'bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90' : 'border-[#26374C]'}`}
+                className={`mt-5 w-full ${p.featured ? 'bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90' : 'border-[#2E2540]'}`}
               >
                 {p.price === 'Custom' ? 'Talk to us' : 'Start with ' + p.name}
               </Button>
@@ -708,7 +708,7 @@ function PricingPage() {
           ))}
         </div>
         <p className="mt-6 text-center text-xs text-dim">
-          Prices are proposed pricing experiments, not established market rates. Payment collection is not active until a billing provider is configured and commercial terms are approved.
+          Plans are billed in USDC on Solana mainnet-beta: upgrades and renewals settle on-chain to the platform treasury and are verified against the real ledger — no card processor involved, and your funds always stay in your custody. Enterprise is priced by contract.
         </p>
       </section>
     </Page>
@@ -734,8 +734,8 @@ function CompanyPage() {
         </p>
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[['Accountability', 'Every payment operation is attributable, reviewable and reconcilable.'], ['Custody discipline', 'We never hold customer funds and never want to.'], ['Honesty', 'Unverified functionality is reported as unverified.']].map(([t, b]) => (
-            <Card key={t} className="border-[#26374C] bg-[#0E1725] p-4">
-              <div className="text-sm font-semibold text-[#35D6C0]">{t}</div>
+            <Card key={t} className="border-[#2E2540] bg-[#15111D] p-4">
+              <div className="text-sm font-semibold text-[#E7B458]">{t}</div>
               <p className="mt-1 text-xs text-dim">{b}</p>
             </Card>
           ))}
@@ -754,18 +754,18 @@ function ContactPage() {
       <Hero eyebrow="Contact" title="Talk to the AZIMARA RELAY team" sub="Sales, integrations, security disclosure and enterprise deployments." />
       <section className="mx-auto max-w-xl px-4 py-14 sm:px-6">
         {sent ? (
-          <Card className="border-[#36C995]/40 bg-[#36C995]/5 p-6 text-center text-sm">
-            <Check className="mx-auto h-8 w-8 text-[#36C995]" />
+          <Card className="border-[#43D48E]/40 bg-[#43D48E]/5 p-6 text-center text-sm">
+            <Check className="mx-auto h-8 w-8 text-[#43D48E]" />
             <div className="mt-3 font-medium">Message recorded</div>
             <p className="mt-1 text-xs text-dim">Thank you — the team reviews requests in order and will respond by email. (Note: an email delivery provider is not configured in this environment; in production this form writes to the sales pipeline.)</p>
           </Card>
         ) : (
-          <Card className="border-[#26374C] bg-[#0E1725] p-6">
+          <Card className="border-[#2E2540] bg-[#15111D] p-6">
             <div className="space-y-3">
-              <Input placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="border-[#26374C] bg-[#0B1220]" />
-              <Input placeholder="Work email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="border-[#26374C] bg-[#0B1220]" />
-              <Input placeholder="Company / organization" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="border-[#26374C] bg-[#0B1220]" />
-              <Textarea placeholder="What are you trying to solve?" rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="border-[#26374C] bg-[#0B1220]" />
+              <Input placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="border-[#2E2540] bg-[#100D16]" />
+              <Input placeholder="Work email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="border-[#2E2540] bg-[#100D16]" />
+              <Input placeholder="Company / organization" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="border-[#2E2540] bg-[#100D16]" />
+              <Textarea placeholder="What are you trying to solve?" rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="border-[#2E2540] bg-[#100D16]" />
               <Button
                 onClick={() => {
                   if (!form.name || !form.email || !form.message) {
@@ -774,7 +774,7 @@ function ContactPage() {
                   }
                   setSent(true)
                 }}
-                className="w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90"
+                className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"
               >
                 <Send className="mr-2 h-4 w-4" /> Send message
               </Button>

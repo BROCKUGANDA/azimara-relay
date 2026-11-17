@@ -9,7 +9,7 @@ const ONBOARDING_STEPS = [
   { id: 'wallet', label: 'Treasury wallet connected and verified', route: '#/app/wallets' },
   { id: 'recipients', label: 'First recipient registered', route: '#/app/recipients' },
   { id: 'policy', label: 'Approval policy reviewed', route: '#/app/policies' },
-  { id: 'integration', label: 'MultiHopper integration configured', route: '#/app/integrations' },
+  { id: 'integration', label: 'Payment routing configured', route: '#/app/integrations' },
 ] as const
 
 export const GET = route(async ({ org }) => {

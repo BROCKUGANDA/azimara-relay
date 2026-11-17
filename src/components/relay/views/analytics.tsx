@@ -36,8 +36,8 @@ export function AnalyticsView() {
         breadcrumb={['Relay', 'Assurance', 'Analytics']}
         actions={
           <Select value={days} onValueChange={setDays}>
-            <SelectTrigger className="w-40 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
-            <SelectContent className="border-[#26374C] bg-[#142135]">
+            <SelectTrigger className="w-40 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
+            <SelectContent className="border-[#2E2540] bg-[#1d1826]">
               {[7, 30, 90, 180, 365].map((d) => <SelectItem key={d} value={String(d)}>Last {d} days</SelectItem>)}
             </SelectContent>
           </Select>
@@ -65,8 +65,8 @@ export function AnalyticsView() {
             <div className="flex h-48 items-end gap-1" role="img" aria-label="Payment volume by day">
               {(data.data?.timeline ?? []).map((t) => (
                 <div key={t.date} className="group relative flex-1">
-                  <div className="w-full rounded-t bg-gradient-to-t from-[#658CFF]/20 to-[#658CFF]/70 transition-all duration-150 hover:to-[#658CFF]" style={{ height: `${Math.max(4, (t.volume / maxVolume) * 170)}px` }} />
-                  <div className="pointer-events-none absolute -top-9 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-[#26374C] bg-[#142135] px-2 py-1 text-[10px] group-active:block group-hover:block">
+                  <div className="w-full rounded-t bg-gradient-to-t from-[#F17FA8]/20 to-[#F17FA8]/70 transition-all duration-150 hover:to-[#F17FA8]" style={{ height: `${Math.max(4, (t.volume / maxVolume) * 170)}px` }} />
+                  <div className="pointer-events-none absolute -top-9 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-[#2E2540] bg-[#1d1826] px-2 py-1 text-[10px] group-active:block group-hover:block">
                     {t.date}: {t.volume.toLocaleString('en-US', { maximumFractionDigits: 2 })} ({t.count})
                   </div>
                 </div>
@@ -86,7 +86,7 @@ export function AnalyticsView() {
             {(data.data?.byStatus ?? []).length === 0 ? <div className="text-xs text-dim">No data yet.</div> : (
               <>
                 {/* Relative magnitude of each state at a glance. */}
-                <MiniBars data={(data.data?.byStatus ?? []).map((s) => s.count)} color="#A18BEB" height={36} label="Payments per lifecycle state" />
+                <MiniBars data={(data.data?.byStatus ?? []).map((s) => s.count)} color="#B79BF0" height={36} label="Payments per lifecycle state" />
                 {(data.data?.byStatus ?? []).map((s) => (
                   <div key={s.status} className="flex items-center justify-between gap-2">
                     <StatusBadge status={s.status} />
@@ -102,7 +102,7 @@ export function AnalyticsView() {
             {(data.data?.assetDistribution ?? []).length === 0 ? <div className="text-xs text-dim">No completed payments yet.</div> : null}
             {(data.data?.assetDistribution ?? []).map((a) => (
               <div key={a.mint} className="flex items-center justify-between text-xs">
-                <span className="text-[#35D6C0]">{a.symbol}</span>
+                <span className="text-[#E7B458]">{a.symbol}</span>
                 <span className="font-mono tabular-nums text-secondary">{a.total} <span className="text-dim">({a.count}×)</span></span>
               </div>
             ))}

@@ -124,7 +124,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
       {detail.isError ? <ErrorState message={String(detail.error)} retry={() => detail.refetch()} /> : null}
       {!d ? (
         <div className="mt-6 space-y-4" aria-hidden>
-          <div className="h-8 w-64 rounded bg-[#142135] relay-shimmer" />
+          <div className="h-8 w-64 rounded bg-[#1d1826] relay-shimmer" />
           <DetailSkeleton />
         </div>
       ) : (
@@ -138,7 +138,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                 <StatusBadge status={d.payment.status} />
                 {d.payment.status === 'PENDING_APPROVAL' && d.canApprove ? (
                   <>
-                    <Button size="sm" onClick={() => approve('APPROVED')} disabled={busy !== null} className="bg-[#36C995] font-medium text-[#06221A] hover:bg-[#36C995]/90">
+                    <Button size="sm" onClick={() => approve('APPROVED')} disabled={busy !== null} className="bg-[#43D48E] font-medium text-[#0A2413] hover:bg-[#43D48E]/90">
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Approve
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => approve('REJECTED')} disabled={busy !== null} className="border-[#F27683]/40 text-[#F27683]">
@@ -148,22 +148,22 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                 ) : null}
                 {d.hasDecided && d.payment.status === 'PENDING_APPROVAL' ? <span className="text-xs text-dim">You already decided on this payment</span> : null}
                 {(d.payment.status === 'APPROVED' || d.payment.status === 'QUOTE_EXPIRED') ? (
-                  <Button size="sm" onClick={() => act('quote')} disabled={busy !== null} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+                  <Button size="sm" onClick={() => act('quote')} disabled={busy !== null} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
                     <Quote className="mr-1.5 h-3.5 w-3.5" /> Request quote
                   </Button>
                 ) : null}
                 {d.payment.status === 'QUOTED' ? (
-                  <Button size="sm" onClick={() => act('execute')} disabled={busy !== null} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+                  <Button size="sm" onClick={() => act('execute')} disabled={busy !== null} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
                     <Play className="mr-1.5 h-3.5 w-3.5" /> Start execution
                   </Button>
                 ) : null}
                 {d.payment.status === 'AWAITING_SIGNATURE' ? (
-                  <Button size="sm" onClick={() => act('prepare')} disabled={busy !== null} className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">
+                  <Button size="sm" onClick={() => act('prepare')} disabled={busy !== null} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
                     <FileSignature className="mr-1.5 h-3.5 w-3.5" /> Prepare bundle
                   </Button>
                 ) : null}
                 {['AWAITING_SIGNATURE', 'FUNDING_BROADCAST', 'PROCESSING', 'SETTLEMENT_VERIFICATION', 'RECOVERABLE', 'RECONCILIATION_REQUIRED'].includes(d.payment.status) ? (
-                  <Button size="sm" variant="outline" onClick={() => act('sync')} disabled={busy !== null} className="border-[#26374C]">
+                  <Button size="sm" variant="outline" onClick={() => act('sync')} disabled={busy !== null} className="border-[#2E2540]">
                     <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Sync status
                   </Button>
                 ) : null}
@@ -179,7 +179,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
           {/* Condensed lifecycle pipeline — position derives from the same
               state machine that gates server actions, not from decoration. */}
           {d.payment.status !== 'DRAFT' ? (
-            <div className="mt-1 mb-6 overflow-x-auto rounded-xl border border-[#26374C] bg-[#0B1220]/60 px-4 py-3">
+            <div className="mt-1 mb-6 overflow-x-auto rounded-xl border border-[#2E2540] bg-[#100D16]/60 px-4 py-3">
               <ProgressFlow
                 steps={['Request', 'Approve', 'Quote', 'Sign', 'Settle']}
                 current={flowIndex(d.payment.status)}
@@ -194,7 +194,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
               <SetupRequiredState
                 title="MultiHopper credentials required"
                 detail="The payment is approved but the provider adapter has no configured credentials, so quoting cannot run. No fake or simulated quote will be shown."
-                action={<Button size="sm" onClick={() => navigate('/app/integrations')} className="bg-[#35D6C0] font-medium text-[#062A26]">Configure integration</Button>}
+                action={<Button size="sm" onClick={() => navigate('/app/integrations')} className="bg-[#E7B458] font-medium text-[#221202]">Configure integration</Button>}
               />
             </div>
           ) : null}
@@ -214,17 +214,17 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                     {d.payment.statusReason ? ` — ${d.payment.statusReason.replaceAll('_', ' ')}` : ''}
                   </div>
                 ) : (
-                  <ol className="relative ml-3 space-y-0 border-l border-[#26374C]">
+                  <ol className="relative ml-3 space-y-0 border-l border-[#2E2540]">
                     {LIFECYCLE_STEPS.map((s, i) => {
                       const done = idx > i || d.payment.status === 'COMPLETED'
                       const current = idx === i
                       return (
                         <li key={s} className="relative flex items-start gap-3 pb-4 pl-5 last:pb-0">
-                          {done ? <CheckCircle2 className="absolute -left-[9px] h-4 w-4 bg-[#0E1725] text-[#36C995]" />
-                            : current ? <span className="absolute -left-[9px] flex h-4 w-4 items-center justify-center bg-[#0E1725]"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#35D6C0]" /></span>
-                              : <Circle className="absolute -left-[9px] h-4 w-4 bg-[#0E1725] text-[#26374C]" />}
+                          {done ? <CheckCircle2 className="absolute -left-[9px] h-4 w-4 bg-[#15111D] text-[#43D48E]" />
+                            : current ? <span className="absolute -left-[9px] flex h-4 w-4 items-center justify-center bg-[#15111D]"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#E7B458]" /></span>
+                              : <Circle className="absolute -left-[9px] h-4 w-4 bg-[#15111D] text-[#2E2540]" />}
                           <div>
-                            <div className={`text-xs font-medium ${current ? 'text-[#35D6C0]' : done ? 'text-secondary' : 'text-dim'}`}>{s.replaceAll('_', ' ')}</div>
+                            <div className={`text-xs font-medium ${current ? 'text-[#E7B458]' : done ? 'text-secondary' : 'text-dim'}`}>{s.replaceAll('_', ' ')}</div>
                           </div>
                         </li>
                       )
@@ -237,28 +237,28 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
               {d.quote ? (
                 <SectionCard title="Provider quote" description="From the live MultiHopper estimate — authoritative at sign time, with expiry.">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
+                    <div className="rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
                       <div className="text-[10px] uppercase tracking-wide text-dim">Principal</div>
                       <Amount base={d.quote.principalBase} decimals={d.payment.decimals} symbol={d.payment.mintSymbol} className="text-sm" />
                     </div>
-                    <div className="rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
+                    <div className="rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
                       <div className="text-[10px] uppercase tracking-wide text-dim">Recipient receives (est.)</div>
                       <Amount base={d.quote.recipientGetsBase ?? d.quote.principalBase} decimals={d.payment.decimals} symbol={d.payment.mintSymbol} className="text-sm" />
                     </div>
                     {d.quote.feePctBps ? (
-                      <div className="rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
+                      <div className="rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
                         <div className="text-[10px] uppercase tracking-wide text-dim">Percentage fee</div>
                         <div className="font-mono text-sm tabular-nums">{d.quote.feePctBps / 100}%</div>
                       </div>
                     ) : null}
-                    <div className="rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
+                    <div className="rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
                       <div className="text-[10px] uppercase tracking-wide text-dim">Quote status</div>
                       <div className="text-sm">{d.quote.status} · expires {formatDateTime(d.quote.expiresAt)}</div>
                     </div>
                   </div>
                   <details className="mt-3">
-                    <summary className="cursor-pointer text-xs text-[#35D6C0]">Raw provider response</summary>
-                    <pre className="mt-2 max-h-48 overflow-auto rounded-lg border border-[#26374C] bg-[#080D17] p-3 font-mono text-[10px] leading-relaxed text-dim">{rawQuote.length > 20000 ? rawQuote.slice(0, 20000) + '\n… truncated' : rawQuote}</pre>
+                    <summary className="cursor-pointer text-xs text-[#E7B458]">Raw provider response</summary>
+                    <pre className="mt-2 max-h-48 overflow-auto rounded-lg border border-[#2E2540] bg-[#0C0A12] p-3 font-mono text-[10px] leading-relaxed text-dim">{rawQuote.length > 20000 ? rawQuote.slice(0, 20000) + '\n… truncated' : rawQuote}</pre>
                   </details>
                 </SectionCard>
               ) : null}
@@ -268,7 +268,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                 <div className="space-y-2">
                   {d.approvals.length === 0 ? <div className="text-xs text-dim">No decisions recorded yet.</div> : null}
                   {d.approvals.map((a) => (
-                    <div key={a.id} className="flex items-start justify-between gap-3 rounded-lg border border-[#26374C] bg-[#0B1220] p-3">
+                    <div key={a.id} className="flex items-start justify-between gap-3 rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
                       <div>
                         <div className="text-xs font-medium">{a.approverName} <span className="text-dim">({a.approverEmail})</span></div>
                         <div className="mt-0.5 text-[11px] text-dim">{timeAgo(a.createdAt)}{a.reason ? ` · ${a.reason}` : ''}</div>
@@ -287,7 +287,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                     {d.signatures.map((s) => {
                       const explorer = `https://explorer.solana.com/tx/${s.signature}${network === 'devnet' ? '?cluster=devnet' : ''}`
                       return (
-                        <a key={s.id} href={explorer} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 rounded-lg border border-[#26374C] bg-[#0B1220] p-3 hover:bg-[#142135]">
+                        <a key={s.id} href={explorer} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 rounded-lg border border-[#2E2540] bg-[#100D16] p-3 hover:bg-[#1d1826]">
                           <div>
                             <div className="text-xs font-medium">{s.purpose.replaceAll('_', ' ')}</div>
                             <div className="mt-0.5 font-mono text-[10px] text-dim">{shortHash(s.signature)}</div>
@@ -308,7 +308,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
             <div className="space-y-5">
               <SectionCard title="Payment details">
                 <dl className="space-y-2.5 text-xs">
-                  <div className="flex justify-between gap-3"><dt className="text-dim">Amount</dt><dd><Amount base={d.payment.amountBaseUnits} decimals={d.payment.decimals} symbol={d.payment.mintSymbol} className="font-semibold text-[#35D6C0]" /></dd></div>
+                  <div className="flex justify-between gap-3"><dt className="text-dim">Amount</dt><dd><Amount base={d.payment.amountBaseUnits} decimals={d.payment.decimals} symbol={d.payment.mintSymbol} className="font-semibold text-[#E7B458]" /></dd></div>
                   <div className="flex justify-between gap-3"><dt className="text-dim">Destination</dt><dd className="text-right font-mono text-secondary">{shortAddress(d.payment.destination, 6)}</dd></div>
                   <div className="flex justify-between gap-3"><dt className="text-dim">Recipient</dt><dd className="text-right text-secondary">{d.recipient?.name ?? 'Not registered'}</dd></div>
                   <div className="flex justify-between gap-3"><dt className="text-dim">Source wallet</dt><dd className="text-right text-secondary">{d.wallet?.label ?? '—'}</dd></div>
@@ -316,7 +316,7 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                   {d.payment.reason ? <div className="flex justify-between gap-3"><dt className="shrink-0 text-dim">Reason</dt><dd className="min-w-0 break-words text-right text-secondary">{d.payment.reason}</dd></div> : null}
                   {d.payment.invoiceRef ? <div className="flex justify-between gap-3"><dt className="text-dim">Invoice</dt><dd className="min-w-0 break-words text-right font-mono text-secondary">{d.payment.invoiceRef}</dd></div> : null}
                   <div className="flex justify-between gap-3"><dt className="text-dim">Approvers required</dt><dd className="text-secondary">{d.payment.approvalsRequired}</dd></div>
-                  {d.payment.completedAt ? <div className="flex justify-between gap-3"><dt className="text-dim">Completed</dt><dd className="text-[#36C995]">{formatDateTime(d.payment.completedAt)}</dd></div> : null}
+                  {d.payment.completedAt ? <div className="flex justify-between gap-3"><dt className="text-dim">Completed</dt><dd className="text-[#43D48E]">{formatDateTime(d.payment.completedAt)}</dd></div> : null}
                 </dl>
               </SectionCard>
 
@@ -335,12 +335,12 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                 <SectionCard title="Settlement" description="Verified against provider and chain evidence.">
                   <dl className="space-y-2 text-xs">
                     <div className="flex justify-between gap-3"><dt className="text-dim">Provider</dt><dd className="text-secondary">{d.settlement.providerStatus ?? '—'}</dd></div>
-                    <div className="flex justify-between gap-3"><dt className="text-dim">Chain</dt><dd className="text-[#36C995]">{d.settlement.chainStatus ?? '—'}</dd></div>
+                    <div className="flex justify-between gap-3"><dt className="text-dim">Chain</dt><dd className="text-[#43D48E]">{d.settlement.chainStatus ?? '—'}</dd></div>
                     <div className="flex justify-between gap-3"><dt className="text-dim">Expected</dt><dd><Amount base={d.settlement.expectedBase} decimals={d.payment.decimals} symbol={d.payment.mintSymbol} className="text-secondary" /></dd></div>
                     <div className="flex justify-between gap-3"><dt className="text-dim">Observed</dt><dd><Amount base={d.settlement.observedBase ?? d.settlement.expectedBase} decimals={d.payment.decimals} symbol={d.payment.mintSymbol} className="text-secondary" /></dd></div>
                   </dl>
                   {d.settlement.signature ? (
-                    <a href={`https://explorer.solana.com/tx/${d.settlement.signature}${network === 'devnet' ? '?cluster=devnet' : ''}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-[#35D6C0] hover:underline">
+                    <a href={`https://explorer.solana.com/tx/${d.settlement.signature}${network === 'devnet' ? '?cluster=devnet' : ''}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-[#E7B458] hover:underline">
                       View on explorer <ExternalLink className="h-3 w-3" />
                     </a>
                   ) : null}
@@ -351,10 +351,10 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                 <div className="space-y-2">
                   {d.lifecycle.length === 0 ? <div className="text-xs text-dim">No events recorded yet.</div> : null}
                   {d.lifecycle.slice().reverse().map((e, i) => (
-                    <div key={i} className="flex items-start justify-between gap-2 border-b border-[#1A293D] pb-2 text-xs last:border-0">
+                    <div key={i} className="flex items-start justify-between gap-2 border-b border-[#231C30] pb-2 text-xs last:border-0">
                       <div>
                         <span className="text-secondary">{e.type.replaceAll('_', ' ')}</span>
-                        <span className="ml-2 rounded bg-[#142135] px-1.5 py-0.5 text-[9px] uppercase text-dim">{e.kind}</span>
+                        <span className="ml-2 rounded bg-[#1d1826] px-1.5 py-0.5 text-[9px] uppercase text-dim">{e.kind}</span>
                       </div>
                       <span className="shrink-0 text-[10px] text-dim">{timeAgo(e.at)}</span>
                     </div>

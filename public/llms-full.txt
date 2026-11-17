@@ -23,8 +23,8 @@ One-off payments, multi-recipient batches (CSV import, per-row validation, exact
 ### Approval engine
 A deterministic policy engine evaluates thresholds, multiple independent approvers, new-recipient review and category rules in code. Every approval binds a SHA-256 hash of the exact payment payload: any material change invalidates the approval. Approvals can expire and be revoked; policies are versioned.
 
-### MultiHopper integration
-Environment-isolated provider adapter (devnet mh_test_ keys and production mh_live_ keys are never interchangeable). The documented lifecycle is estimate → create → prepare → sign → broadcast → confirm → settle → reconcile. Transfers support up to 20 destinations per route; larger batches split into independently tracked routes. Until current provider audit reports and recovery documentation are available, production mainnet support stays credential-gated and devnet is fully supported end-to-end.
+### Payment routing integration
+Environment-isolated provider adapter (devnet and production credentials are never interchangeable). The documented lifecycle is estimate → create → prepare → sign → broadcast → confirm → settle → reconcile. Transfers support up to 20 destinations per route; larger batches split into independently tracked routes. Until current provider audit reports and recovery documentation are available, production mainnet support stays credential-gated and devnet is fully supported end-to-end.
 
 ### Relay Intelligence (AI)
 An AI assistant that prepares batches, detects duplicates, flags anomalies and explains fees or failures. Hard restrictions: the AI never signs transactions, never touches private keys, never bypasses approval policies, and is never treated as authorization. Monetary math happens in deterministic code over integer base units; every AI financial action becomes a proposal with validation checks and explicit human review. Documents are treated as untrusted data — instruction-like content inside context is refused and reported.

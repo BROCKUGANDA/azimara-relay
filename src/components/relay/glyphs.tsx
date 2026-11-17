@@ -30,16 +30,24 @@ const base = (size: number, className?: string) => ({
   'aria-hidden': true,
 })
 
-const ACCENT = '#35D6C0'
-const BLUE = '#658CFF'
+const ACCENT = '#E7B458'
+const BLUE = '#F17FA8'
 
-/** Brand mark — relay triangle inside a rounded plate. */
+/**
+ * Brand mark — the relay-'A': two gold legs meet at an apex, the crossbar is
+ * a signal beam fading at both ends, a white diamond node rides mid-beam and
+ * a rose settlement diamond floats above the apex. Mirrors /public/icon.svg.
+ */
 export function LogoGlyph({ size = 24, className }: GlyphProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" className={cn('shrink-0', className)} aria-hidden>
-      <rect x="1.5" y="1.5" width="29" height="29" rx="8" stroke={ACCENT} strokeWidth="1.6" />
-      <path d="M9 20.5 16 8l7 12.5" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12.2 17.4h7.6" stroke={BLUE} strokeWidth="1.8" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className={cn('shrink-0', className)} aria-hidden>
+      <rect x="1.75" y="1.75" width="60.5" height="60.5" rx="16.25" stroke={ACCENT} strokeOpacity="0.6" strokeWidth="1.5" />
+      <path d="M15 49 L32 13.5 L49 49" stroke={ACCENT} strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M22 35 H42" stroke={ACCENT} strokeOpacity="0.4" strokeWidth="3.2" strokeLinecap="round" />
+      <circle cx="22" cy="35" r="2.7" fill={ACCENT} fillOpacity="0.5" />
+      <circle cx="42" cy="35" r="2.7" fill={ACCENT} fillOpacity="0.5" />
+      <rect x="28.7" y="31.7" width="6.6" height="6.6" rx="1.5" transform="rotate(45 32 35)" fill="#F4F1EA" />
+      <rect x="29.3" y="4.3" width="5.4" height="5.4" rx="1.3" transform="rotate(45 32 7)" fill={BLUE} />
     </svg>
   )
 }

@@ -8,12 +8,12 @@ import { Tilt3D, CountUp } from './motion'
 
 // Payment status tones per PRD §8.6 — every state visually distinct.
 const TONES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  grey: { bg: 'bg-[#1B2A40]', text: 'text-[#A0AEC0]', border: 'border-[#26374C]', dot: 'bg-[#74849A]' },
-  purple: { bg: 'bg-[#A18BEB]/10', text: 'text-[#A18BEB]', border: 'border-[#A18BEB]/30', dot: 'bg-[#A18BEB]' },
-  blue: { bg: 'bg-[#658CFF]/10', text: 'text-[#658CFF]', border: 'border-[#658CFF]/30', dot: 'bg-[#658CFF]' },
-  cyan: { bg: 'bg-[#35D6C0]/10', text: 'text-[#35D6C0]', border: 'border-[#35D6C0]/30', dot: 'bg-[#35D6C0]' },
+  grey: { bg: 'bg-[#251E31]', text: 'text-[#ABA3BC]', border: 'border-[#2E2540]', dot: 'bg-[#7C7490]' },
+  purple: { bg: 'bg-[#B79BF0]/10', text: 'text-[#B79BF0]', border: 'border-[#B79BF0]/30', dot: 'bg-[#B79BF0]' },
+  blue: { bg: 'bg-[#F17FA8]/10', text: 'text-[#F17FA8]', border: 'border-[#F17FA8]/30', dot: 'bg-[#F17FA8]' },
+  cyan: { bg: 'bg-[#E7B458]/10', text: 'text-[#E7B458]', border: 'border-[#E7B458]/30', dot: 'bg-[#E7B458]' },
   amber: { bg: 'bg-[#F2BB62]/10', text: 'text-[#F2BB62]', border: 'border-[#F2BB62]/30', dot: 'bg-[#F2BB62]' },
-  green: { bg: 'bg-[#36C995]/10', text: 'text-[#36C995]', border: 'border-[#36C995]/30', dot: 'bg-[#36C995]' },
+  green: { bg: 'bg-[#43D48E]/10', text: 'text-[#43D48E]', border: 'border-[#43D48E]/30', dot: 'bg-[#43D48E]' },
   red: { bg: 'bg-[#F27683]/10', text: 'text-[#F27683]', border: 'border-[#F27683]/30', dot: 'bg-[#F27683]' },
 }
 
@@ -55,22 +55,22 @@ export function Amount({ base, decimals, symbol, className }: { base: string; de
 }
 
 const METRIC_GLOW: Record<string, string> = {
-  teal: 'rgba(53, 214, 192, 0.10)',
-  purple: 'rgba(161, 139, 235, 0.10)',
+  teal: 'rgba(231, 180, 88, 0.10)',
+  purple: 'rgba(183, 155, 240, 0.10)',
   amber: 'rgba(242, 187, 98, 0.10)',
   red: 'rgba(242, 118, 131, 0.10)',
-  blue: 'rgba(101, 140, 255, 0.10)',
+  blue: 'rgba(241, 127, 168, 0.10)',
 }
 
 export function MetricCard({ label, value, sub, accent, countUp = false }: { label: string; value: React.ReactNode; sub?: React.ReactNode; accent?: 'teal' | 'purple' | 'amber' | 'red' | 'blue'; countUp?: boolean }) {
-  const accentClass = accent === 'teal' ? 'text-[#35D6C0]' : accent === 'purple' ? 'text-[#A18BEB]' : accent === 'amber' ? 'text-[#F2BB62]' : accent === 'red' ? 'text-[#F27683]' : accent === 'blue' ? 'text-[#658CFF]' : 'text-foreground'
-  const glow = accent ? METRIC_GLOW[accent] : 'rgba(240, 245, 250, 0.05)'
+  const accentClass = accent === 'teal' ? 'text-[#E7B458]' : accent === 'purple' ? 'text-[#B79BF0]' : accent === 'amber' ? 'text-[#F2BB62]' : accent === 'red' ? 'text-[#F27683]' : accent === 'blue' ? 'text-[#F17FA8]' : 'text-foreground'
+  const glow = accent ? METRIC_GLOW[accent] : 'rgba(244, 241, 234, 0.05)'
   const numeric = typeof value === 'number'
   return (
     <Tilt3D
       max={3}
       glare
-      className="group relative rounded-xl border border-[#26374C] bg-[#0E1725] p-4 transition-colors duration-150 hover:border-[#35D6C0]/25 hover:bg-[#142135]"
+      className="group relative rounded-xl border border-[#2E2540] bg-[#15111D] p-4 transition-colors duration-150 hover:border-[#E7B458]/25 hover:bg-[#1d1826]"
       style={{ boxShadow: `inset 0 1px 0 rgba(255,255,255,0.02)` }}
     >
       <div className="text-xs font-medium uppercase tracking-wide text-dim">{label}</div>
@@ -95,7 +95,7 @@ export function PageHeader({ title, description, actions, breadcrumb }: { title:
         <div className="mb-2 flex items-center gap-1.5 text-xs text-dim">
           {breadcrumb.map((b, i) => (
             <span key={i} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-[#26374C]">/</span>}
+              {i > 0 && <span className="text-[#2E2540]">/</span>}
               <span>{b}</span>
             </span>
           ))}
@@ -114,11 +114,11 @@ export function PageHeader({ title, description, actions, breadcrumb }: { title:
 
 export function EmptyState({ icon, title, description, action }: { icon?: React.ReactNode; title: string; description?: string; action?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#26374C] bg-[#0E1725]/50 px-6 py-14 text-center">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#2E2540] bg-[#15111D]/50 px-6 py-14 text-center">
       {icon ? (
         // Glyph floats gently + casts a teal halo — the empty state feels
         // alive instead of like a dead end.
-        <div className="relay-float mb-3 text-[#35D6C0] drop-shadow-[0_0_18px_rgba(53,214,192,0.35)]">{icon}</div>
+        <div className="relay-float mb-3 text-[#E7B458] drop-shadow-[0_0_18px_rgba(231,180,88,0.35)]">{icon}</div>
       ) : null}
       <div className="text-sm font-medium">{title}</div>
       {description ? <div className="mt-1 max-w-sm text-xs text-dim">{description}</div> : null}
@@ -168,10 +168,10 @@ export function DataTable<T>({ rows, columns, empty, keyOf, minWidth = 640, load
   if (loading) return <TableSkeleton rows={skeletonRows} cols={skeletonCols ?? Math.min(columns.length, 5)} minWidth={minWidth} />
   if (rows.length === 0 && empty) return <>{empty}</>
   return (
-    <div className="overflow-x-auto rounded-xl border border-[#26374C]">
+    <div className="overflow-x-auto rounded-xl border border-[#2E2540]">
       <table className="w-full text-sm" style={{ minWidth }}>
         <thead>
-          <tr className="border-b border-[#26374C] bg-[#0B1220]">
+          <tr className="border-b border-[#2E2540] bg-[#100D16]">
             {columns.map((c) => (
               <th key={c.key} className={cn('whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-dim md:px-4', c.className)}>
                 {c.header}
@@ -183,7 +183,7 @@ export function DataTable<T>({ rows, columns, empty, keyOf, minWidth = 640, load
           {rows.map((row, i) => (
             // Index-suffixed keys: duplicate business keys (repeated names,
             // identical rows) must not break React reconciliation.
-            <tr key={`${keyOf(row)}-${i}`} className="border-b border-[#1A293D] transition-colors duration-150 last:border-0 hover:bg-[#142135]">
+            <tr key={`${keyOf(row)}-${i}`} className="border-b border-[#231C30] transition-colors duration-150 last:border-0 hover:bg-[#1d1826]">
               {columns.map((c) => (
                 <td key={c.key} className={cn('px-3 py-3 align-middle md:px-4', c.className)}>
                   {c.render(row)}
@@ -203,8 +203,8 @@ export function Mono({ children, className }: { children: React.ReactNode; class
 
 export function SectionCard({ title, description, children, actions, className }: { title: string; description?: string; children: React.ReactNode; actions?: React.ReactNode; className?: string }) {
   return (
-    <section className={cn('rounded-xl border border-[#26374C] bg-[#0E1725]', className)}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1A293D] px-4 py-3">
+    <section className={cn('rounded-xl border border-[#2E2540] bg-[#15111D]', className)}>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#231C30] px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold">{title}</h2>
           {description ? <p className="mt-0.5 text-xs text-dim">{description}</p> : null}

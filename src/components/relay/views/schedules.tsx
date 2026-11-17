@@ -70,17 +70,17 @@ export function SchedulesView() {
         breadcrumb={['Relay', 'Payments', 'Schedules']}
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90"><Plus className="mr-1.5 h-4 w-4" /> New schedule</Button></DialogTrigger>
-            <DialogContent className="border-[#26374C] bg-[#0E1725]">
+            <DialogTrigger asChild><Button className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"><Plus className="mr-1.5 h-4 w-4" /> New schedule</Button></DialogTrigger>
+            <DialogContent className="border-[#2E2540] bg-[#15111D]">
               <DialogHeader><DialogTitle>Create schedule</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Monthly contractor retainer" className="mt-1 border-[#26374C] bg-[#0B1220]" /></div>
+                <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Monthly contractor retainer" className="mt-1 border-[#2E2540] bg-[#100D16]" /></div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Source wallet</Label>
                     <Select value={form.walletId} onValueChange={(v) => setForm({ ...form, walletId: v })}>
-                      <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue placeholder="Verified wallet" /></SelectTrigger>
-                      <SelectContent className="border-[#26374C] bg-[#142135]">
+                      <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue placeholder="Verified wallet" /></SelectTrigger>
+                      <SelectContent className="border-[#2E2540] bg-[#1d1826]">
                         {(wallets.data?.wallets ?? []).filter((w) => w.ownershipStatus === 'VERIFIED').map((w) => <SelectItem key={w.id} value={w.id}>{w.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -88,8 +88,8 @@ export function SchedulesView() {
                   <div>
                     <Label>Recipient</Label>
                     <Select value={form.recipientId} onValueChange={(v) => setForm({ ...form, recipientId: v })}>
-                      <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue placeholder="Active recipient" /></SelectTrigger>
-                      <SelectContent className="border-[#26374C] bg-[#142135]">
+                      <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue placeholder="Active recipient" /></SelectTrigger>
+                      <SelectContent className="border-[#2E2540] bg-[#1d1826]">
                         {(recipients.data?.recipients ?? []).map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -99,21 +99,21 @@ export function SchedulesView() {
                   <div>
                     <Label>Asset</Label>
                     <Select value={form.mint} onValueChange={(v) => setForm({ ...form, mint: v })}>
-                      <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent className="border-[#26374C] bg-[#142135]">
+                      <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent className="border-[#2E2540] bg-[#1d1826]">
                         {(assets.data?.assets ?? []).filter((a) => a.mint !== 'native:SOL').map((a) => <SelectItem key={a.mint} value={a.mint}>{a.symbol}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Amount</Label>
-                    <Input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value.replace(/[^0-9.]/g, '') })} className="mt-1 border-[#26374C] bg-[#0B1220] font-mono" />
+                    <Input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value.replace(/[^0-9.]/g, '') })} className="mt-1 border-[#2E2540] bg-[#100D16] font-mono" />
                   </div>
                   <div>
                     <Label>Recurrence</Label>
                     <Select value={form.recurrence} onValueChange={(v) => setForm({ ...form, recurrence: v })}>
-                      <SelectTrigger className="mt-1 border-[#26374C] bg-[#0B1220]"><SelectValue /></SelectTrigger>
-                      <SelectContent className="border-[#26374C] bg-[#142135]">
+                      <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
+                      <SelectContent className="border-[#2E2540] bg-[#1d1826]">
                         <SelectItem value="WEEKLY">Weekly</SelectItem>
                         <SelectItem value="MONTHLY">Monthly</SelectItem>
                         <SelectItem value="QUARTERLY">Quarterly</SelectItem>
@@ -123,9 +123,9 @@ export function SchedulesView() {
                 </div>
                 <div>
                   <Label>First run</Label>
-                  <Input type="datetime-local" value={form.firstRunAt} onChange={(e) => setForm({ ...form, firstRunAt: e.target.value })} className="mt-1 border-[#26374C] bg-[#0B1220]" />
+                  <Input type="datetime-local" value={form.firstRunAt} onChange={(e) => setForm({ ...form, firstRunAt: e.target.value })} className="mt-1 border-[#2E2540] bg-[#100D16]" />
                 </div>
-                <Button onClick={create} disabled={busy || !form.name.trim() || !form.walletId || !form.recipientId || !form.mint || !form.amount} className="w-full bg-[#35D6C0] font-medium text-[#062A26] hover:bg-[#35D6C0]/90">Create schedule</Button>
+                <Button onClick={create} disabled={busy || !form.name.trim() || !form.walletId || !form.recipientId || !form.mint || !form.amount} className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">Create schedule</Button>
               </div>
             </DialogContent>
           </Dialog>

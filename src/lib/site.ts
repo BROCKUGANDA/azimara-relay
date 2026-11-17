@@ -23,7 +23,7 @@ export const SITE_KEYWORDS = [
   'Solana payment operations Dubai',
   'USDC payments business',
   'approval workflow payments',
-  'MultiHopper routing',
+  'smart payment routing',
   'web3 finance operations UAE',
   'treasury operations platform',
 ]

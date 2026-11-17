@@ -52,3 +52,6 @@ prompt
 server.log
 # Skills directory
 /skills/
+# transient tool artifacts (not part of the app)
+tool-results
+scripts/*.py

@@ -28,7 +28,7 @@ import {
 
 export function Sparkline({
   data,
-  color = '#35D6C0',
+  color = '#E7B458',
   width = 120,
   height = 36,
   area = true,
@@ -112,8 +112,8 @@ export function RadialGauge({
   max = 100,
   size = 92,
   stroke = 7,
-  color = '#35D6C0',
-  trackColor = '#1B2A40',
+  color = '#E7B458',
+  trackColor = '#251E31',
   children,
   className,
   label,
@@ -180,7 +180,7 @@ export function RadialGauge({
 
 export function MiniBars({
   data,
-  color = '#658CFF',
+  color = '#F17FA8',
   height = 40,
   className,
   label,
@@ -224,7 +224,7 @@ export function RingStat({
   label,
   value,
   max = 100,
-  color = '#35D6C0',
+  color = '#E7B458',
   sub,
   className,
 }: {
@@ -257,7 +257,7 @@ export function DeltaBadge({ delta, suffix = '%', className }: { delta: number; 
     <span
       className={cn(
         'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
-        up ? 'bg-[#36C995]/10 text-[#36C995]' : 'bg-[#F27683]/10 text-[#F27683]',
+        up ? 'bg-[#43D48E]/10 text-[#43D48E]' : 'bg-[#F27683]/10 text-[#F27683]',
         className,
       )}
     >
@@ -309,16 +309,16 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden border-[#26374C] bg-[#0B1220]/95 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:max-w-xl" aria-describedby={undefined}>
+      <DialogContent className="overflow-hidden border-[#2E2540] bg-[#100D16]/95 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:max-w-xl" aria-describedby={undefined}>
         <DialogTitle className="sr-only">Command palette</DialogTitle>
         <CommandPrimitive className="text-foreground" loop>
-          <div className="flex items-center gap-2.5 border-b border-[#1A293D] px-4">
+          <div className="flex items-center gap-2.5 border-b border-[#231C30] px-4">
             <GlyphSearch size={15} className="text-dim" />
             <CommandInput
               placeholder="Search views and actions…"
               className="h-11 w-full border-0 bg-transparent text-sm outline-none placeholder:text-dim focus:ring-0"
             />
-            <kbd className="rounded border border-[#26374C] bg-[#142135] px-1.5 py-0.5 font-mono text-[10px] text-dim">ESC</kbd>
+            <kbd className="rounded border border-[#2E2540] bg-[#1d1826] px-1.5 py-0.5 font-mono text-[10px] text-dim">ESC</kbd>
           </div>
           <CommandList className="max-h-[50vh] py-2">
             <CommandEmpty className="px-4 py-6 text-center text-xs text-dim">No matching command</CommandEmpty>
@@ -340,7 +340,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               <PaletteItem glyph={<GlyphAnalytics size={15} />} label="Analytics" keywords="volume trends" onRun={() => go('/app/analytics')} />
               <PaletteItem glyph={<GlyphIntelligence size={15} />} label="Relay Intelligence" keywords="ai insights risk" onRun={() => go('/app/intelligence')} />
               <PaletteItem glyph={<GlyphKeys size={15} />} label="API keys" keywords="token secret" onRun={() => go('/app/api-keys')} show={permissions.includes('apikey:manage' as never)} />
-              <PaletteItem glyph={<GlyphIntegrations size={15} />} label="Integrations" keywords="multihopper provider rpc" onRun={() => go('/app/integrations')} />
+              <PaletteItem glyph={<GlyphIntegrations size={15} />} label="Integrations" keywords="routing provider rpc payments" onRun={() => go('/app/integrations')} />
               <PaletteItem glyph={<GlyphTeam size={15} />} label="Team" keywords="members invite roles" onRun={() => go('/app/team')} />
               <PaletteItem glyph={<GlyphAudit size={15} />} label="Audit trail" keywords="logs immutable" onRun={() => go('/app/audit')} />
               <PaletteItem glyph={<GlyphBilling size={15} />} label="Billing" keywords="plan usage invoice" onRun={() => go('/app/billing')} />
@@ -359,7 +359,7 @@ function PaletteItem({ glyph, label, keywords, onRun, show = true }: { glyph?: R
     <CommandItem
       onSelect={onRun}
       keywords={keywords?.split(' ')}
-      className="mx-2 flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-secondary transition-colors data-[selected=true]:bg-[#142135] data-[selected=true]:text-[#35D6C0]"
+      className="mx-2 flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-secondary transition-colors data-[selected=true]:bg-[#1d1826] data-[selected=true]:text-[#E7B458]"
     >
       <span className="text-dim">{glyph}</span>
       {label}
