@@ -97,30 +97,30 @@ export function TeamView() {
         actions={
           canManage ? (
             <Dialog open={inviteOpen} onOpenChange={(o) => { setInviteOpen(o); if (!o) setInviteLink(null) }}>
-              <DialogTrigger asChild><Button className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"><UserPlus className="mr-1.5 h-4 w-4" /> Invite member</Button></DialogTrigger>
-              <DialogContent className="border-[#2E2540] bg-[#15111D]">
+              <DialogTrigger asChild><Button className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><UserPlus className="mr-1.5 h-4 w-4" /> Invite member</Button></DialogTrigger>
+              <DialogContent className="border-[#1D2E42] bg-[#101C2C]">
                 <DialogHeader><DialogTitle>Invite a member</DialogTitle></DialogHeader>
                 {inviteLink ? (
-                  <div className="rounded-lg border border-[#43D48E]/40 bg-[#43D48E]/5 p-3 text-xs">
-                    <div className="font-medium text-[#43D48E]">Invitation created. Email delivery is not configured in this environment — share the link directly:</div>
+                  <div className="rounded-lg border border-[#2ED3A6]/40 bg-[#2ED3A6]/5 p-3 text-xs">
+                    <div className="font-medium text-[#2ED3A6]">Invitation created. Email delivery is not configured in this environment — share the link directly:</div>
                     <div className="mt-2 flex items-center gap-2">
-                      <code className="flex-1 truncate rounded bg-[#100D16] px-2 py-1.5 font-mono text-[10px] text-[#E7B458]">{inviteLink}</code>
-                      <Button size="sm" variant="outline" className="border-[#2E2540]" onClick={() => { navigator.clipboard.writeText(inviteLink); toast.success('Copied') }}><Copy className="h-3.5 w-3.5" /></Button>
+                      <code className="flex-1 truncate rounded bg-[#0D1622] px-2 py-1.5 font-mono text-[10px] text-[#39C6D8]">{inviteLink}</code>
+                      <Button size="sm" variant="outline" className="border-[#1D2E42]" onClick={() => { navigator.clipboard.writeText(inviteLink); toast.success('Copied') }}><Copy className="h-3.5 w-3.5" /></Button>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1 border-[#2E2540] bg-[#100D16]" /></div>
+                    <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1 border-[#1D2E42] bg-[#0D1622]" /></div>
                     <div>
                       <Label>Role</Label>
                       <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
-                        <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
-                        <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+                        <SelectTrigger className="mt-1 border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
+                        <SelectContent className="border-[#1D2E42] bg-[#142436]">
                           {ROLES.filter((r) => r !== 'OWNER' || isOwner).map((r) => <SelectItem key={r} value={r}>{r.replaceAll('_', ' ')}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button onClick={invite} disabled={busy || !form.email} className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">Create invitation</Button>
+                    <Button onClick={invite} disabled={busy || !form.email} className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Create invitation</Button>
                   </div>
                 )}
               </DialogContent>
@@ -139,8 +139,8 @@ export function TeamView() {
           { key: 'name', header: 'Member', render: (m) => <div><div className="text-sm">{m.name}</div><div className="text-[10px] text-dim">{m.email}</div></div> },
           { key: 'role', header: 'Role', render: (m) => canManage && m.role !== 'OWNER' ? (
             <Select value={m.role} onValueChange={(v) => changeRole(m.id, v)}>
-              <SelectTrigger className="h-8 w-full min-w-[9rem] border-[#2E2540] bg-[#100D16] text-xs sm:w-44"><SelectValue /></SelectTrigger>
-              <SelectContent className="border-[#2E2540] bg-[#1d1826]">{ROLES.filter((r) => r !== 'OWNER' || isOwner).map((r) => <SelectItem key={r} value={r}>{r.replaceAll('_', ' ')}</SelectItem>)}</SelectContent>
+              <SelectTrigger className="h-8 w-full min-w-[9rem] border-[#1D2E42] bg-[#0D1622] text-xs sm:w-44"><SelectValue /></SelectTrigger>
+              <SelectContent className="border-[#1D2E42] bg-[#142436]">{ROLES.filter((r) => r !== 'OWNER' || isOwner).map((r) => <SelectItem key={r} value={r}>{r.replaceAll('_', ' ')}</SelectItem>)}</SelectContent>
             </Select>
           ) : <span className="text-xs text-secondary">{m.role.replaceAll('_', ' ')}</span> },
           { key: 'login', header: 'Last active', render: (m) => <span className="text-xs text-dim">{m.lastLoginAt ? timeAgo(m.lastLoginAt) : 'never'}</span> },
@@ -154,7 +154,7 @@ export function TeamView() {
         ) : (
           <div className="space-y-2">
             {(invites.data?.invitations ?? []).filter((i) => i.status === 'PENDING').map((i) => (
-              <div key={i.id} className="flex items-center justify-between rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
+              <div key={i.id} className="flex items-center justify-between rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3">
                 <div>
                   <div className="text-xs">{i.email} <span className="text-dim">· {i.role.replaceAll('_', ' ')}</span></div>
                   <div className="text-[10px] text-dim">{inviteExpiryLabel(i.expiresAt)}</div>
@@ -176,7 +176,7 @@ export function TeamView() {
             ['Analyst', 'Read-only reports and transaction visibility'],
             ['Auditor', 'Read-only audit records and exports'],
           ].map(([r, d]) => (
-            <div key={r} className="rounded-lg border border-[#2E2540] bg-[#100D16] p-2.5">
+            <div key={r} className="rounded-lg border border-[#1D2E42] bg-[#0D1622] p-2.5">
               <div className="font-medium text-secondary">{r}</div>
               <div className="mt-0.5">{d}</div>
             </div>

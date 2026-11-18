@@ -45,7 +45,7 @@ export function ReconciliationView() {
         actions={
           <>
             <a href="/api/exports" download className="hidden" aria-hidden />
-            <Button size="sm" variant="outline" className="border-[#2E2540]" onClick={async () => {
+            <Button size="sm" variant="outline" className="border-[#1D2E42]" onClick={async () => {
               try {
                 const res = await api<{ csv: string; rowCount: number }>('/api/exports', { json: { kind: 'RECONCILIATION', days: 90 } })
                 if (typeof res?.csv !== 'string') {
@@ -66,7 +66,7 @@ export function ReconciliationView() {
             }}>
               <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
             </Button>
-            <Button size="sm" onClick={resyncAll} disabled={busy} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
+            <Button size="sm" onClick={resyncAll} disabled={busy} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
               <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} /> Resync all
             </Button>
           </>
@@ -76,16 +76,16 @@ export function ReconciliationView() {
       {recon.isLoading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5" aria-hidden>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
-              <div className="h-2 w-16 rounded bg-[#251E31] relay-shimmer" style={{ animationDelay: `${i * 80}ms` }} />
-              <div className="mt-2.5 h-7 w-12 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+            <div key={i} className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
+              <div className="h-2 w-16 rounded bg-[#1A2C44] relay-shimmer" style={{ animationDelay: `${i * 80}ms` }} />
+              <div className="mt-2.5 h-7 w-12 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${i * 80 + 40}ms` }} />
             </div>
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {[['Matched', s?.matched ?? 0, 'text-[#43D48E]'], ['Mismatched', s?.mismatched ?? 0, 'text-[#F27683]'], ['Unreconciled', s?.unreconciled ?? 0, 'text-[#F2BB62]'], ['Failed', s?.failed ?? 0, 'text-[#F27683]'], ['Rejected webhooks', s?.webhookRejected ?? 0, 'text-[#F2BB62]']].map(([label, value, color]) => (
-            <div key={label as string} className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
+          {[['Matched', s?.matched ?? 0, 'text-[#2ED3A6]'], ['Mismatched', s?.mismatched ?? 0, 'text-[#F27683]'], ['Unreconciled', s?.unreconciled ?? 0, 'text-[#F2BB62]'], ['Failed', s?.failed ?? 0, 'text-[#F27683]'], ['Rejected webhooks', s?.webhookRejected ?? 0, 'text-[#F2BB62]']].map(([label, value, color]) => (
+            <div key={label as string} className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
               <div className="text-[10px] uppercase tracking-wide text-dim">{label}</div>
               <div className={`mt-1 text-2xl font-semibold tabular-nums ${color}`}>{value}</div>
             </div>
@@ -100,7 +100,7 @@ export function ReconciliationView() {
           rows={recon.data?.records ?? []}
           empty={<EmptyState icon={<GitCompareArrows className="h-8 w-8" />} title="Nothing to reconcile yet" description="Records appear as payments move through execution and settlement." />}
           columns={[
-            { key: 'pay', header: 'Payment', render: (r) => r.payment ? <button className="font-mono text-xs text-[#E7B458] hover:underline" onClick={() => navigate(`/app/payments/${r.payment!.id}`)}>{r.payment.reference}</button> : <span className="text-xs text-dim">—</span> },
+            { key: 'pay', header: 'Payment', render: (r) => r.payment ? <button className="font-mono text-xs text-[#39C6D8] hover:underline" onClick={() => navigate(`/app/payments/${r.payment!.id}`)}>{r.payment.reference}</button> : <span className="text-xs text-dim">—</span> },
             { key: 'ref', header: 'Provider ref', render: (r) => <span title={r.providerRef ?? undefined} className="block max-w-[12rem] truncate font-mono text-[10px] text-secondary">{r.providerRef ?? '—'}</span> },
             { key: 'ps', header: 'Provider', render: (r) => <span className="text-xs text-secondary">{r.providerStatus ?? '—'}</span> },
             { key: 'd', header: 'Detail', render: (r) => <span className="text-[11px] text-dim">{r.detail ?? ''}</span> },
@@ -132,7 +132,7 @@ export function ReconciliationView() {
             columns={[
               { key: 'ext', header: 'External ID', render: (t) => <span title={t.externalId} className="block max-w-[12rem] truncate font-mono text-[10px] text-secondary">{t.externalId}</span> },
               { key: 'pid', header: 'Provider ref', render: (t) => <span title={t.providerTransferId ?? undefined} className="block max-w-[12rem] truncate font-mono text-[10px] text-secondary">{t.providerTransferId ?? '—'}</span> },
-              { key: 'pay', header: 'Payment', render: (t) => <span className="font-mono text-[10px] text-[#E7B458]">{t.paymentReference ?? '—'}</span> },
+              { key: 'pay', header: 'Payment', render: (t) => <span className="font-mono text-[10px] text-[#39C6D8]">{t.paymentReference ?? '—'}</span> },
               { key: 'st', header: 'Status', render: (t) => <span className="text-xs text-dim">{t.providerStatus ?? t.internalPhase}</span> },
             ]}
           />

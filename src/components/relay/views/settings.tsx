@@ -25,7 +25,7 @@ type OrgData = {
 
 export function PrefRow({ title, detail, checked, onChange, disabled }: { title: string; detail: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3">
       <div className="min-w-0">
         <div className="text-sm">{title}</div>
         <div className="mt-0.5 text-[11px] leading-relaxed text-dim">{detail}</div>
@@ -34,7 +34,7 @@ export function PrefRow({ title, detail, checked, onChange, disabled }: { title:
         checked={checked}
         onCheckedChange={onChange}
         disabled={disabled}
-        className="data-[state=checked]:bg-[#E7B458]"
+        className="data-[state=checked]:bg-[#39C6D8]"
         aria-label={title}
       />
     </div>
@@ -128,16 +128,16 @@ export function SettingsView() {
             <div>
               <Label>Organization name</Label>
               <div className="mt-1 flex gap-2">
-                <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!isOwner} className="border-[#2E2540] bg-[#100D16]" />
-                <Button onClick={saveOrg} disabled={busy || !isOwner} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">Save</Button>
+                <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!isOwner} className="border-[#1D2E42] bg-[#0D1622]" />
+                <Button onClick={saveOrg} disabled={busy || !isOwner} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Save</Button>
               </div>
               <p className="mt-1 text-[11px] text-dim">Slug: {org.data?.slug ?? '—'}</p>
             </div>
             <div>
               <Label>Default network for new wallets</Label>
               <Select value={org.data?.settings.network ?? 'devnet'} onValueChange={changeNetwork} disabled={!isOwner}>
-                <SelectTrigger className="mt-1 w-56 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
-                <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+                <SelectTrigger className="mt-1 w-56 border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
+                <SelectContent className="border-[#1D2E42] bg-[#142436]">
                   <SelectItem value="devnet">Devnet</SelectItem>
                   <SelectItem value="mainnet-beta">Mainnet-beta</SelectItem>
                 </SelectContent>
@@ -153,31 +153,31 @@ export function SettingsView() {
 
         <SectionCard title="Security" description="Two-factor authentication with TOTP authenticator apps.">
           <div className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
+            <div className="flex items-center justify-between rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3">
               <div className="flex items-center gap-2">
-                <ShieldCheck className={`h-4 w-4 ${session.mfaEnabled ? 'text-[#43D48E]' : 'text-dim'}`} />
+                <ShieldCheck className={`h-4 w-4 ${session.mfaEnabled ? 'text-[#2ED3A6]' : 'text-dim'}`} />
                 <div>
                   <div className="text-sm">Authenticator app (TOTP)</div>
                   <div className="text-[11px] text-dim">{session.mfaEnabled ? 'Enabled — codes required at sign-in' : 'Not enabled'}</div>
                 </div>
               </div>
               {!session.mfaEnabled ? (
-                <Button size="sm" onClick={startMfa} variant="outline" className="border-[#2E2540]">Set up</Button>
+                <Button size="sm" onClick={startMfa} variant="outline" className="border-[#1D2E42]">Set up</Button>
               ) : null}
             </div>
             {mfa ? (
-              <div className="rounded-lg border border-[#E7B458]/30 bg-[#E7B458]/5 p-3">
-                <div className="text-xs font-medium text-[#E7B458]">1. Add this secret to your authenticator app:</div>
-                <code className="mt-1.5 block truncate rounded bg-[#100D16] px-2 py-1.5 font-mono text-xs text-[#E7B458]">{mfa.secret}</code>
+              <div className="rounded-lg border border-[#39C6D8]/30 bg-[#39C6D8]/5 p-3">
+                <div className="text-xs font-medium text-[#39C6D8]">1. Add this secret to your authenticator app:</div>
+                <code className="mt-1.5 block truncate rounded bg-[#0D1622] px-2 py-1.5 font-mono text-xs text-[#39C6D8]">{mfa.secret}</code>
                 <div className="mt-1 truncate font-mono text-[10px] text-dim">{mfa.otpauthUri}</div>
-                <div className="mt-2 text-xs font-medium text-[#E7B458]">2. Enter the current 6-digit code:</div>
+                <div className="mt-2 text-xs font-medium text-[#39C6D8]">2. Enter the current 6-digit code:</div>
                 <div className="mt-1 flex gap-2">
-                  <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="123456" className="border-[#2E2540] bg-[#100D16] font-mono" />
-                  <Button onClick={confirmMfa} disabled={mfaBusy || mfaCode.length !== 6} className="bg-[#E7B458] font-medium text-[#221202]">Verify</Button>
+                  <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="123456" className="border-[#1D2E42] bg-[#0D1622] font-mono" />
+                  <Button onClick={confirmMfa} disabled={mfaBusy || mfaCode.length !== 6} className="bg-[#39C6D8] font-medium text-[#04121A]">Verify</Button>
                 </div>
               </div>
             ) : null}
-            <div className="rounded-lg border border-[#2E2540] bg-[#100D16] p-3 text-[11px] leading-relaxed text-dim">
+            <div className="rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3 text-[11px] leading-relaxed text-dim">
               <KeyRound className="mr-1 inline h-3 w-3" /> Sessions are httpOnly cookies; MFA challenges block sensitive operations until passed. Passwords use scrypt hashing; provider credentials and TOTP secrets are AES-256-GCM encrypted at rest.
             </div>
           </div>
@@ -186,7 +186,7 @@ export function SettingsView() {
         <SectionCard title="Workspace">
           <div className="space-y-2 text-sm">
             {session.organizations.map((o) => (
-              <button key={o.id} onClick={() => { session.setActive(o.id); org.refetch() }} className={`flex w-full items-center justify-between rounded-lg border p-3 text-left ${o.id === session.activeOrg?.id ? 'border-[#E7B458]/50 bg-[#E7B458]/5' : 'border-[#2E2540] bg-[#100D16] hover:bg-[#1d1826]'}`}>
+              <button key={o.id} onClick={() => { session.setActive(o.id); org.refetch() }} className={`flex w-full items-center justify-between rounded-lg border p-3 text-left ${o.id === session.activeOrg?.id ? 'border-[#39C6D8]/50 bg-[#39C6D8]/5' : 'border-[#1D2E42] bg-[#0D1622] hover:bg-[#142436]'}`}>
                 <span className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-dim" />
                   <span className="text-sm">{o.name}</span>
@@ -196,7 +196,7 @@ export function SettingsView() {
             ))}
             <Button
               variant="outline"
-              className="w-full border-[#2E2540]"
+              className="w-full border-[#1D2E42]"
               onClick={async () => {
                 const name = window.prompt('New organization name')
                 if (!name) return
@@ -235,7 +235,7 @@ export function SettingsView() {
               disabled={!hapticsSupported()}
               onChange={(v) => updateMotionPref('haptics', v)}
             />
-            <div className="rounded-lg border border-[#2E2540] bg-[#100D16] p-3 text-[11px] leading-relaxed text-dim">
+            <div className="rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3 text-[11px] leading-relaxed text-dim">
               Your OS “reduce motion” setting always wins: when it is on, animations and haptics are disabled regardless of these toggles (WCAG 2.3.3).
             </div>
           </div>

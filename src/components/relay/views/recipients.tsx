@@ -114,13 +114,13 @@ export function RecipientsView() {
         breadcrumb={['Relay', 'Recipients']}
         actions={
           <>
-            <Button variant="outline" className="border-[#2E2540] text-xs" onClick={() => setImportOpen(true)}><Upload className="mr-1.5 h-3.5 w-3.5" /> Import CSV</Button>
-            <a href="/api/recipients/export" download className="inline-flex h-9 items-center rounded-md border border-[#2E2540] px-3 text-xs text-secondary hover:bg-[#1d1826]"><Download className="mr-1.5 h-3.5 w-3.5" /> Export</a>
+            <Button variant="outline" className="border-[#1D2E42] text-xs" onClick={() => setImportOpen(true)}><Upload className="mr-1.5 h-3.5 w-3.5" /> Import CSV</Button>
+            <a href="/api/recipients/export" download className="inline-flex h-9 items-center rounded-md border border-[#1D2E42] px-3 text-xs text-secondary hover:bg-[#142436]"><Download className="mr-1.5 h-3.5 w-3.5" /> Export</a>
             <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(EMPTY_FORM) }}>
               <DialogTrigger asChild>
-                <Button className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"><Users className="mr-1.5 h-4 w-4" /> Add recipient</Button>
+                <Button className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Users className="mr-1.5 h-4 w-4" /> Add recipient</Button>
               </DialogTrigger>
-              <DialogContent className="border-[#2E2540] bg-[#15111D]">
+              <DialogContent className="border-[#1D2E42] bg-[#101C2C]">
                 <DialogHeader><DialogTitle>Add recipient</DialogTitle></DialogHeader>
                 <RecipientForm form={form} setForm={setForm} busy={busy} onSave={save} saveLabel="Add recipient" />
               </DialogContent>
@@ -130,10 +130,10 @@ export function RecipientsView() {
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Input placeholder="Search name, address, reference…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full border-[#2E2540] bg-[#100D16] sm:w-64" />
+        <Input placeholder="Search name, address, reference…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full border-[#1D2E42] bg-[#0D1622] sm:w-64" />
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-40 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
-          <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+          <SelectTrigger className="w-40 border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
+          <SelectContent className="border-[#1D2E42] bg-[#142436]">
             <SelectItem value="ACTIVE">Active</SelectItem>
             <SelectItem value="DISABLED">Disabled</SelectItem>
             <SelectItem value="ARCHIVED">Archived</SelectItem>
@@ -153,7 +153,7 @@ export function RecipientsView() {
             icon={<Users className="h-8 w-8" />}
             title="No recipients yet"
             description="Add recipients manually or import a CSV. Every address is validated and checked for duplicates."
-            action={<Button size="sm" onClick={() => setAddOpen(true)} className="bg-[#E7B458] font-medium text-[#221202]">Add first recipient</Button>}
+            action={<Button size="sm" onClick={() => setAddOpen(true)} className="bg-[#39C6D8] font-medium text-[#04121A]">Add first recipient</Button>}
           />
         }
         columns={[
@@ -178,7 +178,7 @@ export function RecipientsView() {
 
       {/* Edit dialog */}
       <Dialog open={!!editRecipient} onOpenChange={(o) => { if (!o) setEditRecipient(null) }}>
-        <DialogContent className="border-[#2E2540] bg-[#15111D]">
+        <DialogContent className="border-[#1D2E42] bg-[#101C2C]">
           <DialogHeader><DialogTitle>Edit recipient</DialogTitle></DialogHeader>
           <RecipientForm form={form} setForm={setForm} busy={busy} onSave={save} saveLabel="Save changes" editMode />
           <p className="text-[11px] text-[#F2BB62]">Changing a recipient&apos;s address invalidates pending approvals and forces a new review — recorded in the change history.</p>
@@ -187,9 +187,9 @@ export function RecipientsView() {
 
       {/* Import dialog */}
       <Dialog open={importOpen} onOpenChange={(o) => { setImportOpen(o); if (!o) setImportResult(null) }}>
-        <DialogContent className="border-[#2E2540] bg-[#15111D] sm:max-w-2xl">
+        <DialogContent className="border-[#1D2E42] bg-[#101C2C] sm:max-w-2xl">
           <DialogHeader><DialogTitle>Import recipients from CSV</DialogTitle></DialogHeader>
-          <p className="text-xs text-dim">Columns: <code className="font-mono text-[#E7B458]">name</code>, <code className="font-mono text-[#E7B458]">address</code>, optional <code className="font-mono">category, reference, notes</code>. Duplicates are skipped with reasons.</p>
+          <p className="text-xs text-dim">Columns: <code className="font-mono text-[#39C6D8]">name</code>, <code className="font-mono text-[#39C6D8]">address</code>, optional <code className="font-mono">category, reference, notes</code>. Duplicates are skipped with reasons.</p>
           <input
             ref={fileRef}
             type="file"
@@ -206,11 +206,11 @@ export function RecipientsView() {
             }}
           />
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1 border-[#2E2540]" onClick={() => fileRef.current?.click()} disabled={busy}><Upload className="mr-1.5 h-3.5 w-3.5" /> Choose file</Button>
+            <Button variant="outline" className="flex-1 border-[#1D2E42]" onClick={() => fileRef.current?.click()} disabled={busy}><Upload className="mr-1.5 h-3.5 w-3.5" /> Choose file</Button>
           </div>
           {importResult ? (
-            <div className="max-h-64 overflow-y-auto rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
-              <div className="mb-2 text-xs"><span className="text-[#43D48E]">{importResult.created} created</span> · <span className="text-[#F2BB62]">{importResult.skipped} skipped</span> · <span className="text-[#F27683]">{importResult.failed} failed</span></div>
+            <div className="max-h-64 overflow-y-auto rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3">
+              <div className="mb-2 text-xs"><span className="text-[#2ED3A6]">{importResult.created} created</span> · <span className="text-[#F2BB62]">{importResult.skipped} skipped</span> · <span className="text-[#F27683]">{importResult.failed} failed</span></div>
               {importResult.results.filter((r) => r.status !== 'CREATED').slice(0, 20).map((r, i) => (
                 <div key={i} className="text-[11px] text-dim">Row {r.row}: {r.name} — {r.status.replace('_', ' ')}{r.error ? ` (${r.error})` : ''}</div>
               ))}
@@ -234,18 +234,18 @@ function RecipientForm({ form, setForm, busy, onSave, saveLabel, editMode }: {
     <div className="space-y-3">
       <div>
         <Label>Legal or display name</Label>
-        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 border-[#2E2540] bg-[#100D16]" placeholder="Contributor name / company" />
+        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 border-[#1D2E42] bg-[#0D1622]" placeholder="Contributor name / company" />
       </div>
       <div>
         <Label>Solana wallet address</Label>
-        <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={`mt-1 border-[#2E2540] bg-[#100D16] font-mono text-xs ${editMode ? 'border-[#F2BB62]/40' : ''}`} placeholder="Base58 public key" />
+        <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={`mt-1 border-[#1D2E42] bg-[#0D1622] font-mono text-xs ${editMode ? 'border-[#F2BB62]/40' : ''}`} placeholder="Base58 public key" />
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <Label>Category</Label>
           <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-            <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
-            <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+            <SelectTrigger className="mt-1 border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
+            <SelectContent className="border-[#1D2E42] bg-[#142436]">
               {['CONTRACTOR', 'VENDOR', 'CONTRIBUTOR', 'AFFILIATE', 'ROYALTIES', 'OTHER'].map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
@@ -254,14 +254,14 @@ function RecipientForm({ form, setForm, busy, onSave, saveLabel, editMode }: {
         </div>
         <div>
           <Label>Reference (optional)</Label>
-          <Input value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} className="mt-1 border-[#2E2540] bg-[#100D16]" placeholder="PO / contract #" />
+          <Input value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} className="mt-1 border-[#1D2E42] bg-[#0D1622]" placeholder="PO / contract #" />
         </div>
       </div>
       <div>
         <Label>Internal notes</Label>
-        <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="mt-1 border-[#2E2540] bg-[#100D16]" />
+        <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="mt-1 border-[#1D2E42] bg-[#0D1622]" />
       </div>
-      <Button onClick={onSave} disabled={busy || !form.name.trim() || !form.address.trim()} className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">{saveLabel}</Button>
+      <Button onClick={onSave} disabled={busy || !form.name.trim() || !form.address.trim()} className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">{saveLabel}</Button>
     </div>
   )
 }

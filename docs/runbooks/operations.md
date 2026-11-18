@@ -24,7 +24,7 @@ Weekly: review `ReconciliationRecord` states (MATCHED / UNRECONCILED / FAILED), 
 
 ## Webhooks
 
-Endpoint: `POST /api/webhooks/multihopper`. The provider signs the raw body with HMAC-SHA256 (`x-multihopper-signature`); verification is timing-safe against every configured org secret. Register the public URL in the provider console and store the signing secret in Integrations → MultiHopper. Webhook delivery can be permanently dropped by the provider — the RECONCILIATION_SWEEP is the fallback of record.
+Endpoint: `POST /api/webhooks/execution-rail`. The provider signs the raw body with HMAC-SHA256 (`x-multihopper-signature`); verification is timing-safe against every configured org secret. Register the public URL in the provider console and store the signing secret in Integrations → execution-rail provider. Webhook delivery can be permanently dropped by the provider — the RECONCILIATION_SWEEP is the fallback of record.
 
 ## Alerting
 

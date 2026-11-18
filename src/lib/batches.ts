@@ -37,7 +37,7 @@ export async function createBatch(
   // Provider capability limit is configuration, never an arbitrary assumption.
   const maxItems = DEFAULT_CAPABILITY.maxDestinations
   if (input.items.length > maxItems) {
-    throw new ApiError('BATCH_SIZE_EXCEEDED', `A single MultiHopper route supports up to ${maxItems} destinations. Split this batch (${input.items.length} items) into multiple routes.`, 400)
+    throw new ApiError('BATCH_SIZE_EXCEEDED', `A single execution-rail route supports up to ${maxItems} destinations. Split this batch (${input.items.length} items) into multiple routes.`, 400)
   }
 
   const seenAddresses = new Map<string, string>()

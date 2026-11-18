@@ -76,20 +76,20 @@ export function PoliciesView() {
         breadcrumb={['Relay', 'Payments', 'Approval policies']}
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"><Plus className="mr-1.5 h-4 w-4" /> New rule version</Button></DialogTrigger>
-            <DialogContent className="border-[#2E2540] bg-[#15111D]">
+            <DialogTrigger asChild><Button className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Plus className="mr-1.5 h-4 w-4" /> New rule version</Button></DialogTrigger>
+            <DialogContent className="border-[#1D2E42] bg-[#101C2C]">
               <DialogHeader><DialogTitle>Add rule (creates a new version)</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <div>
                   <Label>Policy name</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Treasury policy" className="mt-1 border-[#2E2540] bg-[#100D16]" />
+                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Treasury policy" className="mt-1 border-[#1D2E42] bg-[#0D1622]" />
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <Label>Condition</Label>
                     <Select value={ruleType} onValueChange={(v) => setRuleType(v as typeof ruleType)}>
-                      <SelectTrigger className="mt-1 w-full border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
-                      <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+                      <SelectTrigger className="mt-1 w-full border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
+                      <SelectContent className="border-[#1D2E42] bg-[#142436]">
                         <SelectItem value="AMOUNT_GTE">Amount ≥ threshold</SelectItem>
                         <SelectItem value="AMOUNT_LT">Amount &lt; threshold</SelectItem>
                         <SelectItem value="NEW_RECIPIENT">New recipient (within N days)</SelectItem>
@@ -100,8 +100,8 @@ export function PoliciesView() {
                   <div>
                     <Label>Approvers required</Label>
                     <Select value={approvers} onValueChange={setApprovers}>
-                      <SelectTrigger className="mt-1 w-full border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
-                      <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+                      <SelectTrigger className="mt-1 w-full border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
+                      <SelectContent className="border-[#1D2E42] bg-[#142436]">
                         {[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -110,19 +110,19 @@ export function PoliciesView() {
                 {ruleType.startsWith('AMOUNT') ? (
                   <div>
                     <Label>Threshold (USDC)</Label>
-                    <Input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} className="mt-1 border-[#2E2540] bg-[#100D16] font-mono" />
+                    <Input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} className="mt-1 border-[#1D2E42] bg-[#0D1622] font-mono" />
                   </div>
                 ) : ruleType === 'NEW_RECIPIENT' ? (
                   <div>
                     <Label>Recipient age (days)</Label>
-                    <Input value={withinDays} onChange={(e) => setWithinDays(e.target.value.replace(/[^0-9]/g, ''))} className="mt-1 border-[#2E2540] bg-[#100D16] font-mono" />
+                    <Input value={withinDays} onChange={(e) => setWithinDays(e.target.value.replace(/[^0-9]/g, ''))} className="mt-1 border-[#1D2E42] bg-[#0D1622] font-mono" />
                   </div>
                 ) : null}
                 <div>
                   <Label>Description (shown as approval evidence)</Label>
-                  <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Displayed to approvers" className="mt-1 border-[#2E2540] bg-[#100D16]" />
+                  <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Displayed to approvers" className="mt-1 border-[#1D2E42] bg-[#0D1622]" />
                 </div>
-                <Button onClick={createPolicy} disabled={busy || (ruleType.startsWith('AMOUNT') && !amountValid)} className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">Create new version</Button>
+                <Button onClick={createPolicy} disabled={busy || (ruleType.startsWith('AMOUNT') && !amountValid)} className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Create new version</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -135,13 +135,13 @@ export function PoliciesView() {
         {active ? (
           <div>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-[#E7B458]" />
+              <ShieldCheck className="h-4 w-4 text-[#39C6D8]" />
               <span className="text-sm font-medium">{active.name}</span>
-              <span className="rounded bg-[#1d1826] px-1.5 py-0.5 text-[10px] text-dim">v{active.version}</span>
+              <span className="rounded bg-[#142436] px-1.5 py-0.5 text-[10px] text-dim">v{active.version}</span>
             </div>
             <ul className="mt-3 space-y-2">
               {active.rules.map((r) => (
-                <li key={r.id} className="flex items-start justify-between gap-3 rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
+                <li key={r.id} className="flex items-start justify-between gap-3 rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3">
                   {/* min-w-0: the condition JSON must be able to shrink and
                       truncate — a long unbreakable string otherwise inflates
                       the flex item and the whole page horizontally. */}
@@ -149,7 +149,7 @@ export function PoliciesView() {
                     <div className="text-xs text-secondary">{r.description}</div>
                     <div className="mt-1 font-mono text-[10px] text-dim"><span className="block max-w-full truncate break-all font-mono text-[10px]">{JSON.stringify(r.condition)}</span></div>
                   </div>
-                  <span className="shrink-0 rounded bg-[#B79BF0]/10 px-2 py-0.5 text-[10px] text-[#B79BF0]">{r.approversRequired} approver{r.approversRequired > 1 ? 's' : ''}</span>
+                  <span className="shrink-0 rounded bg-[#8AA2F0]/10 px-2 py-0.5 text-[10px] text-[#8AA2F0]">{r.approversRequired} approver{r.approversRequired > 1 ? 's' : ''}</span>
                 </li>
               ))}
             </ul>
@@ -162,10 +162,10 @@ export function PoliciesView() {
       <SectionCard className="mt-5" title="Version history" description="Approvals store the policy context; policy changes flag pending payments for re-review.">
         <div className="space-y-2">
           {(policies.data?.policies ?? []).filter((p) => !p.active).map((p) => (
-            <div key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-[#2E2540] bg-[#100D16] p-3 text-xs">
+            <div key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3 text-xs">
               <History className="h-3.5 w-3.5 text-dim" />
               <span className="min-w-0 max-w-full truncate text-secondary sm:max-w-none">{p.name}</span>
-              <span className="rounded bg-[#1d1826] px-1.5 py-0.5 text-[10px] text-dim">v{p.version}</span>
+              <span className="rounded bg-[#142436] px-1.5 py-0.5 text-[10px] text-dim">v{p.version}</span>
               <span className="text-dim">{p.rules.length} rules · superseded</span>
             </div>
           ))}

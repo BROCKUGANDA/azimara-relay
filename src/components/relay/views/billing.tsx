@@ -83,8 +83,8 @@ function Meter({ label, used, limit }: { label: string; used: number; limit: num
         <span className="text-secondary">{label}</span>
         <span className="font-mono tabular-nums text-dim">{used} / {limit}</span>
       </div>
-      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#1d1826]">
-        <div className={cn('h-full rounded-full', pct > 90 ? 'bg-[#F27683]' : pct > 70 ? 'bg-[#F2BB62]' : 'bg-[#E7B458]')} style={{ width: `${pct}%` }} />
+      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#142436]">
+        <div className={cn('h-full rounded-full', pct > 90 ? 'bg-[#F27683]' : pct > 70 ? 'bg-[#F2BB62]' : 'bg-[#39C6D8]')} style={{ width: `${pct}%` }} />
       </div>
     </div>
   )
@@ -92,9 +92,9 @@ function Meter({ label, used, limit }: { label: string; used: number; limit: num
 
 const INVOICE_STATUS_TONE: Record<string, { text: string; border: string; bg: string }> = {
   PENDING: { text: 'text-[#F2BB62]', border: 'border-[#F2BB62]/30', bg: 'bg-[#F2BB62]/10' },
-  CONFIRMED: { text: 'text-[#43D48E]', border: 'border-[#43D48E]/30', bg: 'bg-[#43D48E]/10' },
-  EXPIRED: { text: 'text-[#7C7490]', border: 'border-[#2E2540]', bg: 'bg-[#251E31]' },
-  CANCELLED: { text: 'text-[#7C7490]', border: 'border-[#2E2540]', bg: 'bg-[#251E31]' },
+  CONFIRMED: { text: 'text-[#2ED3A6]', border: 'border-[#2ED3A6]/30', bg: 'bg-[#2ED3A6]/10' },
+  EXPIRED: { text: 'text-[#64798F]', border: 'border-[#1D2E42]', bg: 'bg-[#1A2C44]' },
+  CANCELLED: { text: 'text-[#64798F]', border: 'border-[#1D2E42]', bg: 'bg-[#1A2C44]' },
 }
 
 function InvoiceStatusBadge({ status }: { status: string }) {
@@ -209,21 +209,21 @@ export function BillingView() {
       {d ? (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-[#E7B458]/30 bg-[#E7B458]/5 p-4">
-              <div className="text-[10px] uppercase tracking-wide text-[#E7B458]/70">Current plan</div>
-              <div className="mt-1 text-xl font-semibold text-[#E7B458]">{d.plan}</div>
+            <div className="rounded-xl border border-[#39C6D8]/30 bg-[#39C6D8]/5 p-4">
+              <div className="text-[10px] uppercase tracking-wide text-[#39C6D8]/70">Current plan</div>
+              <div className="mt-1 text-xl font-semibold text-[#39C6D8]">{d.plan}</div>
               <div className="text-xs text-dim">{d.planStatus} · renews {d.subscription ? formatDateTime(d.subscription.periodEnd) : '—'}</div>
             </div>
-            <div className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
+            <div className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
               <div className="text-[10px] uppercase tracking-wide text-dim">Monthly price</div>
               <div className="mt-1 text-xl font-semibold tabular-nums">{d.entitlements.priceMonthlyUsd != null ? `${d.entitlements.priceMonthlyUsd} USDC` : 'Custom'}</div>
               <div className="text-xs text-dim">paid on {d.collection.network}</div>
             </div>
-            <div className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
+            <div className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
               <div className="text-[10px] uppercase tracking-wide text-dim">Seats</div>
               <div className="mt-1 text-xl font-semibold tabular-nums">{d.usage.members}/{d.usage.seatsLimit}</div>
             </div>
-            <div className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
+            <div className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
               <div className="text-[10px] uppercase tracking-wide text-dim">Payments this month</div>
               <div className="mt-1 text-xl font-semibold tabular-nums">{d.usage.paymentsThisMonth}/{d.usage.paymentsLimit}</div>
             </div>
@@ -237,32 +237,32 @@ export function BillingView() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-xs">
-                  <span className={cn('h-2 w-2 shrink-0 rounded-full', d.collection.rpcHealth.ok ? 'bg-[#43D48E]' : 'bg-[#F2BB62]')} aria-hidden />
+                  <span className={cn('h-2 w-2 shrink-0 rounded-full', d.collection.rpcHealth.ok ? 'bg-[#2ED3A6]' : 'bg-[#F2BB62]')} aria-hidden />
                   <span className="text-secondary">
                     {d.collection.rpcHealth.ok
                       ? `RPC healthy${d.collection.rpcHealth.slot ? ` · slot ${d.collection.rpcHealth.slot.toLocaleString('en-US')}` : ''}`
                       : 'RPC degraded — payment detection may be delayed (retains honest pending state, never fakes settlement)'}
                   </span>
                 </div>
-                <div className="rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
+                <div className="rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3">
                   <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-dim"><Landmark className="h-3 w-3" /> Treasury (USDC destination)</div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     <code className="min-w-0 break-all font-mono text-[11px] text-secondary">{d.collection.treasuryAddress}</code>
-                    <button onClick={() => copyText(d.collection.treasuryAddress, 'Treasury address')} className="rounded-md border border-[#2E2540] p-1.5 text-dim hover:text-[#E7B458]" aria-label="Copy treasury address">
+                    <button onClick={() => copyText(d.collection.treasuryAddress, 'Treasury address')} className="rounded-md border border-[#1D2E42] p-1.5 text-dim hover:text-[#39C6D8]" aria-label="Copy treasury address">
                       <Copy className="h-3 w-3" />
                     </button>
-                    <a href={d.collection.explorerTreasury} target="_blank" rel="noreferrer" className="rounded-md border border-[#2E2540] p-1.5 text-dim hover:text-[#E7B458]" aria-label="View treasury on Solana Explorer">
+                    <a href={d.collection.explorerTreasury} target="_blank" rel="noreferrer" className="rounded-md border border-[#1D2E42] p-1.5 text-dim hover:text-[#39C6D8]" aria-label="View treasury on Solana Explorer">
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   </div>
                   <div className="mt-2 text-[10px] text-dim">ATA: {shortAddr(d.collection.treasuryAta)} · mint: {shortAddr(d.collection.mint)} · {d.collection.decimals} decimals</div>
                 </div>
                 <div className="flex items-start gap-2 text-[11px] text-dim">
-                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#E7B458]" />
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#39C6D8]" />
                   Detection runs at `finalized` commitment every 60s; you can also paste a transaction signature below for instant verification. The platform never holds private keys.
                 </div>
               </div>
-              <div className="flex flex-col justify-between gap-3 rounded-lg border border-[#2E2540] bg-[#100D16] p-3">
+              <div className="flex flex-col justify-between gap-3 rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3">
                 <div>
                   <div className="text-[10px] uppercase tracking-wide text-dim">Renew subscription</div>
                   {d.entitlements.priceMonthlyUsd != null ? (
@@ -275,10 +275,10 @@ export function BillingView() {
                 </div>
                 {canManage && d.entitlements.priceMonthlyUsd != null ? (
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90" onClick={() => renew(1)}>
+                    <Button size="sm" className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90" onClick={() => renew(1)}>
                       <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Renew 1 month
                     </Button>
-                    <Button size="sm" variant="outline" className="border-[#2E2540]" onClick={() => renew(12)}>Renew 12 months</Button>
+                    <Button size="sm" variant="outline" className="border-[#1D2E42]" onClick={() => renew(12)}>Renew 12 months</Button>
                   </div>
                 ) : null}
               </div>
@@ -293,9 +293,9 @@ export function BillingView() {
               <Meter label="Treasury wallets" used={d.usage.activeKeys === d.usage.apiKeysLimit ? 0 : d.usage.activeKeys} limit={d.entitlements.treasuryWallets} />
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <span className={cn('rounded-full border px-2.5 py-1', d.entitlements.multiApprover ? 'border-[#43D48E]/40 text-[#43D48E]' : 'border-[#2E2540] text-dim')}>Multi-approver policies {d.entitlements.multiApprover ? 'included' : 'not included'}</span>
-              <span className={cn('rounded-full border px-2.5 py-1', d.entitlements.apiAccess ? 'border-[#43D48E]/40 text-[#43D48E]' : 'border-[#2E2540] text-dim')}>Developer API {d.entitlements.apiAccess ? 'included' : 'not included'}</span>
-              <span className={cn('rounded-full border px-2.5 py-1', d.entitlements.exports ? 'border-[#43D48E]/40 text-[#43D48E]' : 'border-[#2E2540] text-dim')}>Financial exports {d.entitlements.exports ? 'included' : 'not included'}</span>
+              <span className={cn('rounded-full border px-2.5 py-1', d.entitlements.multiApprover ? 'border-[#2ED3A6]/40 text-[#2ED3A6]' : 'border-[#1D2E42] text-dim')}>Multi-approver policies {d.entitlements.multiApprover ? 'included' : 'not included'}</span>
+              <span className={cn('rounded-full border px-2.5 py-1', d.entitlements.apiAccess ? 'border-[#2ED3A6]/40 text-[#2ED3A6]' : 'border-[#1D2E42] text-dim')}>Developer API {d.entitlements.apiAccess ? 'included' : 'not included'}</span>
+              <span className={cn('rounded-full border px-2.5 py-1', d.entitlements.exports ? 'border-[#2ED3A6]/40 text-[#2ED3A6]' : 'border-[#1D2E42] text-dim')}>Financial exports {d.entitlements.exports ? 'included' : 'not included'}</span>
             </div>
           </SectionCard>
 
@@ -305,10 +305,10 @@ export function BillingView() {
                 const isUpgrade = p.priceMonthlyUsd != null && p.priceMonthlyUsd > (d.entitlements.priceMonthlyUsd ?? 0)
                 const isDowngrade = p.priceMonthlyUsd != null && p.priceMonthlyUsd <= (d.entitlements.priceMonthlyUsd ?? 0)
                 return (
-                  <div key={p.id} className={cn('rounded-xl border p-4', p.id === d.plan ? 'border-[#E7B458]/50 bg-[#E7B458]/5' : 'border-[#2E2540] bg-[#100D16]')}>
+                  <div key={p.id} className={cn('rounded-xl border p-4', p.id === d.plan ? 'border-[#39C6D8]/50 bg-[#39C6D8]/5' : 'border-[#1D2E42] bg-[#0D1622]')}>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold">{p.id}</span>
-                      {p.id === d.plan ? <CheckCircle2 className="h-4 w-4 text-[#E7B458]" /> : null}
+                      {p.id === d.plan ? <CheckCircle2 className="h-4 w-4 text-[#39C6D8]" /> : null}
                     </div>
                     <div className="mt-1 text-lg font-semibold tabular-nums">{p.priceMonthlyUsd != null ? `${p.priceMonthlyUsd} USDC/mo` : 'Custom'}</div>
                     <div className="mt-2 space-y-1 text-[11px] text-dim">
@@ -318,7 +318,7 @@ export function BillingView() {
                     </div>
                     {canManage && p.id !== d.plan ? (
                       p.priceMonthlyUsd == null ? (
-                        <Button size="sm" variant="outline" className="mt-3 w-full cursor-not-allowed border-[#2E2540]" disabled>
+                        <Button size="sm" variant="outline" className="mt-3 w-full cursor-not-allowed border-[#1D2E42]" disabled>
                           Contact sales
                         </Button>
                       ) : (
@@ -326,7 +326,7 @@ export function BillingView() {
                           size="sm"
                           onClick={() => upgradeTo(p.id)}
                           variant="outline"
-                          className={cn('mt-3 w-full', isUpgrade ? 'border-[#E7B458]/50 text-[#E7B458] hover:bg-[#E7B458]/10' : 'border-[#2E2540]')}
+                          className={cn('mt-3 w-full', isUpgrade ? 'border-[#39C6D8]/50 text-[#39C6D8] hover:bg-[#39C6D8]/10' : 'border-[#1D2E42]')}
                         >
                           {isUpgrade ? `Pay ${p.priceMonthlyUsd} USDC` : `Switch to ${p.id}`}
                         </Button>
@@ -337,7 +337,7 @@ export function BillingView() {
                 )
               })}
             </div>
-            <div className="mt-3 flex items-start gap-2 rounded-lg border border-[#E7B458]/25 bg-[#E7B458]/5 p-3 text-[11px] text-[#E7B458]">
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-[#39C6D8]/25 bg-[#39C6D8]/5 p-3 text-[11px] text-[#39C6D8]">
               <Wallet className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               {d.collectionNote}
             </div>
@@ -351,10 +351,10 @@ export function BillingView() {
                 description="Upgrade or renewal invoices appear here with their on-chain settlement state."
               />
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-[#2E2540]">
+              <div className="overflow-x-auto rounded-xl border border-[#1D2E42]">
                 <table className="w-full text-sm" style={{ minWidth: 760 }}>
                   <thead>
-                    <tr className="border-b border-[#2E2540] bg-[#100D16]">
+                    <tr className="border-b border-[#1D2E42] bg-[#0D1622]">
                       <th className="whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-dim">Kind</th>
                       <th className="whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-dim">Plan</th>
                       <th className="whitespace-nowrap px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-dim">Amount</th>
@@ -366,7 +366,7 @@ export function BillingView() {
                   </thead>
                   <tbody>
                     {(d.invoices ?? []).map((inv, i) => (
-                      <tr key={`${inv.id}-${i}`} className="border-b border-[#231C30] transition-colors duration-150 last:border-0 hover:bg-[#1d1826]">
+                      <tr key={`${inv.id}-${i}`} className="border-b border-[#16273C] transition-colors duration-150 last:border-0 hover:bg-[#142436]">
                         <td className="whitespace-nowrap px-3 py-3">{inv.kind === 'UPGRADE' ? 'Upgrade' : 'Renewal'}</td>
                         <td className="whitespace-nowrap px-3 py-3">{inv.plan}{inv.months > 1 ? ` ×${inv.months}mo` : ''}</td>
                         <td className="whitespace-nowrap px-3 py-3 font-mono tabular-nums">{inv.amountUi} USDC</td>
@@ -374,7 +374,7 @@ export function BillingView() {
                         <td className="whitespace-nowrap px-3 py-3 text-xs text-dim">{formatDateTime(inv.createdAt)}</td>
                         <td className="px-3 py-3 text-xs">
                           {inv.explorerTx ? (
-                            <a href={inv.explorerTx} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#E7B458] hover:underline">
+                            <a href={inv.explorerTx} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#39C6D8] hover:underline">
                               {formatDateTime(inv.confirmedAt ?? inv.createdAt)} <ExternalLink className="h-3 w-3" />
                             </a>
                           ) : inv.status === 'PENDING' ? (
@@ -400,7 +400,7 @@ export function BillingView() {
             <div className="space-y-1.5">
               {(d.billingEvents ?? []).length === 0 ? <div className="text-xs text-dim">No billing events yet.</div> : null}
               {(d.billingEvents ?? []).map((e) => (
-                <div key={e.id} className="flex items-center justify-between rounded-lg border border-[#2E2540] bg-[#100D16] px-3 py-2 text-xs">
+                <div key={e.id} className="flex items-center justify-between rounded-lg border border-[#1D2E42] bg-[#0D1622] px-3 py-2 text-xs">
                   <span className="text-secondary">{e.type.replaceAll('_', ' ')}{typeof e.data?.to === 'string' ? ` → ${e.data.to}` : ''}{typeof e.data?.plan === 'string' && e.type !== 'PLAN_CHANGED' ? ` (${e.data.plan})` : ''}</span>
                   <span className="text-dim">{formatDateTime(e.createdAt)}</span>
                 </div>
@@ -446,7 +446,7 @@ function PaymentDialog({
   useEffect(() => {
     if (!invoice || invoice.status !== 'PENDING' || !invoice.payUri) return
     let alive = true
-    QRCode.toDataURL(invoice.payUri, { margin: 1, width: 232, color: { dark: '#100D16', light: '#F4F1EA' }, errorCorrectionLevel: 'M' })
+    QRCode.toDataURL(invoice.payUri, { margin: 1, width: 232, color: { dark: '#0D1622', light: '#E8F1F7' }, errorCorrectionLevel: 'M' })
       .then((url) => { if (alive) setQr({ id: invoice.id, url }) })
       .catch(() => { if (alive) setQrErrorId(invoice.id) })
     return () => { alive = false }
@@ -457,7 +457,7 @@ function PaymentDialog({
 
   return (
     <Dialog open={!!invoice} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="max-h-[92vh] max-w-lg overflow-y-auto border-[#2E2540] bg-[#15111D]">
+      <DialogContent className="max-h-[92vh] max-w-lg overflow-y-auto border-[#1D2E42] bg-[#101C2C]">
         <DialogHeader>
           <DialogTitle className="text-left">
             {confirmed ? 'Payment confirmed' : invoice?.kind === 'UPGRADE' ? `Upgrade to ${invoice.plan}` : 'Renew subscription'}
@@ -469,11 +469,11 @@ function PaymentDialog({
 
         {invoice ? (
           <div className="space-y-4">
-            <div className="rounded-xl border border-[#2E2540] bg-[#100D16] p-4">
+            <div className="rounded-xl border border-[#1D2E42] bg-[#0D1622] p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-[10px] uppercase tracking-wide text-dim">Exact amount</div>
-                  <div className="mt-0.5 font-mono text-2xl font-semibold tabular-nums text-[#E7B458]">{invoice.amountUi} <span className="text-sm text-secondary">USDC</span></div>
+                  <div className="mt-0.5 font-mono text-2xl font-semibold tabular-nums text-[#39C6D8]">{invoice.amountUi} <span className="text-sm text-secondary">USDC</span></div>
                 </div>
                 <InvoiceStatusBadge status={invoice.status} />
               </div>
@@ -485,7 +485,7 @@ function PaymentDialog({
             {pending ? (
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_1fr] sm:items-start">
-                  <div className="mx-auto rounded-xl border border-[#2E2540] bg-white p-2">
+                  <div className="mx-auto rounded-xl border border-[#1D2E42] bg-white p-2">
                     {qrErrorId === invoice.id ? (
                       <div className="flex h-[232px] w-[232px] flex-col items-center justify-center text-center text-xs text-[#F27683]" role="status">
                         QR unavailable — use the address below
@@ -503,19 +503,19 @@ function PaymentDialog({
                       <div className="text-[10px] uppercase tracking-wide text-dim">Treasury (Solana mainnet)</div>
                       <div className="mt-1 break-all font-mono text-[11px] text-secondary">{invoice.treasuryAddress}</div>
                       <div className="mt-1.5 flex gap-2">
-                        <Button size="sm" variant="outline" className="h-7 border-[#2E2540] px-2 text-xs" onClick={() => copyText(invoice.treasuryAddress, 'Treasury address')}>
+                        <Button size="sm" variant="outline" className="h-7 border-[#1D2E42] px-2 text-xs" onClick={() => copyText(invoice.treasuryAddress, 'Treasury address')}>
                           <Copy className="mr-1 h-3 w-3" /> Address
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 border-[#2E2540] px-2 text-xs" onClick={() => copyText(invoice.amountUi, 'Amount')}>
+                        <Button size="sm" variant="outline" className="h-7 border-[#1D2E42] px-2 text-xs" onClick={() => copyText(invoice.amountUi, 'Amount')}>
                           <Copy className="mr-1 h-3 w-3" /> Amount
                         </Button>
-                        <a href={invoice.explorerTreasury} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1 rounded-md border border-[#2E2540] px-2 text-xs text-dim hover:text-[#E7B458]">
+                        <a href={invoice.explorerTreasury} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1 rounded-md border border-[#1D2E42] px-2 text-xs text-dim hover:text-[#39C6D8]">
                           <ExternalLink className="h-3 w-3" /> Explorer
                         </a>
                       </div>
                     </div>
                     <div className="flex items-start gap-1.5 text-[11px] leading-relaxed text-dim">
-                      <QrCode className="mt-0.5 h-3 w-3 shrink-0 text-[#E7B458]" />
+                      <QrCode className="mt-0.5 h-3 w-3 shrink-0 text-[#39C6D8]" />
                       Scan with a Solana wallet (Phantom, Solflare…) — the Solana Pay URI pre-fills the exact USDC amount. On desktop, send manually with the exact amount shown.
                     </div>
                   </div>
@@ -528,11 +528,11 @@ function PaymentDialog({
                       value={claimSig}
                       onChange={(e) => setClaimSig(e.target.value)}
                       placeholder="Paste the transaction signature"
-                      className="min-w-0 flex-1 rounded-md border border-[#2E2540] bg-[#100D16] px-2.5 py-2 font-mono text-[11px] text-secondary placeholder:text-dim focus:border-[#E7B458]/50 focus:outline-none"
+                      className="min-w-0 flex-1 rounded-md border border-[#1D2E42] bg-[#0D1622] px-2.5 py-2 font-mono text-[11px] text-secondary placeholder:text-dim focus:border-[#39C6D8]/50 focus:outline-none"
                       aria-label="Transaction signature"
                       spellCheck={false}
                     />
-                    <Button size="sm" className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90" disabled={verifying || claimSig.trim().length < 64} onClick={onVerify}>
+                    <Button size="sm" className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90" disabled={verifying || claimSig.trim().length < 64} onClick={onVerify}>
                       {verifying ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />}
                       {verifying ? 'Reading chain…' : 'Verify payment'}
                     </Button>
@@ -550,12 +550,12 @@ function PaymentDialog({
             ) : null}
 
             {confirmed ? (
-              <div className="space-y-3 rounded-xl border border-[#43D48E]/30 bg-[#43D48E]/5 p-4">
-                <div className="flex items-center gap-2 text-sm font-medium text-[#43D48E]">
+              <div className="space-y-3 rounded-xl border border-[#2ED3A6]/30 bg-[#2ED3A6]/5 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-[#2ED3A6]">
                   <CheckCircle2 className="h-4 w-4" /> {invoice.amountUi} USDC confirmed at finalized commitment
                 </div>
                 {invoice.explorerTx ? (
-                  <a href={invoice.explorerTx} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[#E7B458] hover:underline">
+                  <a href={invoice.explorerTx} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[#39C6D8] hover:underline">
                     View settlement transaction <ExternalLink className="h-3 w-3" />
                   </a>
                 ) : null}

@@ -1,8 +1,10 @@
 import { z } from 'zod'
-import { ok, readJson, ApiError } from '@/lib/api'
+import { ok, readJson, ApiError, fail } from '@/lib/api'
 import { registerUser } from '@/lib/auth'
+import { sendEmail, verificationEmail, isMailConfigured } from '@/lib/mailer'
 import { audit } from '@/lib/audit'
 import { rateLimit, clientIp } from '@/lib/rate-limit'
+import { SITE_URL } from '@/lib/site'
 
 const bodySchema = z.object({
   name: z.string().min(1).max(80),
@@ -23,17 +25,20 @@ export async function POST(request: Request) {
       organization = await createOrganization(result.user, body.organizationName)
     }
     await audit({ actorId: result.user.id, action: 'USER_REGISTERED', resourceType: 'User', resourceId: result.user.id, ip: clientIp(request) })
+    const verifyUrl = `${SITE_URL}/#/verify/${result.verifyToken}`
+    const mail = await sendEmail(verificationEmail(result.user.email, result.user.name, verifyUrl))
     return ok({
       user: { id: result.user.id, email: result.user.email, name: result.user.name, emailVerified: false },
       organization,
-      emailDelivery: {
-        configured: false,
-        verificationToken: result.verifyToken,
-        note: 'Email delivery is not configured in this environment. Use the verification link shown in the interface (development mode only).',
-      },
+      emailDelivery: mail.delivered
+        ? { configured: true, delivered: true, note: 'A verification link has been emailed to you.' }
+        : {
+            configured: false,
+            verificationToken: result.verifyToken,
+            note: 'Email delivery is not configured in this environment. Use the verification link shown in the interface (development mode only).',
+          },
     })
   } catch (err) {
-    const { fail } = await import('@/lib/api')
     return fail(request, err)
   }
 }

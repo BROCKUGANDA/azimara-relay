@@ -6,13 +6,24 @@ const schema = z.object({
   APP_URL: z.string().url().optional(),
   AUTH_SECRET: z.string().min(16).optional(),
   ENCRYPTION_KEY: z.string().min(16).optional(),
-  SOLANA_NETWORK: z.enum(['devnet', 'mainnet-beta']).default('devnet'),
+  SOLANA_NETWORK: z.enum(['devnet', 'mainnet-beta']).default('mainnet-beta'),
   SOLANA_RPC_URL: z.string().url().optional(),
+  // Helius paid RPC — required before real volume: the public mainnet RPC
+  // rate-limits aggressively and will drop production traffic.
+  HELIUS_API_KEY: z.string().min(8).optional(),
+  // SMTP transactional email (verification, password reset, invitations).
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional(),
+  SMTP_SECURE: z.coerce.boolean().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  SMTP_FROM: z.string().email().optional(),
+  SMTP_FROM_NAME: z.string().optional(),
   TREASURY_ADDRESS: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, 'Treasury address must be a base58 Solana public key').optional(),
   BILLING_MINT: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/).optional(),
   BILLING_MINT_DECIMALS: z.coerce.number().int().min(0).max(11).default(6),
   BILLING_INVOICE_VALIDITY_HOURS: z.coerce.number().int().min(1).max(168).default(72),
-  MULTIHOPPER_ENVIRONMENT: z.enum(['DEVNET', 'PRODUCTION']).default('DEVNET'),
+  MULTIHOPPER_ENVIRONMENT: z.enum(['DEVNET', 'PRODUCTION']).optional(),
   MULTIHOPPER_API_KEY: z.string().optional(),
   MULTIHOPPER_WEBHOOK_SECRET: z.string().optional(),
   AI_PROVIDER: z.string().default('ZAI'),
@@ -20,6 +31,7 @@ const schema = z.object({
 
 type Env = z.infer<typeof schema> & {
   resolvedRpcUrl: string
+  rpcIsPaid: boolean
   authSecret: string
   encryptionKey: string
   resolvedTreasuryAddress: string
@@ -46,9 +58,26 @@ export function env(): Env {
   if (isProd && (!e.AUTH_SECRET || !e.ENCRYPTION_KEY)) {
     throw new Error('AUTH_SECRET and ENCRYPTION_KEY are mandatory in production')
   }
-  const resolvedRpcUrl =
-    e.SOLANA_RPC_URL ??
-    (e.SOLANA_NETWORK === 'mainnet-beta' ? 'https://api.mainnet-beta.solana.com' : 'https://api.devnet.solana.com')
+  // RPC resolution order: explicit URL > Helius key (paid, recommended) >
+  // network default (public — rate-limited; acceptable for testing only).
+  let resolvedRpcUrl: string
+  let rpcIsPaid: boolean
+  if (e.SOLANA_RPC_URL) {
+    resolvedRpcUrl = e.SOLANA_RPC_URL
+    rpcIsPaid = !/api\.(mainnet-beta|devnet)\.solana\.com/.test(e.SOLANA_RPC_URL)
+  } else if (e.HELIUS_API_KEY) {
+    resolvedRpcUrl =
+      e.SOLANA_NETWORK === 'mainnet-beta'
+        ? `https://mainnet.helius-rpc.com/?api-key=${encodeURIComponent(e.HELIUS_API_KEY)}`
+        : `https://devnet.helius-rpc.com/?api-key=${encodeURIComponent(e.HELIUS_API_KEY)}`
+    rpcIsPaid = true
+  } else {
+    resolvedRpcUrl = e.SOLANA_NETWORK === 'mainnet-beta' ? 'https://api.mainnet-beta.solana.com' : 'https://api.devnet.solana.com'
+    rpcIsPaid = false
+    if (e.SOLANA_NETWORK === 'mainnet-beta') {
+      console.warn(JSON.stringify({ level: 'warn', msg: 'HELIUS_API_KEY not set — falling back to the public mainnet RPC. This is rate-limited and MUST NOT be used with real volume.' }))
+    }
+  }
   // Dev fallbacks are derived per boot and logged once; production fails fast above.
   const authSecret = e.AUTH_SECRET ?? `dev-only-auth-secret-${Date.now()}-rotate-me`
   const encryptionKey = e.ENCRYPTION_KEY ?? `dev-only-encryption-key-${Date.now()}-rotate-me`
@@ -56,7 +85,7 @@ export function env(): Env {
   if (!e.TREASURY_ADDRESS) {
     console.warn(JSON.stringify({ level: 'warn', msg: 'TREASURY_ADDRESS not set — using the deployment default treasury for subscription collection.' }))
   }
-  cached = { ...e, resolvedRpcUrl, authSecret, encryptionKey, resolvedTreasuryAddress, resolvedBillingMint: e.BILLING_MINT ?? DEFAULT_BILLING_MINT }
+  cached = { ...e, resolvedRpcUrl, rpcIsPaid, authSecret, encryptionKey, resolvedTreasuryAddress, resolvedBillingMint: e.BILLING_MINT ?? DEFAULT_BILLING_MINT }
   if (!e.AUTH_SECRET || !e.ENCRYPTION_KEY) {
     console.warn(JSON.stringify({ level: 'warn', msg: 'AUTH_SECRET/ENCRYPTION_KEY not configured — derived dev-only fallbacks in use. Do not run production without them.' }))
   }

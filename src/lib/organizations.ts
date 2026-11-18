@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { DEFAULT_RULES } from '@/lib/approvals'
 import { audit } from '@/lib/audit'
 import { entitlementsFor } from '@/lib/entitlements'
+import { env } from './env'
 
 function slugify(name: string): string {
   const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'org'
@@ -13,7 +14,8 @@ export async function createOrganization(user: { id: string; name: string; email
     data: {
       name,
       slug: slugify(name),
-      settingsJson: JSON.stringify({ network: 'devnet', requireMfa: false }),
+      // New organizations follow the deployment network (mainnet-beta by default).
+      settingsJson: JSON.stringify({ network: env().SOLANA_NETWORK, requireMfa: false }),
       onboardingJson: JSON.stringify({ steps: {} }),
     },
   })

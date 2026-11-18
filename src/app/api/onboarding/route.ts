@@ -3,6 +3,7 @@ import { ok, readJson, route } from '@/lib/api'
 import { db } from '@/lib/db'
 import { audit } from '@/lib/audit'
 import { safeJsonParse } from '@/lib/safe-json'
+import { env } from '@/lib/env'
 
 const ONBOARDING_STEPS = [
   { id: 'org_profile', label: 'Organization profile configured', route: '#/app/settings' },
@@ -30,7 +31,7 @@ export const GET = route(async ({ org }) => {
   }
   const steps = ONBOARDING_STEPS.map((s) => ({ ...s, done: onboarding.steps?.[s.id] === true || auto[s.id] }))
   const completed = steps.filter((s) => s.done).length
-  return ok({ steps, completed, total: steps.length, network: settings.network ?? 'devnet', dismissed: onboarding.dismissed ?? completed === steps.length })
+  return ok({ steps, completed, total: steps.length, network: settings.network ?? env().SOLANA_NETWORK, dismissed: onboarding.dismissed ?? completed === steps.length })
 })
 
 const patchSchema = z.object({ step: z.string().min(1).max(40), done: z.boolean() })

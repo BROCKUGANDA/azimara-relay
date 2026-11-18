@@ -67,17 +67,17 @@ export function PaymentsView() {
         breadcrumb={['Relay', 'Payments']}
         actions={
           <>
-            <Button variant="outline" onClick={() => navigate('/app/batches')} className="border-[#2E2540] text-xs"><Layers className="mr-1.5 h-3.5 w-3.5" /> Batch builder</Button>
-            <Button onClick={() => navigate('/app/payments/new')} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"><Send className="mr-1.5 h-4 w-4" /> New payment</Button>
+            <Button variant="outline" onClick={() => navigate('/app/batches')} className="border-[#1D2E42] text-xs"><Layers className="mr-1.5 h-3.5 w-3.5" /> Batch builder</Button>
+            <Button onClick={() => navigate('/app/payments/new')} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Send className="mr-1.5 h-4 w-4" /> New payment</Button>
           </>
         }
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Input placeholder="Search reference, destination, reason…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full border-[#2E2540] bg-[#100D16] sm:w-64" />
+        <Input placeholder="Search reference, destination, reason…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full border-[#1D2E42] bg-[#0D1622] sm:w-64" />
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-52 border-[#2E2540] bg-[#100D16]"><SelectValue /></SelectTrigger>
-          <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+          <SelectTrigger className="w-52 border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
+          <SelectContent className="border-[#1D2E42] bg-[#142436]">
             {STATUS_GROUPS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
           </SelectContent>
         </Select>
@@ -95,13 +95,13 @@ export function PaymentsView() {
             icon={<Send className="h-8 w-8" />}
             title="No payments found"
             description="Create a single payment or import a batch. Payments move through validation → approval → quote → wallet signature → settlement → reconciliation."
-            action={<Button size="sm" onClick={() => navigate('/app/payments/new')} className="bg-[#E7B458] font-medium text-[#221202]">Create payment</Button>}
+            action={<Button size="sm" onClick={() => navigate('/app/payments/new')} className="bg-[#39C6D8] font-medium text-[#04121A]">Create payment</Button>}
           />
         }
         columns={[
           { key: 'ref', header: 'Reference', render: (p) => (
             <button className="text-left" onClick={() => navigate(`/app/payments/${p.id}`)}>
-              <div className="font-mono text-xs text-[#E7B458] hover:underline">{p.reference}</div>
+              <div className="font-mono text-xs text-[#39C6D8] hover:underline">{p.reference}</div>
               <div className="mt-0.5 text-[10px] text-dim">{p.source}{p.providerTransferId ? ' · routed' : ''}</div>
             </button>
           ) },

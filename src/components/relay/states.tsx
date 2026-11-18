@@ -4,8 +4,8 @@
 // and skeleton loaders. Every asynchronous surface in the app falls back to one
 // of these components instead of a generic spinner or a flash of empty data.
 //
-// Design language: PRD §8 — deep navy surfaces (#15111D), hairline borders
-// (#2E2540), teal relay accent (#E7B458), red for contained failures.
+// Design language: PRD §8 — deep navy surfaces (#101C2C), hairline borders
+// (#1D2E42), teal relay accent (#39C6D8), red for contained failures.
 
 import React, { useEffect, useState } from 'react'
 import { AlertTriangle, ChevronDown, Copy, Check } from 'lucide-react'
@@ -37,7 +37,7 @@ export class ViewBoundary extends React.Component<ViewBoundaryProps, ViewBoundar
     const { error, showDetail, copied } = this.state
     if (!error) return this.props.children
     return (
-      <div className="mx-auto mt-8 flex max-w-lg flex-col items-center gap-4 rounded-xl border border-[#F27683]/25 bg-[#15111D] px-6 py-10 text-center sm:px-8">
+      <div className="mx-auto mt-8 flex max-w-lg flex-col items-center gap-4 rounded-xl border border-[#F27683]/25 bg-[#101C2C] px-6 py-10 text-center sm:px-8">
         <span className="relative flex h-14 w-14 items-center justify-center">
           <span className="absolute inset-0 animate-ping rounded-full bg-[#F27683]/10" style={{ animationDuration: '2.4s' }} />
           <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#F27683]/10">
@@ -53,12 +53,12 @@ export class ViewBoundary extends React.Component<ViewBoundaryProps, ViewBoundar
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Button
             size="sm"
-            className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"
+            className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"
             onClick={() => this.setState({ error: null, showDetail: false, copied: false })}
           >
             Try again
           </Button>
-          <Button size="sm" variant="outline" className="border-[#2E2540]" onClick={() => this.props.navigate('/app')}>
+          <Button size="sm" variant="outline" className="border-[#1D2E42]" onClick={() => this.props.navigate('/app')}>
             Back to overview
           </Button>
         </div>
@@ -70,10 +70,10 @@ export class ViewBoundary extends React.Component<ViewBoundaryProps, ViewBoundar
           Technical details <ChevronDown className={cn('h-3 w-3 transition-transform', showDetail && 'rotate-180')} />
         </button>
         {showDetail ? (
-          <div className="w-full space-y-2 rounded-lg border border-[#2E2540] bg-[#100D16] p-3 text-left">
+          <div className="w-full space-y-2 rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3 text-left">
             <p className="break-words font-mono text-[11px] text-[#F27683]/90">{error.message || String(error)}</p>
             <button
-              className="flex items-center gap-1.5 text-[11px] text-dim hover:text-[#E7B458]"
+              className="flex items-center gap-1.5 text-[11px] text-dim hover:text-[#39C6D8]"
               onClick={() => {
                 const payload = `${error.message}\n\n${error.stack ?? ''}`
                 if (navigator.clipboard?.writeText) {
@@ -84,7 +84,7 @@ export class ViewBoundary extends React.Component<ViewBoundaryProps, ViewBoundar
                 }
               }}
             >
-              {copied ? <Check className="h-3 w-3 text-[#43D48E]" /> : <Copy className="h-3 w-3" />}
+              {copied ? <Check className="h-3 w-3 text-[#2ED3A6]" /> : <Copy className="h-3 w-3" />}
               {copied ? 'Copied' : 'Copy for support'}
             </button>
           </div>
@@ -106,22 +106,22 @@ export function BootSplash() {
     return () => clearInterval(t)
   }, [])
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0C0A12] relay-grid-bg" role="status" aria-live="polite">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0A1220] relay-grid-bg" role="status" aria-live="polite">
       <div className="relative flex h-20 w-20 items-center justify-center">
-        <span className="absolute inset-0 animate-ping rounded-full border border-[#E7B458]/30" style={{ animationDuration: '2.2s' }} />
+        <span className="absolute inset-0 animate-ping rounded-full border border-[#39C6D8]/30" style={{ animationDuration: '2.2s' }} />
         <span className="absolute inset-0 animate-ping rounded-full border border-[#F17FA8]/20" style={{ animationDuration: '2.2s', animationDelay: '0.9s' }} />
         <svg width="44" height="44" viewBox="0 0 32 32" fill="none" aria-hidden>
-          <rect x="1.5" y="1.5" width="29" height="29" rx="8" stroke="#E7B458" strokeWidth="1.6" />
-          <path d="M9 20.5 16 8l7 12.5" stroke="#E7B458" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="1.5" y="1.5" width="29" height="29" rx="8" stroke="#39C6D8" strokeWidth="1.6" />
+          <path d="M9 20.5 16 8l7 12.5" stroke="#39C6D8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M12.2 17.4h7.6" stroke="#F17FA8" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       </div>
       <div className="mt-6 text-[15px] font-semibold tracking-tight">
-        AZIMARA <span className="text-[#E7B458]">RELAY</span>
+        AZIMARA <span className="text-[#39C6D8]">RELAY</span>
       </div>
       <div className="mt-2 h-4 text-xs text-dim">{BOOT_STAGES[stage]}</div>
-      <div className="mt-6 h-0.5 w-44 overflow-hidden rounded-full bg-[#1d1826]">
-        <div className="relay-progress-bar h-full w-1/3 rounded-full bg-[#E7B458]" />
+      <div className="mt-6 h-0.5 w-44 overflow-hidden rounded-full bg-[#142436]">
+        <div className="relay-progress-bar h-full w-1/3 rounded-full bg-[#39C6D8]" />
       </div>
     </div>
   )
@@ -133,18 +133,18 @@ export function BootSplash() {
 
 export function TableSkeleton({ rows = 6, cols = 4, minWidth = 640 }: { rows?: number; cols?: number; minWidth?: number }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-[#2E2540]" aria-hidden>
+    <div className="overflow-x-auto rounded-xl border border-[#1D2E42]" aria-hidden>
       <div style={{ minWidth }}>
-        <div className="flex gap-4 border-b border-[#231C30] bg-[#100D16] px-4 py-3">
+        <div className="flex gap-4 border-b border-[#16273C] bg-[#0D1622] px-4 py-3">
           {Array.from({ length: cols }).map((_, i) => (
-            <div key={i} className={cn('h-3 rounded bg-[#251E31]', i === 0 ? 'w-28' : 'flex-1')} style={{ animationDelay: `${i * 60}ms` }} />
+            <div key={i} className={cn('h-3 rounded bg-[#1A2C44]', i === 0 ? 'w-28' : 'flex-1')} style={{ animationDelay: `${i * 60}ms` }} />
           ))}
         </div>
         {Array.from({ length: rows }).map((_, r) => (
-          <div key={r} className="flex items-center gap-4 border-b border-[#231C30]/60 px-4 py-3.5 last:border-0">
-            <div className="h-3 w-28 shrink-0 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: `${r * 70}ms` }} />
-            <div className="h-3 min-w-0 flex-1 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: `${r * 70 + 40}ms` }} />
-            <div className="hidden h-3 w-20 rounded bg-[#1d1826] relay-shimmer sm:block" style={{ animationDelay: `${r * 70 + 80}ms` }} />
+          <div key={r} className="flex items-center gap-4 border-b border-[#16273C]/60 px-4 py-3.5 last:border-0">
+            <div className="h-3 w-28 shrink-0 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${r * 70}ms` }} />
+            <div className="h-3 min-w-0 flex-1 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${r * 70 + 40}ms` }} />
+            <div className="hidden h-3 w-20 rounded bg-[#142436] relay-shimmer sm:block" style={{ animationDelay: `${r * 70 + 80}ms` }} />
           </div>
         ))}
       </div>
@@ -156,9 +156,9 @@ export function MetricSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
-          <div className="h-2.5 w-20 rounded bg-[#251E31] relay-shimmer" style={{ animationDelay: `${i * 90}ms` }} />
-          <div className="mt-3 h-7 w-24 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: `${i * 90 + 50}ms` }} />
+        <div key={i} className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
+          <div className="h-2.5 w-20 rounded bg-[#1A2C44] relay-shimmer" style={{ animationDelay: `${i * 90}ms` }} />
+          <div className="mt-3 h-7 w-24 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${i * 90 + 50}ms` }} />
         </div>
       ))}
     </div>
@@ -172,7 +172,7 @@ export function ChartSkeleton() {
       {BARS.map((h, i) => (
         <div
           key={i}
-          className="flex-1 rounded-t bg-[#1d1826] relay-shimmer"
+          className="flex-1 rounded-t bg-[#142436] relay-shimmer"
           style={{ height: `${h}%`, animationDelay: `${i * 60}ms` }}
         />
       ))}
@@ -184,11 +184,11 @@ export function ListSkeleton({ rows = 8 }: { rows?: number }) {
   return (
     <div className="space-y-2" aria-hidden>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-lg border border-[#2E2540]/60 bg-[#15111D]/60 px-3 py-3">
-          <div className="h-7 w-7 shrink-0 rounded-full bg-[#251E31] relay-shimmer" style={{ animationDelay: `${i * 60}ms` }} />
+        <div key={i} className="flex items-center gap-3 rounded-lg border border-[#1D2E42]/60 bg-[#101C2C]/60 px-3 py-3">
+          <div className="h-7 w-7 shrink-0 rounded-full bg-[#1A2C44] relay-shimmer" style={{ animationDelay: `${i * 60}ms` }} />
           <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="h-2.5 w-1/3 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: `${i * 60 + 30}ms` }} />
-            <div className="h-2.5 w-2/3 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: `${i * 60 + 60}ms` }} />
+            <div className="h-2.5 w-1/3 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${i * 60 + 30}ms` }} />
+            <div className="h-2.5 w-2/3 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${i * 60 + 60}ms` }} />
           </div>
         </div>
       ))}
@@ -200,9 +200,9 @@ export function DetailSkeleton() {
   return (
     <div className="space-y-3" aria-hidden>
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between gap-4 rounded-lg border border-[#2E2540]/60 px-4 py-3">
-          <div className="h-2.5 w-24 rounded bg-[#251E31] relay-shimmer" style={{ animationDelay: `${i * 70}ms` }} />
-          <div className="h-2.5 w-40 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: `${i * 70 + 40}ms` }} />
+        <div key={i} className="flex items-center justify-between gap-4 rounded-lg border border-[#1D2E42]/60 px-4 py-3">
+          <div className="h-2.5 w-24 rounded bg-[#1A2C44] relay-shimmer" style={{ animationDelay: `${i * 70}ms` }} />
+          <div className="h-2.5 w-40 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${i * 70 + 40}ms` }} />
         </div>
       ))}
     </div>
@@ -211,12 +211,12 @@ export function DetailSkeleton() {
 
 export function CardSkeleton() {
   return (
-    <div className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4" aria-hidden>
-      <div className="h-3 w-28 rounded bg-[#251E31] relay-shimmer" />
+    <div className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4" aria-hidden>
+      <div className="h-3 w-28 rounded bg-[#1A2C44] relay-shimmer" />
       <div className="mt-3 space-y-2">
-        <div className="h-2.5 w-full rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: '60ms' }} />
-        <div className="h-2.5 w-5/6 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: '120ms' }} />
-        <div className="h-2.5 w-2/3 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: '180ms' }} />
+        <div className="h-2.5 w-full rounded bg-[#142436] relay-shimmer" style={{ animationDelay: '60ms' }} />
+        <div className="h-2.5 w-5/6 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: '120ms' }} />
+        <div className="h-2.5 w-2/3 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: '180ms' }} />
       </div>
     </div>
   )
@@ -226,9 +226,9 @@ export function PanelSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-2" aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between rounded-lg border border-[#2E2540] bg-[#100D16] px-3 py-2.5">
-          <div className="h-2.5 w-32 rounded bg-[#1d1826] relay-shimmer" style={{ animationDelay: `${i * 80}ms` }} />
-          <div className="h-2.5 w-16 rounded bg-[#251E31] relay-shimmer" style={{ animationDelay: `${i * 80 + 40}ms` }} />
+        <div key={i} className="flex items-center justify-between rounded-lg border border-[#1D2E42] bg-[#0D1622] px-3 py-2.5">
+          <div className="h-2.5 w-32 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${i * 80}ms` }} />
+          <div className="h-2.5 w-16 rounded bg-[#1A2C44] relay-shimmer" style={{ animationDelay: `${i * 80 + 40}ms` }} />
         </div>
       ))}
     </div>

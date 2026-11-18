@@ -4,33 +4,33 @@
 <meta charset="utf-8">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 1200px; height: 630px; background: #080D17; font-family: 'Geist', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  html, body { width: 1200px; height: 630px; background: #0A1220; font-family: 'Geist', 'Segoe UI', system-ui, -apple-system, sans-serif; }
   .stage { position: relative; width: 1200px; height: 630px; overflow: hidden; }
   .grid {
     position: absolute; inset: 0;
     background-image:
-      linear-gradient(to right, rgba(53,214,192,0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(53,214,192,0.05) 1px, transparent 1px);
+      linear-gradient(to right, rgba(57,198,216,0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(57,198,216,0.05) 1px, transparent 1px);
     background-size: 44px 44px;
   }
   .radial {
     position: absolute; inset: 0;
     background:
-      radial-gradient(60% 55% at 50% 0%, rgba(53,214,192,0.14) 0%, transparent 70%),
-      radial-gradient(40% 40% at 82% 25%, rgba(101,140,255,0.10) 0%, transparent 70%);
+      radial-gradient(60% 55% at 50% 0%, rgba(57,198,216,0.14) 0%, transparent 70%),
+      radial-gradient(40% 40% at 82% 25%, rgba(138,162,240,0.10) 0%, transparent 70%);
   }
   .content { position: relative; padding: 72px 84px; height: 100%; display: flex; flex-direction: column; }
   .brandrow { display: flex; align-items: center; gap: 14px; }
-  .badge { width: 44px; height: 44px; }
-  .wordmark { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: #F0F5FA; }
-  .wordmark .relay { color: #35D6C0; }
-  h1 { margin-top: 84px; font-size: 64px; line-height: 1.12; font-weight: 600; letter-spacing: -0.025em; color: #F0F5FA; max-width: 1000px; }
-  h1 .accent { color: #35D6C0; }
-  .sub { margin-top: 26px; font-size: 24px; line-height: 1.5; color: #A0AEC0; max-width: 860px; }
+  .badge { width: 46px; height: 46px; }
+  .wordmark { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: #E8F1F7; }
+  .wordmark .relay { color: #39C6D8; }
+  h1 { margin-top: 84px; font-size: 64px; line-height: 1.12; font-weight: 600; letter-spacing: -0.025em; color: #E8F1F7; max-width: 1000px; }
+  h1 .accent { color: #39C6D8; }
+  .sub { margin-top: 26px; font-size: 24px; line-height: 1.5; color: #8FA5BC; max-width: 880px; }
   .chips { margin-top: auto; display: flex; gap: 12px; align-items: center; }
-  .chip { border: 1px solid #26374C; background: rgba(20,33,53,0.6); color: #A0AEC0; border-radius: 999px; padding: 10px 20px; font-size: 17px; font-weight: 500; }
-  .chip.teal { border-color: rgba(53,214,192,0.4); background: rgba(53,214,192,0.10); color: #35D6C0; }
-  .geo { margin-left: auto; color: #74849A; font-size: 17px; }
+  .chip { border: 1px solid #26374C; background: rgba(20,33,53,0.6); color: #8FA5BC; border-radius: 999px; padding: 10px 20px; font-size: 17px; font-weight: 500; }
+  .chip.teal { border-color: rgba(57,198,216,0.4); background: rgba(57,198,216,0.10); color: #39C6D8; }
+  .geo { margin-left: auto; color: #64798F; font-size: 17px; }
 </style>
 </head>
 <body>
@@ -39,10 +39,21 @@
   <div class="radial"></div>
   <div class="content">
     <div class="brandrow">
-      <svg class="badge" viewBox="0 0 32 32" fill="none">
-        <rect x="1.5" y="1.5" width="29" height="29" rx="8" stroke="#35D6C0" stroke-width="1.6"/>
-        <path d="M9 20.5 16 8l7 12.5" stroke="#35D6C0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M12.2 17.4h7.6" stroke="#658CFF" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- Relay Conduit mark v2 (matches /public/logo.svg) -->
+      <svg class="badge" viewBox="0 0 64 64" fill="none">
+        <defs>
+          <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#15293F"/>
+            <stop offset="1" stop-color="#0A1220"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 7 L53.65 19.5 L53.65 44.5 L32 57 L10.35 44.5 L10.35 19.5 Z" fill="url(#plate)" stroke="url(#plate)" stroke-width="7" stroke-linejoin="round"/>
+        <path d="M32 8.6 L52.15 20.3 L52.15 43.7 L32 55.4 L11.85 43.7 L11.85 20.3 Z" stroke="#39C6D8" stroke-opacity="0.45" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M17.5 44.5 C 25 44.5, 25.5 32, 32 32 C 38.5 32, 39 19.5, 46.5 19.5" stroke="#39C6D8" stroke-opacity="0.8" stroke-width="4.6" stroke-linecap="round"/>
+        <circle cx="17.5" cy="44.5" r="3.1" fill="#8AA2F0"/>
+        <rect x="28.2" y="28.2" width="7.6" height="7.6" rx="1.8" transform="rotate(45 32 32)" fill="#39C6D8"/>
+        <rect x="30.4" y="30.4" width="3.2" height="3.2" rx="0.8" transform="rotate(45 32 32)" fill="#04121A"/>
+        <circle cx="46.5" cy="19.5" r="3.1" fill="#2ED3A6"/>
       </svg>
       <span class="wordmark">AZIMARA <span class="relay">RELAY</span></span>
     </div>
@@ -51,7 +62,7 @@
     <div class="chips">
       <span class="chip teal">Non-custodial</span>
       <span class="chip">Solana</span>
-      <span class="chip">MultiHopper</span>
+      <span class="chip">Approval policies</span>
       <span class="chip">Relay Intelligence</span>
       <span class="geo">Dubai · United Arab Emirates</span>
     </div>

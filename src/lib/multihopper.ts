@@ -253,7 +253,10 @@ function extractValue(value: unknown, keys: string[]): unknown {
 }
 
 export function providerConfigFromRow(row: { environment: string; apiKeyCipher: string | null; capabilityJson: string } | null, orgOverride?: { environment?: string }): ProviderConfig {
-  const environment = (orgOverride?.environment ?? row?.environment ?? env().MULTIHOPPER_ENVIRONMENT) as MultiHopperEnv
+  // Environment precedence: org override > stored integration row > derived
+  // from the Solana network (mainnet-beta → PRODUCTION) so a mainnet deployment
+  // never silently talks to a devnet rail.
+  const environment = (orgOverride?.environment ?? row?.environment ?? (env().SOLANA_NETWORK === 'mainnet-beta' ? 'PRODUCTION' : 'DEVNET')) as MultiHopperEnv
   let capability: { maxDestinations?: number } | undefined
   try {
     capability = row ? (JSON.parse(row.capabilityJson) as { maxDestinations?: number }) : undefined

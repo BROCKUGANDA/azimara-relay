@@ -195,7 +195,7 @@ function nextRecurrence(recurrence: string, from: Date): Date {
 export async function probeProvider(orgId: string): Promise<{ ok: boolean; detail: string; environment: string }> {
   const integration = await db.providerIntegration.findUnique({ where: { orgId_provider: { orgId, provider: 'MULTIHOPPER' } } })
   if (!integration?.apiKeyCipher) {
-    return { ok: false, detail: 'No MultiHopper API key configured for this organization.', environment: integration?.environment ?? 'DEVNET' }
+    return { ok: false, detail: 'No execution-rail API key configured for this organization.', environment: integration?.environment ?? 'DEVNET' }
   }
   const client = new MultiHopperClient(providerConfigFromRow(integration))
   try {

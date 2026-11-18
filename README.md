@@ -8,7 +8,7 @@ A full working platform (not a prototype):
 
 - **Public website** — 13 marketing routes (home, product, treasury, payouts, intelligence, integrations, developers, security, pricing, company, contact, legal) rendered as hash-routed views.
 - **Authenticated application** — 20 operational views: onboarding checklist, treasury, wallets, recipients, payment builder, batch builder, approval center, policy editor, schedules, activity, transaction detail, reconciliation, analytics, Relay Intelligence (AI), API keys, integrations, team, audit, billing, settings.
-- **Backend** — ~45 API route handlers, 36-table Prisma schema, payment state machine (23 states), approval policy engine, MultiHopper adapter, Solana service, DB-backed durable job queue, HMAC-verified webhooks, OpenAPI spec at `/api/openapi`.
+- **Backend** — ~45 API route handlers, 36-table Prisma schema, payment state machine (23 states), approval policy engine, execution-rail provider adapter, Solana service, DB-backed durable job queue, HMAC-verified webhooks, SMTP transactional email, OpenAPI spec at `/api/openapi`.
 
 ## Architecture (single-deployment layout)
 
@@ -21,19 +21,26 @@ src/
 ├── instrumentation.ts        # boots asset seed + background worker
 └── lib/
     ├── api.ts                # route wrapper: session → org → RBAC → rate limit
-    ├── auth.ts               # sessions, TOTP MFA, org context
+    ├── auth.ts               # sessions, TOTP MFA, org context, password recovery
+    ├── mailer.ts             # SMTP transactional email (verification, reset, invitations)
     ├── rbac.ts               7 roles, 21 permissions (server-side)
     ├── entitlements.ts       # plan gates enforced in code
     ├── state-machine.ts      # payment lifecycle + provider status mapping
     ├── approvals.ts          # deterministic policy evaluation, payload hashing
     ├── payments.ts           # payment domain service (idempotent, versioned)
     ├── batches.ts            # batch validation, isolation, execution
-    ├── multihopper.ts        # env-isolated provider adapter
+    ├── multihopper.ts        # env-isolated execution-rail provider adapter (internal)
     ├── solana.ts             # address validation, ed25519 ownership, RPC
     ├── ai.ts                 # Relay Intelligence (z-ai) with deterministic checks
     ├── jobs.ts + worker-processor.ts  # durable queue + all processors
     └── client/               # SPA router, API wrapper, formatters, wallet
 ```
+
+## Brand — "Arctic Deep" theme and the Relay Conduit mark
+
+- **Theme** — deep navy surfaces (`#0A1220` background, `#101C2C` cards) with a cyan accent (`#39C6D8`), mint success / rose danger / amber warning states. All colors flow through design tokens in `globals.css` plus a consistent hardcoded-hex mapping across components; both paths stay in sync.
+- **Mark** — the "Relay Conduit" icon: a hexagonal vault gate threaded by an S-curve settlement rail through three approval nodes (origin → gate → settlement). Sources: `public/logo.svg` (inline embedding), `public/icon.svg` (raster base).
+- **Asset pipeline** — `node scripts/gen-brand-assets.mjs` regenerates `favicon.ico` (16/32/48), PWA icons (192/512 + maskable variants), `apple-touch-icon.png` and 16/32 px PNGs from `icon.svg`; `node scripts/gen-og.js` regenerates the 1200×630 `og.png` from `scripts/og-template.html`.
 
 ## Running
 
@@ -49,7 +56,11 @@ Health: `GET /api/health` · OpenAPI: `GET /api/openapi`
 
 ## Environment
 
-See `.env.example`. Production fails fast without `AUTH_SECRET` and `ENCRYPTION_KEY`. MultiHopper keys are validated per environment (`mh_test_` → devnet only, `mh_live_` → production only).
+See `.env.example`. Production fails fast without `AUTH_SECRET` and `ENCRYPTION_KEY`.
+
+- **RPC** — set `HELIUS_API_KEY` (derived URL) or `SOLANA_RPC_URL`. Without either, the platform runs on the public mainnet endpoint, logs a startup warning and the Integrations view shows a "public RPC — rate-limited" advisory. A paid RPC is required before real volume.
+- **Email** — set `SMTP_*` to enable verification / password-reset / invitation delivery. Unconfigured mail never fakes success: the interface surfaces one-time links with an explicit "delivery unavailable" notice (development only).
+- **Execution rail** — keys are validated per environment (`mh_test_` → devnet only, `mh_live_` → production only); the provider identity is an internal integration detail and is not exposed on public surfaces.
 
 ## Commercialization — on-chain subscription collection
 
@@ -76,7 +87,8 @@ Subscription collection is LIVE on Solana **mainnet-beta** in USDC (native Circl
 - `scripts/verify-sweep-live.ts` — points the sweep at a wallet with genuine USDC traffic and asserts real transfers are recorded then cleaned up.
 - `scripts/verify-lifecycle.ts` — 24-check financial pipeline: ed25519 ownership, duplicate guard, separation of duties, RBAC, honest `PROVIDER_SETUP_REQUIRED`, invoice issuance.
 - `scripts/debug-overflow.js` — reports elements wider than the viewport (excludes intentional scroll containers).
-- `scripts/gen-og.js` — regenerates `/og.png` and the PWA/apple icons from `scripts/og-template.html`.
+- `scripts/gen-og.js` — regenerates `/og.png` from `scripts/og-template.html`.
+- `scripts/gen-brand-assets.mjs` — regenerates the favicon/ICO/PWA/apple icon suite from `public/icon.svg` (sharp-based, canonical).
 
 ## Non-negotiable rules honored by this codebase
 

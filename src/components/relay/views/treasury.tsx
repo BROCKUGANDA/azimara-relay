@@ -46,10 +46,10 @@ function ExpenditureChart({ timeline }: { timeline: AnalyticsData['timeline'] })
       {data.slice(-40).map((d) => (
         <div key={d.date} className="group relative flex-1">
           <div
-            className="w-full rounded-t bg-gradient-to-t from-[#E7B458]/20 to-[#E7B458]/70 transition-all duration-150 group-hover:from-[#E7B458]/40 group-hover:to-[#E7B458]"
+            className="w-full rounded-t bg-gradient-to-t from-[#39C6D8]/20 to-[#39C6D8]/70 transition-all duration-150 group-hover:from-[#39C6D8]/40 group-hover:to-[#39C6D8]"
             style={{ height: `${Math.max(4, (d.volume / max) * 120)}px` }}
           />
-          <div className="pointer-events-none absolute -top-10 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-[#2E2540] bg-[#1d1826] px-2 py-1 text-[10px] group-active:block group-hover:block">
+          <div className="pointer-events-none absolute -top-10 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-[#1D2E42] bg-[#142436] px-2 py-1 text-[10px] group-active:block group-hover:block">
             {d.date}: {Number.isFinite(d.volume) ? d.volume.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0'} · {d.completed}✓ {d.failed}✗
           </div>
         </div>
@@ -111,22 +111,22 @@ export function TreasuryView() {
                 data={analytics.data.timeline.map((t) => t.count)}
                 width={96}
                 height={28}
-                color="#E7B458"
+                color="#39C6D8"
                 label="Payment count trend"
               />
             ) : null
           }
         >
-          {analytics.isLoading ? <Skeleton className="h-36 bg-[#1d1826]" /> : analytics.data ? <ExpenditureChart timeline={analytics.data.timeline} /> : null}
+          {analytics.isLoading ? <Skeleton className="h-36 bg-[#142436]" /> : analytics.data ? <ExpenditureChart timeline={analytics.data.timeline} /> : null}
         </SectionCard>
         <SectionCard title="Asset distribution" description="Completed payment volume per asset.">
           {(analytics.data?.assetDistribution ?? []).length ? (
             <div className="space-y-2">
               {(analytics.data?.assetDistribution ?? []).map((a) => (
                 <div key={a.mint} className="flex items-center gap-3">
-                  <span className="w-14 text-xs font-medium text-[#E7B458]">{a.symbol}</span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#1d1826]">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#E7B458] to-[#F17FA8]" style={{ width: `${maxTotal > 0 ? Math.max(4, Math.min(100, (parseFloat(String(a.total).replace(/,/g, '')) / maxTotal) * 100)) : 0}%` }} />
+                  <span className="w-14 text-xs font-medium text-[#39C6D8]">{a.symbol}</span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#142436]">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#39C6D8] to-[#F17FA8]" style={{ width: `${maxTotal > 0 ? Math.max(4, Math.min(100, (parseFloat(String(a.total).replace(/,/g, '')) / maxTotal) * 100)) : 0}%` }} />
                   </div>
                   <span className="min-w-0 truncate font-mono text-xs tabular-nums">{a.total}</span>
                   <span className="hidden w-10 shrink-0 text-right text-[10px] text-dim sm:inline">{a.count}×</span>
@@ -139,13 +139,13 @@ export function TreasuryView() {
         </SectionCard>
       </div>
 
-      <SectionCard className="mt-6" title="Wallet balances" description="Live Solana RPC reads for verified wallets. Unreachable RPC is reported honestly — never faked." actions={<Button size="sm" variant="outline" className="border-[#2E2540] text-xs" onClick={() => navigate('/app/wallets')}>Manage wallets</Button>}>
+      <SectionCard className="mt-6" title="Wallet balances" description="Live Solana RPC reads for verified wallets. Unreachable RPC is reported honestly — never faked." actions={<Button size="sm" variant="outline" className="border-[#1D2E42] text-xs" onClick={() => navigate('/app/wallets')}>Manage wallets</Button>}>
         {(treasury.data?.wallets ?? []).length === 0 ? (
-          <EmptyState icon={<WalletIcon className="h-7 w-7" />} title="No wallets connected" description="Register a treasury wallet to see balances here." action={<Button size="sm" onClick={() => navigate('/app/wallets')} className="bg-[#E7B458] font-medium text-[#221202]">Connect wallet</Button>} />
+          <EmptyState icon={<WalletIcon className="h-7 w-7" />} title="No wallets connected" description="Register a treasury wallet to see balances here." action={<Button size="sm" onClick={() => navigate('/app/wallets')} className="bg-[#39C6D8] font-medium text-[#04121A]">Connect wallet</Button>} />
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {(treasury.data?.wallets ?? []).map((w) => (
-              <div key={w.id} className="rounded-xl border border-[#2E2540] bg-[#100D16] p-4">
+              <div key={w.id} className="rounded-xl border border-[#1D2E42] bg-[#0D1622] p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{w.label}</span>
@@ -158,7 +158,7 @@ export function TreasuryView() {
                 <div className="mt-2 font-mono text-xs text-dim">{shortAddress(w.address, 6)} · {w.network}</div>
                 {w.balance?.available ? (
                   <div className="mt-3 space-y-1">
-                    <div className="font-mono text-sm tabular-nums text-[#E7B458]">
+                    <div className="font-mono text-sm tabular-nums text-[#39C6D8]">
                       {formatAmount(w.balance.sol?.lamports ?? '0', 9)} SOL
                     </div>
                     {(w.balance.tokens ?? []).slice(0, 4).map((t) => (
@@ -191,7 +191,7 @@ export function TreasuryView() {
             keyOf={(p) => p.id}
             rows={treasury.data?.recentPayments ?? []}
             columns={[
-              { key: 'ref', header: 'Reference', render: (p) => <button className="font-mono text-xs text-[#E7B458] hover:underline" onClick={() => navigate(`/app/payments/${p.id}`)}>{p.reference}</button> },
+              { key: 'ref', header: 'Reference', render: (p) => <button className="font-mono text-xs text-[#39C6D8] hover:underline" onClick={() => navigate(`/app/payments/${p.id}`)}>{p.reference}</button> },
               { key: 'r', header: 'Recipient', render: (p) => <span className="text-xs text-secondary">{p.recipientName ?? '—'}</span> },
               { key: 'amt', header: 'Amount', render: (p) => <Amount base={p.amountBaseUnits} decimals={p.decimals} symbol={p.mintSymbol} className="text-xs" /> },
               { key: 'when', header: 'Created', render: (p) => <span className="text-xs text-dim">{timeAgo(p.createdAt)}</span> },

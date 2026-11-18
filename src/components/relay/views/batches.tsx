@@ -67,9 +67,9 @@ export function BatchesView({ initialBatchId }: { initialBatchId?: string }) {
         actions={
           <Dialog open={buildOpen} onOpenChange={setBuildOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"><Layers className="mr-1.5 h-4 w-4" /> New batch</Button>
+              <Button className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Layers className="mr-1.5 h-4 w-4" /> New batch</Button>
             </DialogTrigger>
-            <DialogContent className="border-[#2E2540] bg-[#15111D] sm:max-w-3xl">
+            <DialogContent className="border-[#1D2E42] bg-[#101C2C] sm:max-w-3xl">
               <DialogHeader><DialogTitle>Batch payment builder</DialogTitle></DialogHeader>
               <BatchBuilder onClose={(id) => { setBuildOpen(false); if (id) setSelected(id) }} />
             </DialogContent>
@@ -88,11 +88,11 @@ export function BatchesView({ initialBatchId }: { initialBatchId?: string }) {
             icon={<Layers className="h-8 w-8" />}
             title="No batches yet"
             description="Import a CSV of recipients and amounts; Relay validates every row before anything is submitted."
-            action={<Button size="sm" onClick={() => setBuildOpen(true)} className="bg-[#E7B458] font-medium text-[#221202]">Build a batch</Button>}
+            action={<Button size="sm" onClick={() => setBuildOpen(true)} className="bg-[#39C6D8] font-medium text-[#04121A]">Build a batch</Button>}
           />
         }
         columns={[
-          { key: 'ref', header: 'Reference', render: (b) => <button className="font-mono text-xs text-[#E7B458] hover:underline" onClick={() => setSelected(b.id)}>{b.reference}</button> },
+          { key: 'ref', header: 'Reference', render: (b) => <button className="font-mono text-xs text-[#39C6D8] hover:underline" onClick={() => setSelected(b.id)}>{b.reference}</button> },
           { key: 'name', header: 'Batch', render: (b) => <span className="text-xs text-secondary">{b.name}</span> },
           { key: 'mint', header: 'Asset', render: (b) => <span className="text-xs">{b.mintSymbol}</span> },
           { key: 'total', header: 'Total', render: (b) => <Amount base={b.totalBaseUnits} decimals={b.decimals} symbol={b.mintSymbol} className="text-xs" /> },
@@ -154,13 +154,13 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
           <Label>Batch name</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="March contributor payouts" className="mt-1 border-[#2E2540] bg-[#100D16]" />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="March contributor payouts" className="mt-1 border-[#1D2E42] bg-[#0D1622]" />
         </div>
         <div>
           <Label>Source wallet (verified)</Label>
           <Select value={walletId} onValueChange={setWalletId}>
-            <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+            <SelectTrigger className="mt-1 border-[#1D2E42] bg-[#0D1622]"><SelectValue placeholder="Select" /></SelectTrigger>
+            <SelectContent className="border-[#1D2E42] bg-[#142436]">
               {verifiedWallets.map((w) => <SelectItem key={w.id} value={w.id}>{w.label} · {w.network}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -168,8 +168,8 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
         <div>
           <Label>Asset</Label>
           <Select value={mint} onValueChange={(v) => { setMint(v); setPreview(null) }}>
-            <SelectTrigger className="mt-1 border-[#2E2540] bg-[#100D16]"><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+            <SelectTrigger className="mt-1 border-[#1D2E42] bg-[#0D1622]"><SelectValue placeholder="Select" /></SelectTrigger>
+            <SelectContent className="border-[#1D2E42] bg-[#142436]">
               {(assets.data?.assets ?? []).filter((a) => a.mint !== 'native:SOL').map((a) => <SelectItem key={a.mint} value={a.mint}>{a.symbol}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -179,22 +179,22 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
       <div>
         <div className="flex items-center justify-between">
           <Label>Recipients CSV</Label>
-          <button className="text-[11px] text-[#E7B458] hover:underline" onClick={() => setCsv(TEMPLATE)}>Insert template</button>
+          <button className="text-[11px] text-[#39C6D8] hover:underline" onClick={() => setCsv(TEMPLATE)}>Insert template</button>
         </div>
         <textarea
           value={csv}
           onChange={(e) => { setCsv(e.target.value); setPreview(null) }}
           rows={6}
-          className="mt-1 w-full rounded-lg border border-[#2E2540] bg-[#100D16] p-3 font-mono text-xs text-secondary"
+          className="mt-1 w-full rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3 font-mono text-xs text-secondary"
           placeholder={TEMPLATE}
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={runPreview} disabled={busy || !csv.trim() || !mint} variant="outline" className="border-[#2E2540]"><Upload className="mr-1.5 h-3.5 w-3.5" /> Validate rows</Button>
+        <Button onClick={runPreview} disabled={busy || !csv.trim() || !mint} variant="outline" className="border-[#1D2E42]"><Upload className="mr-1.5 h-3.5 w-3.5" /> Validate rows</Button>
         <Select value={failurePolicy} onValueChange={(v) => setFailurePolicy(v as 'ISOLATE' | 'HALT')}>
-          <SelectTrigger className="w-full border-[#2E2540] bg-[#100D16] sm:w-56"><SelectValue /></SelectTrigger>
-          <SelectContent className="border-[#2E2540] bg-[#1d1826]">
+          <SelectTrigger className="w-full border-[#1D2E42] bg-[#0D1622] sm:w-56"><SelectValue /></SelectTrigger>
+          <SelectContent className="border-[#1D2E42] bg-[#142436]">
             <SelectItem value="ISOLATE">Error isolation — keep valid rows</SelectItem>
             <SelectItem value="HALT">Halt — reject batch on any invalid row</SelectItem>
           </SelectContent>
@@ -205,34 +205,34 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
       {preview ? (
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-3 text-xs">
-            <span className="text-[#43D48E]"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />{preview.summary.validRows} valid</span>
+            <span className="text-[#2ED3A6]"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />{preview.summary.validRows} valid</span>
             {preview.summary.invalidRows > 0 ? <span className="text-[#F27683]"><XCircle className="mr-1 inline h-3.5 w-3.5" />{preview.summary.invalidRows} invalid</span> : null}
             {preview.summary.duplicates > 0 ? <span className="text-[#F2BB62]"><AlertTriangle className="mr-1 inline h-3.5 w-3.5" />{preview.summary.duplicates} duplicates</span> : null}
-            <span className="ml-auto text-dim">Total principal: <strong className="font-mono tabular-nums text-[#E7B458]">{formatAmount(preview.summary.totalBaseUnits, preview.summary.decimals, asset?.symbol)}</strong></span>
+            <span className="ml-auto text-dim">Total principal: <strong className="font-mono tabular-nums text-[#39C6D8]">{formatAmount(preview.summary.totalBaseUnits, preview.summary.decimals, asset?.symbol)}</strong></span>
           </div>
-          <div className="max-h-56 overflow-auto rounded-lg border border-[#2E2540]">
+          <div className="max-h-56 overflow-auto rounded-lg border border-[#1D2E42]">
             <table className="w-full min-w-[480px] text-xs">
-              <thead className="sticky top-0 bg-[#100D16]">
+              <thead className="sticky top-0 bg-[#0D1622]">
                 <tr className="text-left text-dim">
                   <th className="px-2 py-1.5">#</th><th className="px-2 py-1.5">Name</th><th className="px-2 py-1.5">Address</th><th className="px-2 py-1.5 text-right">Amount</th><th className="px-2 py-1.5">Checks</th>
                 </tr>
               </thead>
               <tbody>
                 {preview.rows.map((r) => (
-                  <tr key={r.row} className={`border-t border-[#231C30] ${r.valid ? '' : 'bg-[#F27683]/5'}`}>
+                  <tr key={r.row} className={`border-t border-[#16273C] ${r.valid ? '' : 'bg-[#F27683]/5'}`}>
                     <td className="px-2 py-1.5 text-dim">{r.row}</td>
-                    <td className="px-2 py-1.5">{r.name || <span className="text-[#F27683]">missing</span>}{r.matchedRecipient?.registered ? <span className="ml-1 rounded bg-[#43D48E]/10 px-1 text-[9px] text-[#43D48E]">registered</span> : <span className="ml-1 rounded bg-[#F2BB62]/10 px-1 text-[9px] text-[#F2BB62]">new</span>}</td>
+                    <td className="px-2 py-1.5">{r.name || <span className="text-[#F27683]">missing</span>}{r.matchedRecipient?.registered ? <span className="ml-1 rounded bg-[#2ED3A6]/10 px-1 text-[9px] text-[#2ED3A6]">registered</span> : <span className="ml-1 rounded bg-[#F2BB62]/10 px-1 text-[9px] text-[#F2BB62]">new</span>}</td>
                     <td className="px-2 py-1.5 font-mono text-[10px] text-dim">{shortAddress(r.address, 4)}</td>
                     <td className="px-2 py-1.5 text-right font-mono tabular-nums">{r.amount}</td>
                     <td className="px-2 py-1.5">
-                      {r.valid ? <span className="text-[#43D48E]">OK</span> : <span className="text-[#F27683]">{r.issues.join('; ')}</span>}
+                      {r.valid ? <span className="text-[#2ED3A6]">OK</span> : <span className="text-[#F27683]">{r.issues.join('; ')}</span>}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <Button onClick={create} disabled={busy || preview.summary.validRows === 0 || !name.trim() || !walletId} className="mt-3 w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
+          <Button onClick={create} disabled={busy || preview.summary.validRows === 0 || !name.trim() || !walletId} className="mt-3 w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
             <Layers className="mr-1.5 h-4 w-4" /> Create batch with {preview.summary.validRows} items
           </Button>
           <p className="mt-2 text-[11px] text-dim">Creating a batch validates again server-side, then enters the approval flow. Execution creates one real payment per item through the normal pipeline — approvals still apply.</p>
@@ -277,8 +277,8 @@ function BatchDetailPanel({ detail, batchId, onBack, onChanged, navigate }: { de
             <StatusBadge status={b.status} />
             {['DRAFT', 'AWAITING_APPROVAL'].includes(b.status) ? (
               <>
-                <Button size="sm" variant="outline" onClick={() => run('validate')} disabled={busy} className="border-[#2E2540]">Revalidate</Button>
-                <Button size="sm" onClick={() => run('execute')} disabled={busy} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"><Play className="mr-1.5 h-3.5 w-3.5" /> Create payments</Button>
+                <Button size="sm" variant="outline" onClick={() => run('validate')} disabled={busy} className="border-[#1D2E42]">Revalidate</Button>
+                <Button size="sm" onClick={() => run('execute')} disabled={busy} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Play className="mr-1.5 h-3.5 w-3.5" /> Create payments</Button>
               </>
             ) : null}
           </div>
@@ -286,19 +286,19 @@ function BatchDetailPanel({ detail, batchId, onBack, onChanged, navigate }: { de
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
+        <div className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
           <div className="text-[10px] uppercase tracking-wide text-dim">Total principal</div>
-          <Amount base={b.totalBaseUnits} decimals={b.decimals} symbol={b.mintSymbol} className="mt-1 text-lg text-[#E7B458]" />
+          <Amount base={b.totalBaseUnits} decimals={b.decimals} symbol={b.mintSymbol} className="mt-1 text-lg text-[#39C6D8]" />
         </div>
-        <div className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
+        <div className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
           <div className="text-[10px] uppercase tracking-wide text-dim">Items</div>
           <div className="mt-1 text-lg tabular-nums">{b.itemCount}</div>
         </div>
-        <div className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
+        <div className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
           <div className="text-[10px] uppercase tracking-wide text-dim">Source wallet</div>
           <div className="mt-1 text-sm">{b.wallet.label} <span className="font-mono text-[10px] text-dim">{shortAddress(b.wallet.address, 4)}</span></div>
         </div>
-        <div className="rounded-xl border border-[#2E2540] bg-[#15111D] p-4">
+        <div className="rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4">
           <div className="text-[10px] uppercase tracking-wide text-dim">Failure policy</div>
           <div className="mt-1 text-sm">{b.failurePolicy === 'ISOLATE' ? 'Isolate errors' : 'Halt on error'}</div>
         </div>
@@ -313,7 +313,7 @@ function BatchDetailPanel({ detail, batchId, onBack, onChanged, navigate }: { de
             { key: 'name', header: 'Recipient', render: (i) => <span className="text-xs">{i.recipientName}</span> },
             { key: 'addr', header: 'Address', render: (i) => <span className="font-mono text-[10px] text-dim">{shortAddress(i.address, 4)}</span> },
             { key: 'amt', header: 'Amount', render: (i) => <Amount base={i.amountBaseUnits} decimals={i.decimals} symbol={b.mintSymbol} className="text-xs" /> },
-            { key: 'pay', header: 'Payment', render: (i) => i.payment ? <button className="font-mono text-xs text-[#E7B458] hover:underline" onClick={() => navigate(`/app/payments/${i.payment!.id}`)}>{i.payment.reference}</button> : <span className="text-xs text-dim">—</span> },
+            { key: 'pay', header: 'Payment', render: (i) => i.payment ? <button className="font-mono text-xs text-[#39C6D8] hover:underline" onClick={() => navigate(`/app/payments/${i.payment!.id}`)}>{i.payment.reference}</button> : <span className="text-xs text-dim">—</span> },
             { key: 'err', header: 'Detail', render: (i) => <span className="text-[11px] text-[#F27683]">{i.error ?? ''}</span> },
             { key: 'status', header: 'Status', render: (i) => <StatusBadge status={i.status === 'VALID' ? 'QUOTED' : i.status === 'INVALID' ? 'FAILED' : i.status === 'PAYMENT_CREATED' ? 'APPROVED' : i.status === 'COMPLETED' ? 'COMPLETED' : 'PENDING_APPROVAL'} label={i.status.replaceAll('_', ' ')} /> },
           ]}

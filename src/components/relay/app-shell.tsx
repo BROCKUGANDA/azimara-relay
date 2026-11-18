@@ -33,42 +33,69 @@ const NAV_GROUPS: { label: string; items: { path: string; label: string; Glyph: 
     label: 'Operations',
     items: [
       { path: '/app', label: 'Overview', Glyph: GlyphOverview },
-      { path: '/app/treasury', label: 'Treasury', Glyph: GlyphTreasury },
-      { path: '/app/wallets', label: 'Wallets', Glyph: GlyphWallet },
-      { path: '/app/recipients', label: 'Recipients', Glyph: GlyphRecipients },
+      { path: '/app/treasury', label: 'Treasury', Glyph: GlyphTreasury, permission: 'wallet:read' },
+      { path: '/app/wallets', label: 'Wallets', Glyph: GlyphWallet, permission: 'wallet:read' },
+      { path: '/app/recipients', label: 'Recipients', Glyph: GlyphRecipients, permission: 'recipient:read' },
     ],
   },
   {
     label: 'Payments',
     items: [
-      { path: '/app/payments', label: 'Payments', Glyph: GlyphPayments },
+      { path: '/app/payments', label: 'Payments', Glyph: GlyphPayments, permission: 'payment:read' },
       { path: '/app/payments/new', label: 'New payment', Glyph: GlyphPayments, permission: 'payment:create' },
       { path: '/app/batches', label: 'Batch payouts', Glyph: GlyphBatches, permission: 'payment:create' },
-      { path: '/app/approvals', label: 'Approval center', Glyph: GlyphApprovals },
-      { path: '/app/policies', label: 'Approval policies', Glyph: GlyphPolicies },
-      { path: '/app/schedules', label: 'Schedules', Glyph: GlyphSchedules },
+      { path: '/app/approvals', label: 'Approval center', Glyph: GlyphApprovals, permission: 'approval:decide' },
+      { path: '/app/policies', label: 'Approval policies', Glyph: GlyphPolicies, permission: 'policy:manage' },
+      { path: '/app/schedules', label: 'Schedules', Glyph: GlyphSchedules, permission: 'schedule:manage' },
     ],
   },
   {
     label: 'Assurance',
     items: [
-      { path: '/app/transactions', label: 'Activity', Glyph: GlyphActivity },
-      { path: '/app/reconciliation', label: 'Reconciliation', Glyph: GlyphReconcile },
-      { path: '/app/analytics', label: 'Analytics', Glyph: GlyphAnalytics },
-      { path: '/app/intelligence', label: 'Relay Intelligence', Glyph: GlyphIntelligence },
+      { path: '/app/transactions', label: 'Activity', Glyph: GlyphActivity, permission: 'payment:read' },
+      { path: '/app/reconciliation', label: 'Reconciliation', Glyph: GlyphReconcile, permission: 'reconciliation:read' },
+      { path: '/app/analytics', label: 'Analytics', Glyph: GlyphAnalytics, permission: 'analytics:read' },
+      { path: '/app/intelligence', label: 'Relay Intelligence', Glyph: GlyphIntelligence, permission: 'intelligence:use' },
     ],
   },
   {
     label: 'Administration',
     items: [
       { path: '/app/api-keys', label: 'API keys', Glyph: GlyphKeys, permission: 'apikey:manage' },
-      { path: '/app/integrations', label: 'Integrations', Glyph: GlyphIntegrations },
-      { path: '/app/team', label: 'Team', Glyph: GlyphTeam },
-      { path: '/app/audit', label: 'Audit trail', Glyph: GlyphAudit },
-      { path: '/app/billing', label: 'Billing', Glyph: GlyphBilling },
-      { path: '/app/settings', label: 'Settings', Glyph: GlyphSettings },
+      { path: '/app/integrations', label: 'Integrations', Glyph: GlyphIntegrations, permission: 'org:manage' },
+      { path: '/app/team', label: 'Team', Glyph: GlyphTeam, permission: 'team:manage' },
+      { path: '/app/audit', label: 'Audit trail', Glyph: GlyphAudit, permission: 'audit:read' },
+      { path: '/app/billing', label: 'Billing', Glyph: GlyphBilling, permission: 'billing:manage' },
+      { path: '/app/settings', label: 'Settings', Glyph: GlyphSettings, permission: 'org:read' },
     ],
   },
+]
+
+// Deep-link guard: hash routes bypass the sidebar, so every restricted view
+// re-checks the role's permissions here (mirrors the server-side `route()`
+// permission option exactly — the API stays the source of truth). Exact-match
+// entries are checked first, then prefixes; write paths (create/new) sit before
+// their read counterparts so ordering resolves correctly.
+const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
+  { prefix: '/app/payments/new', permission: 'payment:create' },
+  { prefix: '/app/batches/', permission: 'payment:read' },
+  { prefix: '/app/batches', permission: 'payment:create' },
+  { prefix: '/app/payments', permission: 'payment:read' },
+  { prefix: '/app/approvals', permission: 'approval:decide' },
+  { prefix: '/app/policies', permission: 'policy:manage' },
+  { prefix: '/app/schedules', permission: 'schedule:manage' },
+  { prefix: '/app/treasury', permission: 'wallet:read' },
+  { prefix: '/app/wallets', permission: 'wallet:read' },
+  { prefix: '/app/recipients', permission: 'recipient:read' },
+  { prefix: '/app/transactions', permission: 'payment:read' },
+  { prefix: '/app/reconciliation', permission: 'reconciliation:read' },
+  { prefix: '/app/analytics', permission: 'analytics:read' },
+  { prefix: '/app/intelligence', permission: 'intelligence:use' },
+  { prefix: '/app/api-keys', permission: 'apikey:manage' },
+  { prefix: '/app/integrations', permission: 'org:manage' },
+  { prefix: '/app/team', permission: 'team:manage' },
+  { prefix: '/app/audit', permission: 'audit:read' },
+  { prefix: '/app/billing', permission: 'billing:manage' },
 ]
 
 type Notification = { id: string; type: string; title: string; body: string | null; link: string | null; readAt: string | null; createdAt: string }
@@ -152,25 +179,25 @@ export function AppShell() {
   )
 
   return (
-    <div className="flex min-h-screen bg-[#0C0A12]">
+    <div className="flex min-h-screen bg-[#0A1220]">
       {/* Desktop sidebar — md covers tablets (768-1023px) too, which previously
           fell back to the cramped phone drawer. */}
-      <aside className={cn('sticky top-0 hidden h-screen shrink-0 border-r border-[#231C30] bg-[#100D16] transition-[width] duration-300 md:block', collapsed ? 'w-[72px]' : 'w-[248px]')}>
+      <aside className={cn('sticky top-0 hidden h-screen shrink-0 border-r border-[#16273C] bg-[#0D1622] transition-[width] duration-300 md:block', collapsed ? 'w-[72px]' : 'w-[248px]')}>
         {SidebarContent()}
       </aside>
       {/* Mobile drawer */}
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="relay-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="relay-drawer absolute left-0 top-0 h-full w-[260px] border-r border-[#231C30] bg-[#100D16]">{SidebarContent(true)}</aside>
+          <aside className="relay-drawer absolute left-0 top-0 h-full w-[260px] border-r border-[#16273C] bg-[#0D1622]">{SidebarContent(true)}</aside>
         </div>
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar */}
-        <header className="relay-sticky-safe sticky top-0 z-30 flex h-[68px] items-center justify-between gap-3 border-b border-[#231C30] bg-[#0C0A12]/90 px-4 backdrop-blur sm:px-6">
+        <header className="relay-sticky-safe sticky top-0 z-30 flex h-[68px] items-center justify-between gap-3 border-b border-[#16273C] bg-[#0A1220]/90 px-4 backdrop-blur sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
-            <button className="relay-press rounded-lg p-2 text-secondary hover:bg-[#1d1826] hover:text-foreground md:hidden" onClick={() => { haptic('tap'); setMobileOpen(true) }} aria-label="Open navigation">
+            <button className="relay-press rounded-lg p-2 text-secondary hover:bg-[#142436] hover:text-foreground md:hidden" onClick={() => { haptic('tap'); setMobileOpen(true) }} aria-label="Open navigation">
               <Menu className="h-5 w-5" />
             </button>
             <Breadcrumbs path={path} navigate={go} />
@@ -179,16 +206,16 @@ export function AppShell() {
             {/* Command palette trigger — the shell's global launcher. */}
             <button
               onClick={() => { haptic('select'); setPaletteOpen(true) }}
-              className="relay-press hidden items-center gap-2 rounded-lg border border-[#2E2540] bg-[#100D16] px-3 py-2 text-xs text-dim transition-colors hover:border-[#E7B458]/40 hover:text-secondary lg:flex"
+              className="relay-press hidden items-center gap-2 rounded-lg border border-[#1D2E42] bg-[#0D1622] px-3 py-2 text-xs text-dim transition-colors hover:border-[#39C6D8]/40 hover:text-secondary lg:flex"
               aria-label="Open command palette"
             >
               <GlyphSearchGlyph />
               Search…
-              <kbd className="rounded border border-[#2E2540] bg-[#1d1826] px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+              <kbd className="rounded border border-[#1D2E42] bg-[#142436] px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
             </button>
             <button
               onClick={() => { haptic('select'); setPaletteOpen(true) }}
-              className="relay-press rounded-lg border border-[#2E2540] p-2.5 text-secondary hover:bg-[#1d1826] hover:text-foreground lg:hidden"
+              className="relay-press rounded-lg border border-[#1D2E42] p-2.5 text-secondary hover:bg-[#142436] hover:text-foreground lg:hidden"
               aria-label="Search"
             >
               <GlyphSearchGlyph />
@@ -197,27 +224,27 @@ export function AppShell() {
               size="sm"
               onClick={() => go('/app/payments/new')}
               aria-label="New payment"
-              className="relay-press-sm bg-[#E7B458] font-medium text-[#221202] shadow-[0_0_18px_rgba(231,180,88,0.25)] hover:bg-[#E7B458]/90 hover:shadow-[0_0_26px_rgba(231,180,88,0.4)] md:hidden"
+              className="relay-press-sm bg-[#39C6D8] font-medium text-[#04121A] shadow-[0_0_18px_rgba(57,198,216,0.25)] hover:bg-[#39C6D8]/90 hover:shadow-[0_0_26px_rgba(57,198,216,0.4)] md:hidden"
             >
               <Send className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
               onClick={() => go('/app/payments/new')}
-              className="relay-press-sm hidden bg-[#E7B458] font-medium text-[#221202] shadow-[0_0_18px_rgba(231,180,88,0.25)] hover:bg-[#E7B458]/90 hover:shadow-[0_0_26px_rgba(231,180,88,0.4)] md:inline-flex"
+              className="relay-press-sm hidden bg-[#39C6D8] font-medium text-[#04121A] shadow-[0_0_18px_rgba(57,198,216,0.25)] hover:bg-[#39C6D8]/90 hover:shadow-[0_0_26px_rgba(57,198,216,0.4)] md:inline-flex"
             >
               <Send className="mr-1.5 h-3.5 w-3.5" /> New payment
             </Button>
             <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
               <DropdownMenuTrigger asChild>
-                <button className="relay-press relative rounded-lg border border-[#2E2540] p-2.5 text-secondary hover:bg-[#1d1826] hover:text-foreground" aria-label="Notifications">
+                <button className="relay-press relative rounded-lg border border-[#1D2E42] p-2.5 text-secondary hover:bg-[#142436] hover:text-foreground" aria-label="Notifications">
                   <span className={cn('block', bellSwing && 'relay-ring')}>
-                    <GlyphBell size={17} accent={unread > 0 ? '#F2BB62' : '#E7B458'} />
+                    <GlyphBell size={17} accent={unread > 0 ? '#F2BB62' : '#39C6D8'} />
                   </span>
-                  {unread > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F27683] px-1 text-[9px] font-bold text-[#0C0A12]">{unread}</span> : null}
+                  {unread > 0 ? <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F27683] px-1 text-[9px] font-bold text-[#0A1220]">{unread}</span> : null}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))] border-[#2E2540] bg-[#1d1826]">
+              <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))] border-[#1D2E42] bg-[#142436]">
                 <DropdownMenuLabel className="text-xs">Notifications</DropdownMenuLabel>
                 <div className="max-h-80 overflow-y-auto">
                   {notifications.length === 0 ? (
@@ -226,7 +253,7 @@ export function AppShell() {
                     notifications.slice(0, 12).map((n) => (
                       <button
                         key={n.id}
-                        className={cn('relay-press-sm block w-full border-b border-[#231C30] px-3 py-2.5 text-left last:border-0 hover:bg-[#251E31]', !n.readAt && 'bg-[#E7B458]/5')}
+                        className={cn('relay-press-sm block w-full border-b border-[#16273C] px-3 py-2.5 text-left last:border-0 hover:bg-[#1A2C44]', !n.readAt && 'bg-[#39C6D8]/5')}
                         onClick={async () => {
                           await api('/api/notifications', { json: { ids: [n.id], markRead: true } }).catch(() => undefined)
                           setNotifOpen(false)
@@ -246,7 +273,7 @@ export function AppShell() {
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relay-press flex items-center gap-2 rounded-lg border border-[#2E2540] px-2.5 py-2 hover:bg-[#1d1826]" aria-label="Account menu">
+                <button className="relay-press flex items-center gap-2 rounded-lg border border-[#1D2E42] px-2.5 py-2 hover:bg-[#142436]" aria-label="Account menu">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#F17FA8]/15 text-[10px] font-bold text-[#F17FA8]">
                     {session.user?.name?.slice(0, 2).toUpperCase() ?? '??'}
                   </span>
@@ -254,15 +281,15 @@ export function AppShell() {
                   <ChevronsUpDown className="h-3 w-3 text-dim" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 border-[#2E2540] bg-[#1d1826]">
+              <DropdownMenuContent align="end" className="w-56 border-[#1D2E42] bg-[#142436]">
                 <DropdownMenuLabel className="text-xs">
                   {session.user?.email}
                   {!session.emailVerified ? <span className="mt-1 block text-[10px] font-normal text-[#F2BB62]">Email not verified</span> : null}
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-[#2E2540]" />
+                <DropdownMenuSeparator className="bg-[#1D2E42]" />
                 <DropdownMenuItem className="text-xs" onClick={() => go('/app/settings')}><GlyphSettings size={14} className="mr-2" /> Settings & security</DropdownMenuItem>
                 <DropdownMenuItem className="text-xs" onClick={() => go('/app/billing')}><GlyphBilling size={14} className="mr-2" /> Billing</DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-[#2E2540]" />
+                <DropdownMenuSeparator className="bg-[#1D2E42]" />
                 <DropdownMenuItem
                   className="text-xs text-[#F27683]"
                   onClick={async () => {
@@ -287,7 +314,7 @@ export function AppShell() {
               one view is contained here — sidebar, topbar and session survive. */}
           <div key={path} className="view-enter">
             <ViewBoundary navigate={navigate}>
-              <AppView path={path} navigate={navigate} />
+              <AppView path={path} navigate={navigate} role={role} />
             </ViewBoundary>
           </div>
         </main>
@@ -367,25 +394,25 @@ function SidebarInner({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center justify-between border-b border-[#231C30] px-4">
+      <div className="flex h-16 items-center justify-between border-b border-[#16273C] px-4">
         <button onClick={() => handleNavigate('/app')} className="relay-press-sm group flex items-center gap-2.5" aria-label="Overview">
           <span className="transition-transform duration-500 group-hover:rotate-[8deg]">
             <LogoGlyph size={24} />
           </span>
-          {!collapsed && <span className="text-[13px] font-semibold tracking-tight">AZIMARA <span className="text-[#E7B458]">RELAY</span></span>}
+          {!collapsed && <span className="text-[13px] font-semibold tracking-tight">AZIMARA <span className="text-[#39C6D8]">RELAY</span></span>}
         </button>
         {!collapsed && (
-          <button className="relay-press rounded-lg p-2 text-dim hover:bg-[#1d1826] hover:text-foreground md:hidden" onClick={onNavigateDrawer} aria-label="Close navigation">
+          <button className="relay-press rounded-lg p-2 text-dim hover:bg-[#142436] hover:text-foreground md:hidden" onClick={onNavigateDrawer} aria-label="Close navigation">
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
       {/* Organization switcher */}
-      <div className="border-b border-[#231C30] p-3">
+      <div className="border-b border-[#16273C] p-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn('relay-press-sm flex w-full items-center gap-2 rounded-lg border border-[#2E2540] bg-[#100D16] px-2.5 py-2 text-left hover:bg-[#1d1826] transition-colors', collapsed && 'justify-center px-0')} aria-label="Switch organization">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#E7B458]/15 text-xs font-bold text-[#E7B458]">{activeOrg.name.slice(0, 2).toUpperCase()}</span>
+            <button className={cn('relay-press-sm flex w-full items-center gap-2 rounded-lg border border-[#1D2E42] bg-[#0D1622] px-2.5 py-2 text-left hover:bg-[#142436] transition-colors', collapsed && 'justify-center px-0')} aria-label="Switch organization">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#39C6D8]/15 text-xs font-bold text-[#39C6D8]">{activeOrg.name.slice(0, 2).toUpperCase()}</span>
               {!collapsed && (
                 <>
                   <span className="min-w-0 flex-1">
@@ -397,16 +424,16 @@ function SidebarInner({
               )}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-[min(16rem,calc(100vw-3rem))] border-[#2E2540] bg-[#1d1826]">
+          <DropdownMenuContent align="start" className="w-[min(16rem,calc(100vw-3rem))] border-[#1D2E42] bg-[#142436]">
             <DropdownMenuLabel className="text-xs text-dim">Workspaces</DropdownMenuLabel>
             {session.organizations.map((o) => (
               <DropdownMenuItem key={o.id} onClick={() => session.setActive(o.id)} className="text-xs">
                 <Building2 className="mr-2 h-3.5 w-3.5 text-dim" />
                 <span className="flex-1">{o.name}</span>
-                {o.id === activeOrg.id && <Badge className="border-0 bg-[#E7B458]/15 text-[10px] text-[#E7B458]">Active</Badge>}
+                {o.id === activeOrg.id && <Badge className="border-0 bg-[#39C6D8]/15 text-[10px] text-[#39C6D8]">Active</Badge>}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator className="bg-[#2E2540]" />
+            <DropdownMenuSeparator className="bg-[#1D2E42]" />
             <DropdownMenuItem
               className="text-xs"
               onClick={async () => {
@@ -421,7 +448,7 @@ function SidebarInner({
                 }
               }}
             >
-              <Building2 className="mr-2 h-3.5 w-3.5 text-[#E7B458]" /> Create new organization
+              <Building2 className="mr-2 h-3.5 w-3.5 text-[#39C6D8]" /> Create new organization
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -448,7 +475,7 @@ function SidebarInner({
                       onClick={() => handleNavigate(item.path)}
                       className={cn(
                         'group relative mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors duration-150',
-                        active ? 'text-[#E7B458]' : 'text-secondary hover:bg-[#1d1826]/60 hover:text-foreground',
+                        active ? 'text-[#39C6D8]' : 'text-secondary hover:bg-[#142436]/60 hover:text-foreground',
                         collapsed && 'justify-center px-0',
                       )}
                       title={collapsed ? item.label : undefined}
@@ -459,7 +486,7 @@ function SidebarInner({
                       </span>
                       {!collapsed && <span className="truncate">{item.label}</span>}
                       {!collapsed && item.path === '/app/approvals' && <ApprovalsCountBadge />}
-                      {active && !collapsed ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#E7B458] shadow-[0_0_8px_rgba(231,180,88,0.8)]" /> : null}
+                      {active && !collapsed ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#39C6D8] shadow-[0_0_8px_rgba(57,198,216,0.8)]" /> : null}
                     </button>
                   )
                 })}
@@ -467,18 +494,18 @@ function SidebarInner({
           ))}
         </div>
       </nav>
-      <div className="border-t border-[#231C30] p-3">
+      <div className="border-t border-[#16273C] p-3">
         {!collapsed && (
-          <div className="mb-2 rounded-lg border border-[#2E2540] bg-[#100D16] p-2.5">
+          <div className="mb-2 rounded-lg border border-[#1D2E42] bg-[#0D1622] p-2.5">
             <div className="flex items-center gap-1.5 text-[10px] font-medium text-dim"><GlyphCommand size={12} /> SHORTCUT</div>
             <div className="mt-1 text-[11px] text-secondary">
-              Press <kbd className="rounded border border-[#2E2540] bg-[#1d1826] px-1 font-mono">⌘K</kbd> for commands
+              Press <kbd className="rounded border border-[#1D2E42] bg-[#142436] px-1 font-mono">⌘K</kbd> for commands
             </div>
           </div>
         )}
         <button
           onClick={() => { haptic('toggle'); onToggleCollapse() }}
-          className={cn('relay-press-sm hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-dim hover:bg-[#1d1826] hover:text-foreground md:flex', collapsed && 'justify-center px-0')}
+          className={cn('relay-press-sm hidden w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-dim hover:bg-[#142436] hover:text-foreground md:flex', collapsed && 'justify-center px-0')}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <GlyphSettings size={15} />
@@ -504,7 +531,7 @@ function ApprovalsCountBadge() {
     return () => clearInterval(t)
   }, [])
   if (!count) return null
-  return <span className="ml-auto rounded-full bg-[#B79BF0]/15 px-2 py-0.5 text-[10px] font-semibold text-[#B79BF0]"><CountUp value={count} /></span>
+  return <span className="ml-auto rounded-full bg-[#8AA2F0]/15 px-2 py-0.5 text-[10px] font-semibold text-[#8AA2F0]"><CountUp value={count} /></span>
 }
 
 function Breadcrumbs({ path, navigate }: { path: string; navigate: (to: string) => void }) {
@@ -533,7 +560,7 @@ function Breadcrumbs({ path, navigate }: { path: string; navigate: (to: string) 
 }
 
 function ChevronSep() {
-  return <span className="text-[#2E2540]">/</span>
+  return <span className="text-[#1D2E42]">/</span>
 }
 
 function labelForPath(p: string): string {
@@ -570,7 +597,13 @@ import { BillingView } from './views/billing'
 import { SettingsView } from './views/settings'
 import { ActivityView } from './views/activity'
 
-function AppView({ path, navigate }: { path: string; navigate: (to: string) => void }) {
+function AppView({ path, navigate, role }: { path: string; navigate: (to: string) => void; role: string }) {
+  // Deep-link RBAC guard: the sidebar hides restricted items, but a hand-typed
+  // hash must not render a view whose actions would all fail server-side.
+  const guard = ROUTE_PERMISSIONS.find((r) => path === r.prefix) ?? ROUTE_PERMISSIONS.find((r) => path.startsWith(r.prefix))
+  if (guard && !permissionsFor(role).includes(guard.permission as never)) {
+    return <NoAccessView permission={guard.permission} navigate={navigate} />
+  }
   if (path === '/app' || path === '/app/') return <OverviewView />
   if (path === '/app/treasury') return <TreasuryView />
   if (path === '/app/wallets') return <WalletsView />
@@ -602,8 +635,18 @@ function AppView({ path, navigate }: { path: string; navigate: (to: string) => v
 
 function NotFoundView({ navigate }: { navigate: (to: string) => void }) {
   return (
-    <div className="rounded-xl border border-dashed border-[#2E2540] p-10 text-center text-sm text-dim">
-      Page not found — <button className="text-[#E7B458] hover:underline" onClick={() => navigate('/app')}>back to overview</button>
+    <div className="rounded-xl border border-dashed border-[#1D2E42] p-10 text-center text-sm text-dim">
+      Page not found — <button className="text-[#39C6D8] hover:underline" onClick={() => navigate('/app')}>back to overview</button>
+    </div>
+  )
+}
+
+function NoAccessView({ permission, navigate }: { permission: string; navigate: (to: string) => void }) {
+  return (
+    <div className="rounded-xl border border-dashed border-[#1D2E42] bg-[#0D1622] p-10 text-center">
+      <div className="text-sm font-medium">Your role does not include this area</div>
+      <p className="mt-1 text-xs text-dim">Access requires the <code className="font-mono text-[#39C6D8]">{permission}</code> permission. Ask an organization owner to adjust your role under Team.</p>
+      <button className="mt-4 text-xs text-[#39C6D8] hover:underline" onClick={() => navigate('/app')}>Back to overview</button>
     </div>
   )
 }

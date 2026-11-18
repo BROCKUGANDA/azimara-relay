@@ -30,24 +30,25 @@ const base = (size: number, className?: string) => ({
   'aria-hidden': true,
 })
 
-const ACCENT = '#E7B458'
-const BLUE = '#F17FA8'
+const ACCENT = '#39C6D8'
 
 /**
- * Brand mark — the relay-'A': two gold legs meet at an apex, the crossbar is
- * a signal beam fading at both ends, a white diamond node rides mid-beam and
- * a rose settlement diamond floats above the apex. Mirrors /public/icon.svg.
+ * Brand mark v2 "Relay Conduit" — a hexagonal vault gate threaded by the
+ * settlement rail: an S-curve path flows through a central approval-gate
+ * diamond from an origin node (indigo) to a settlement node (mint). The
+ * silhouette + rail geometry are unique to AZIMARA RELAY and match
+ * /public/logo.svg.
  */
 export function LogoGlyph({ size = 24, className }: GlyphProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className={cn('shrink-0', className)} aria-hidden>
-      <rect x="1.75" y="1.75" width="60.5" height="60.5" rx="16.25" stroke={ACCENT} strokeOpacity="0.6" strokeWidth="1.5" />
-      <path d="M15 49 L32 13.5 L49 49" stroke={ACCENT} strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M22 35 H42" stroke={ACCENT} strokeOpacity="0.4" strokeWidth="3.2" strokeLinecap="round" />
-      <circle cx="22" cy="35" r="2.7" fill={ACCENT} fillOpacity="0.5" />
-      <circle cx="42" cy="35" r="2.7" fill={ACCENT} fillOpacity="0.5" />
-      <rect x="28.7" y="31.7" width="6.6" height="6.6" rx="1.5" transform="rotate(45 32 35)" fill="#F4F1EA" />
-      <rect x="29.3" y="4.3" width="5.4" height="5.4" rx="1.3" transform="rotate(45 32 7)" fill={BLUE} />
+      <path d="M32 7 L53.65 19.5 L53.65 44.5 L32 57 L10.35 44.5 L10.35 19.5 Z" fill="rgba(20,41,63,0.92)" stroke="rgba(20,41,63,0.92)" strokeWidth="7" strokeLinejoin="round" />
+      <path d="M32 8.6 L52.15 20.3 L52.15 43.7 L32 55.4 L11.85 43.7 L11.85 20.3 Z" stroke={ACCENT} strokeOpacity="0.45" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M17.5 44.5 C 25 44.5, 25.5 32, 32 32 C 38.5 32, 39 19.5, 46.5 19.5" stroke={ACCENT} strokeOpacity="0.72" strokeWidth="4.6" strokeLinecap="round" />
+      <circle cx="17.5" cy="44.5" r="3.1" fill="#8AA2F0" />
+      <rect x="28.2" y="28.2" width="7.6" height="7.6" rx="1.8" transform="rotate(45 32 32)" fill={ACCENT} />
+      <rect x="30.4" y="30.4" width="3.2" height="3.2" rx="0.8" transform="rotate(45 32 32)" fill="#04121A" />
+      <circle cx="46.5" cy="19.5" r="3.1" fill="#2ED3A6" />
     </svg>
   )
 }

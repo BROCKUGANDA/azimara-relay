@@ -1,21 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- AZIMARA RELAY mark v2 "Relay Conduit": a hexagonal vault gate threaded
+       by the settlement rail — an S-curve path flows through a central
+       approval-gate diamond from origin node (indigo) to settlement node
+       (mint). Silhouette and path are unique to the brand. -->
   <defs>
-    <linearGradient id="plateL" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1C1526"/>
-      <stop offset="1" stop-color="#0C0A12"/>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#15293F"/>
+      <stop offset="1" stop-color="#0A1220"/>
     </linearGradient>
-    <linearGradient id="beamL" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#E7B458" stop-opacity="0.3"/>
-      <stop offset="0.5" stop-color="#E7B458"/>
-      <stop offset="1" stop-color="#E7B458" stop-opacity="0.3"/>
+    <linearGradient id="rail" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#39C6D8" stop-opacity="0.45"/>
+      <stop offset="0.5" stop-color="#39C6D8"/>
+      <stop offset="1" stop-color="#39C6D8" stop-opacity="0.45"/>
     </linearGradient>
   </defs>
-  <rect x="1" y="1" width="62" height="62" rx="17" fill="url(#plateL)"/>
-  <rect x="1.75" y="1.75" width="60.5" height="60.5" rx="16.25" fill="none" stroke="#E7B458" stroke-opacity="0.6" stroke-width="1.5"/>
-  <path d="M15 49 L32 13.5 L49 49" fill="none" stroke="#E7B458" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M22 35 H42" stroke="url(#beamL)" stroke-width="3.2" stroke-linecap="round"/>
-  <circle cx="22" cy="35" r="2.7" fill="#E7B458" fill-opacity="0.5"/>
-  <circle cx="42" cy="35" r="2.7" fill="#E7B458" fill-opacity="0.5"/>
-  <rect x="28.7" y="31.7" width="6.6" height="6.6" rx="1.5" transform="rotate(45 32 35)" fill="#F4F1EA"/>
-  <rect x="29.3" y="4.3" width="5.4" height="5.4" rx="1.3" transform="rotate(45 32 7)" fill="#F17FA8"/>
+  <path d="M32 7 L53.65 19.5 L53.65 44.5 L32 57 L10.35 44.5 L10.35 19.5 Z"
+        fill="url(#plate)" stroke="url(#plate)" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M32 8.6 L52.15 20.3 L52.15 43.7 L32 55.4 L11.85 43.7 L11.85 20.3 Z"
+        fill="none" stroke="#39C6D8" stroke-opacity="0.45" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M17.5 44.5 C 25 44.5, 25.5 32, 32 32 C 38.5 32, 39 19.5, 46.5 19.5"
+        fill="none" stroke="url(#rail)" stroke-width="4.6" stroke-linecap="round"/>
+  <circle cx="17.5" cy="44.5" r="3.1" fill="#8AA2F0"/>
+  <rect x="28.2" y="28.2" width="7.6" height="7.6" rx="1.8" transform="rotate(45 32 32)" fill="#39C6D8"/>
+  <rect x="30.4" y="30.4" width="3.2" height="3.2" rx="0.8" transform="rotate(45 32 32)" fill="#04121A"/>
+  <circle cx="46.5" cy="19.5" r="3.1" fill="#2ED3A6"/>
 </svg>

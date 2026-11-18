@@ -291,7 +291,7 @@ export function CountUp({
 // ─── PulseDot ───────────────────────────────────────────────────────────────
 // Live status indicator: a steady core with an expanding ring pulse.
 
-export function PulseDot({ color = '#E7B458', size = 8, className }: { color?: string; size?: number; className?: string }) {
+export function PulseDot({ color = '#39C6D8', size = 8, className }: { color?: string; size?: number; className?: string }) {
   return (
     <span className={cn('relative inline-flex', className)} style={{ width: size, height: size }} aria-hidden>
       <span className="absolute inset-0 rounded-full animate-ping" style={{ backgroundColor: color, opacity: 0.4, animationDuration: '1.8s' }} />
@@ -315,7 +315,7 @@ export function ProgressFlow({
   tone?: 'teal' | 'blue' | 'purple' | 'amber' | 'green' | 'red'
   className?: string
 }) {
-  const toneHex = { teal: '#E7B458', blue: '#F17FA8', purple: '#B79BF0', amber: '#F2BB62', green: '#43D48E', red: '#F27683' }[tone]
+  const toneHex = { teal: '#39C6D8', blue: '#F17FA8', purple: '#8AA2F0', amber: '#F2BB62', green: '#2ED3A6', red: '#F27683' }[tone]
   return (
     <div className={cn('flex items-center', className)} role="img" aria-label={`Progress: ${steps.slice(0, current + 1).join(', ') || steps[0]}`}>
       {steps.map((label, i) => {
@@ -330,9 +330,9 @@ export function ProgressFlow({
                   active && 'relay-flow-active',
                 )}
                 style={{
-                  borderColor: done || active ? toneHex : '#2E2540',
+                  borderColor: done || active ? toneHex : '#1D2E42',
                   backgroundColor: done ? `${toneHex}22` : active ? `${toneHex}14` : 'transparent',
-                  color: done || active ? toneHex : '#7C7490',
+                  color: done || active ? toneHex : '#64798F',
                 }}
               >
                 {done ? '✓' : i + 1}
@@ -342,7 +342,7 @@ export function ProgressFlow({
             {i < steps.length - 1 ? (
               <span
                 className="mx-1.5 mb-3.5 h-px w-6 sm:w-10 transition-colors duration-500"
-                style={{ backgroundColor: done ? toneHex : '#2E2540' }}
+                style={{ backgroundColor: done ? toneHex : '#1D2E42' }}
               />
             ) : null}
           </div>

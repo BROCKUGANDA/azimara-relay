@@ -30,7 +30,7 @@
 
 ## Disclosed risks (not silently accepted)
 
-1. **Provider smart-contract risk** — routing depends on MultiHopper programs. Published provider security documentation has advised caution until audit reports are available. Mainnet support is gated on current audits, program deployment information, vulnerability disclosure and recovery documentation. RELAY never claims a third-party protocol is audited when it is not.
+1. **Provider smart-contract risk** — routing depends on execution-rail provider programs. Published provider security documentation has advised caution until audit reports are available. Mainnet support is gated on current audits, program deployment information, vulnerability disclosure and recovery documentation. RELAY never claims a third-party protocol is audited when it is not.
 2. **Per-instance rate limiting** — the in-process limiter must be replaced with a shared store (Redis) for horizontal scale-out.
 3. **Single-instance queue** — the durable DB queue leases within one process; multi-instance deployment needs the Redis-backed swap documented in the operations runbook.
 4. **Routing transparency** — routing does not guarantee anonymity; onchain traceability remains. The interface makes no sanctions-clearance or compliance claims; jurisdictional controls are the customer's responsibility.

@@ -37,7 +37,7 @@ export function OverviewView() {
         title={`Welcome back, ${session.user?.name?.split(' ')[0] ?? 'operator'}`}
         description="Your payment operations at a glance. Everything below is real application state — nothing simulated."
         actions={
-          <MagneticButton onClick={() => navigate('/app/payments/new')} hapticEvent="select" className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#E7B458] px-4 text-sm font-medium text-[#221202] shadow-[0_0_18px_rgba(231,180,88,0.25)] transition-colors hover:bg-[#E7B458]/90">
+          <MagneticButton onClick={() => navigate('/app/payments/new')} hapticEvent="select" className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#39C6D8] px-4 text-sm font-medium text-[#04121A] shadow-[0_0_18px_rgba(57,198,216,0.25)] transition-colors hover:bg-[#39C6D8]/90">
             <Send className="h-4 w-4" /> New payment
           </MagneticButton>
         }
@@ -57,7 +57,7 @@ export function OverviewView() {
 
       {treasury.isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-xl bg-[#1d1826]" />)}
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-xl bg-[#142436]" />)}
         </div>
       ) : treasury.isError ? (
         <ErrorState message={treasury.error instanceof Error ? treasury.error.message : 'Something went wrong'} retry={() => treasury.refetch()} />
@@ -74,15 +74,15 @@ export function OverviewView() {
         {/* Onboarding checklist */}
         <SectionCard title="Workspace setup" description="Guided checklist — real completion state, not decorative progress." className="lg:col-span-1">
           {onboarding.isLoading ? (
-            <Skeleton className="h-40 bg-[#1d1826]" />
+            <Skeleton className="h-40 bg-[#142436]" />
           ) : (
             <div className="space-y-2.5">
               {(onboarding.data?.steps ?? []).map((s) => (
-                <button key={s.id} onClick={() => navigate(s.route.replace('#', ''))} className="flex w-full items-start gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-[#1d1826]">
-                  {s.done ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#43D48E]" /> : <Circle className="mt-0.5 h-4 w-4 shrink-0 text-dim" />}
+                <button key={s.id} onClick={() => navigate(s.route.replace('#', ''))} className="flex w-full items-start gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-[#142436]">
+                  {s.done ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#2ED3A6]" /> : <Circle className="mt-0.5 h-4 w-4 shrink-0 text-dim" />}
                   <span className="flex-1">
                     <span className={`block text-xs ${s.done ? 'text-dim line-through' : 'text-secondary'}`}>{s.label}</span>
-                    {!s.done ? <span className="text-[10px] text-[#E7B458]">Go →</span> : null}
+                    {!s.done ? <span className="text-[10px] text-[#39C6D8]">Go →</span> : null}
                   </span>
                 </button>
               ))}
@@ -98,15 +98,15 @@ export function OverviewView() {
               icon={<Send className="h-7 w-7" />}
               title="No payments yet"
               description="Create your first payment or batch — the full lifecycle from validation to settlement is live."
-              action={<Button size="sm" onClick={() => navigate('/app/payments/new')} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">Create payment</Button>}
+              action={<Button size="sm" onClick={() => navigate('/app/payments/new')} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Create payment</Button>}
             />
           ) : (
             <div className="space-y-1">
               {(treasury.data?.recentPayments ?? []).map((p) => (
-                <button key={p.id} onClick={() => navigate(`/app/payments/${p.id}`)} className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-[#1d1826]">
+                <button key={p.id} onClick={() => navigate(`/app/payments/${p.id}`)} className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-[#142436]">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="min-w-0 truncate font-mono text-[#E7B458]">{p.reference}</span>
+                      <span className="min-w-0 truncate font-mono text-[#39C6D8]">{p.reference}</span>
                       <span className="text-dim">·</span>
                       <span className="truncate text-secondary">{p.recipientName ?? p.walletLabel ?? 'Unknown'}</span>
                     </div>
@@ -132,11 +132,11 @@ export function OverviewView() {
           <Reveal key={a.route} variant="scale" delay={i * 60} as="div">
             <button
               onClick={() => { haptic('tap'); navigate(a.route) }}
-              className="group flex w-full items-center gap-3 rounded-xl border border-[#2E2540] bg-[#15111D] p-4 text-left transition-all duration-150 hover:border-[#E7B458]/25 hover:bg-[#1d1826]"
+              className="group flex w-full items-center gap-3 rounded-xl border border-[#1D2E42] bg-[#101C2C] p-4 text-left transition-all duration-150 hover:border-[#39C6D8]/25 hover:bg-[#142436]"
             >
-              <span className="text-[#E7B458] transition-transform duration-300 group-hover:scale-110">{a.icon}</span>
+              <span className="text-[#39C6D8] transition-transform duration-300 group-hover:scale-110">{a.icon}</span>
               <span className="flex-1 text-sm">{a.label}</span>
-              <ArrowRight className="h-4 w-4 text-dim transition-transform duration-300 group-hover:translate-x-1 group-hover:text-[#E7B458]" />
+              <ArrowRight className="h-4 w-4 text-dim transition-transform duration-300 group-hover:translate-x-1 group-hover:text-[#39C6D8]" />
             </button>
           </Reveal>
         ))}
@@ -144,22 +144,22 @@ export function OverviewView() {
 
       {/* Approvals shortcut */}
       {m?.pendingApprovals ? (
-        <button onClick={() => navigate('/app/approvals')} className="mt-6 block w-full rounded-xl border border-[#B79BF0]/30 bg-[#B79BF0]/5 px-4 py-3 text-left hover:bg-[#B79BF0]/10">
+        <button onClick={() => navigate('/app/approvals')} className="mt-6 block w-full rounded-xl border border-[#8AA2F0]/30 bg-[#8AA2F0]/5 px-4 py-3 text-left hover:bg-[#8AA2F0]/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CheckCheck className="h-5 w-5 text-[#B79BF0]" />
+              <CheckCheck className="h-5 w-5 text-[#8AA2F0]" />
               <div>
-                <div className="text-sm font-medium text-[#B79BF0]">{m.pendingApprovals} payment{m.pendingApprovals > 1 ? 's' : ''} awaiting approval</div>
-                <div className="text-xs text-[#B79BF0]/70">Open the approval center to review with full policy evidence.</div>
+                <div className="text-sm font-medium text-[#8AA2F0]">{m.pendingApprovals} payment{m.pendingApprovals > 1 ? 's' : ''} awaiting approval</div>
+                <div className="text-xs text-[#8AA2F0]/70">Open the approval center to review with full policy evidence.</div>
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 text-[#B79BF0]" />
+            <ArrowRight className="h-4 w-4 text-[#8AA2F0]" />
           </div>
         </button>
       ) : null}
 
       <div className="mt-8 flex items-center gap-2 text-[11px] text-dim">
-        <ShieldCheck className="h-3.5 w-3.5 text-[#43D48E]" />
+        <ShieldCheck className="h-3.5 w-3.5 text-[#2ED3A6]" />
         Non-custodial: no seed phrases or private keys are stored; no omnibus wallet holds customer funds; AI never signs or approves.
       </div>
     </div>

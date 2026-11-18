@@ -5,13 +5,13 @@
 // styles only — this page renders before/independent of the app stylesheet.
 
 const COLORS = {
-  bg: '#0C0A12',
-  surface: '#15111D',
-  border: '#2E2540',
-  text: '#F4F1EA',
-  dim: '#ABA3BC',
-  faint: '#7C7490',
-  teal: '#E7B458',
+  bg: '#0A1220',
+  surface: '#101C2C',
+  border: '#1D2E42',
+  text: '#E8F1F7',
+  dim: '#8FA5BC',
+  faint: '#64798F',
+  teal: '#39C6D8',
   red: '#F27683',
 }
 
@@ -40,7 +40,7 @@ export default function GlobalErrorBoundary({
           {error?.digest ? <p style={{ fontSize: 11, color: COLORS.faint, margin: '0 0 16px', fontFamily: 'monospace' }}>Reference: {error.digest}</p> : null}
           <button
             onClick={reset}
-            style={{ background: COLORS.teal, color: '#221202', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+            style={{ background: COLORS.teal, color: '#04121A', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
           >
             Reload
           </button>

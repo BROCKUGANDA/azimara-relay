@@ -21,7 +21,7 @@ export default function ErrorBoundary({
   }, [error])
 
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-xl border border-[#2E2540] bg-[#15111D] p-8 text-center mt-10">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-xl border border-[#1D2E42] bg-[#101C2C] p-8 text-center mt-10">
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F27683]/10">
         <AlertTriangle className="h-6 w-6 text-[#F27683]" />
       </span>
@@ -33,10 +33,10 @@ export default function ErrorBoundary({
       </div>
       {error.digest ? <p className="font-mono text-[10px] text-dim">Reference: {error.digest}</p> : null}
       <div className="flex gap-2">
-        <Button size="sm" onClick={reset} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
+        <Button size="sm" onClick={reset} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
           Try again
         </Button>
-        <Button size="sm" variant="outline" className="border-[#2E2540]" onClick={() => (window.location.hash = '#/app')}>
+        <Button size="sm" variant="outline" className="border-[#1D2E42]" onClick={() => (window.location.hash = '#/app')}>
           Back to overview
         </Button>
       </div>

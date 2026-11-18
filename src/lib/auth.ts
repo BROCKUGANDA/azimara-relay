@@ -37,6 +37,43 @@ export async function consumeEmailToken(rawToken: string, purpose: 'EMAIL_VERIFY
   return db.user.findUnique({ where: { id: rec.userId } })
 }
 
+// ─── Password recovery ──────────────────────────────────────────────────────
+// The reset request endpoint is deliberately non-enumerating: unknown emails
+// get the same response shape as known ones. When SMTP is unconfigured, the
+// token is surfaced through the same genuine "delivery unavailable" channel
+// used by registration (development mode only — never faked as an email).
+
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000
+
+export async function requestPasswordReset(email: string): Promise<{ userExists: boolean; resetToken: string | null }> {
+  const normalized = email.trim().toLowerCase()
+  const user = await db.user.findUnique({ where: { email: normalized } })
+  if (!user) return { userExists: false, resetToken: null }
+  const raw = randomToken()
+  await db.emailToken.create({
+    data: { userId: user.id, tokenHash: sha256(raw), purpose: 'PASSWORD_RESET', expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS) },
+  })
+  return { userExists: true, resetToken: raw }
+}
+
+export async function resetPassword(rawToken: string, newPassword: string) {
+  if (newPassword.length < 10) throw Object.assign(new Error('Password must be at least 10 characters'), { code: 'WEAK_PASSWORD', status: 400 })
+  const rec = await db.emailToken.findUnique({ where: { tokenHash: sha256(rawToken) } })
+  if (!rec || rec.purpose !== 'PASSWORD_RESET' || rec.usedAt || rec.expiresAt < new Date()) {
+    throw Object.assign(new Error('This reset link is invalid or has expired. Request a new one.'), { code: 'INVALID_RESET_TOKEN', status: 400 })
+  }
+  const user = await db.user.findUnique({ where: { id: rec.userId } })
+  if (!user) throw Object.assign(new Error('Account not found'), { code: 'NOT_FOUND', status: 404 })
+  await db.$transaction([
+    db.emailToken.update({ where: { id: rec.id }, data: { usedAt: new Date() } }),
+    db.user.update({ where: { id: user.id }, data: { passwordHash: hashPassword(newPassword) } }),
+    // Force re-authentication everywhere: any session created before the
+    // reset (e.g. an attacker with a stolen cookie) is invalidated.
+    db.session.deleteMany({ where: { userId: user.id } }),
+  ])
+  return user
+}
+
 export async function login(email: string, password: string, meta: { ip?: string; userAgent?: string }) {
   const user = await db.user.findUnique({ where: { email: email.trim().toLowerCase() } })
   if (!user || !verifyPassword(password, user.passwordHash)) {

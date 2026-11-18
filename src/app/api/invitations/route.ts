@@ -5,6 +5,8 @@ import { audit } from '@/lib/audit'
 import { isRole } from '@/lib/rbac'
 import { randomToken, sha256 } from '@/lib/crypto'
 import { entitlementsFor } from '@/lib/entitlements'
+import { sendEmail, invitationEmail } from '@/lib/mailer'
+import { SITE_URL } from '@/lib/site'
 
 export const GET = route(async ({ org }) => {
   const invites = await db.invitation.findMany({ where: { orgId: org.org.id }, orderBy: { createdAt: 'desc' } })
@@ -43,12 +45,17 @@ export const POST = route(async ({ org, auth, request }) => {
     },
   })
   await audit({ orgId: org.org.id, actorId: auth.user.id, action: 'INVITATION_CREATED', resourceType: 'Invitation', resourceId: body.email, data: { role: body.role } })
+  const inviteUrl = `${SITE_URL}/#/invite/${rawToken}`
+  const mail = await sendEmail(invitationEmail(body.email.toLowerCase(), org.org.name, body.role, inviteUrl))
   return ok({
     invited: true,
     email: body.email,
-    emailDeliveryConfigured: false,
-    invitationToken: rawToken,
-    inviteUrl: `/?verify-invite=${rawToken}`,
+    emailDeliveryConfigured: mail.delivered,
+    // Without SMTP the raw link is returned so an admin can hand-deliver it —
+    // an honest unconfigured channel, not a fake "email sent".
+    invitationToken: mail.delivered ? undefined : rawToken,
+    inviteUrl,
+    deliveryNote: mail.delivered ? 'Invitation emailed.' : 'Email delivery is not configured — share the link with the invitee directly.',
   })
 }, { permission: 'team:manage' })
 

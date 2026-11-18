@@ -95,23 +95,23 @@ export function IntelligenceView() {
   function ProposalCard({ data }: { data: Message['data'] }) {
     const checks = data.checks ?? {}
     return (
-      <div className="rounded-lg border border-[#B79BF0]/30 bg-[#B79BF0]/5 p-3">
-        <div className="text-xs font-semibold text-[#B79BF0]">Proposed payment batch: {data.title}</div>
+      <div className="rounded-lg border border-[#8AA2F0]/30 bg-[#8AA2F0]/5 p-3">
+        <div className="text-xs font-semibold text-[#8AA2F0]">Proposed payment batch: {data.title}</div>
         <div className="mt-2 space-y-1.5">
           {(data.items ?? []).map((it, i) => (
-            <div key={i} className="flex items-center justify-between gap-2 rounded border border-[#2E2540] bg-[#100D16] px-2 py-1.5 text-xs">
+            <div key={i} className="flex items-center justify-between gap-2 rounded border border-[#1D2E42] bg-[#0D1622] px-2 py-1.5 text-xs">
               <span className="text-secondary">{it.recipientName}</span>
-              <span className="font-mono text-[#E7B458]">{it.amount}</span>
+              <span className="font-mono text-[#39C6D8]">{it.amount}</span>
             </div>
           ))}
         </div>
         <div className="mt-2 space-y-1 text-[11px] text-dim">
-          <div><CheckCircle2 className="mr-1 inline h-3 w-3 text-[#43D48E]" /> Deterministic validation: {String(checks.recipientsMatched ?? 0)} recipient(s) matched, {((checks.recipientsMissing as string[] | undefined) ?? []).length ? `${(checks.recipientsMissing as string[]).length} missing` : 'none missing'}</div>
-          <div><ShieldCheck className="mr-1 inline h-3 w-3 text-[#B79BF0]" /> Policy: ~{String(checks.policyApproversRequired ?? 1)} approver(s) required by the active policy</div>
+          <div><CheckCircle2 className="mr-1 inline h-3 w-3 text-[#2ED3A6]" /> Deterministic validation: {String(checks.recipientsMatched ?? 0)} recipient(s) matched, {((checks.recipientsMissing as string[] | undefined) ?? []).length ? `${(checks.recipientsMissing as string[]).length} missing` : 'none missing'}</div>
+          <div><ShieldCheck className="mr-1 inline h-3 w-3 text-[#8AA2F0]" /> Policy: ~{String(checks.policyApproversRequired ?? 1)} approver(s) required by the active policy</div>
           <div><Lightbulb className="mr-1 inline h-3 w-3 text-[#F2BB62]" /> Estimated total: {String(checks.estimatedTotal ?? '0')} base units ({String(checks.totalCurrency ?? '')}) — recalculated by code, never by the model</div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => decideProposal(data.proposalId!, 'ACCEPT')} disabled={!data.proposalId} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
+          <Button size="sm" onClick={() => decideProposal(data.proposalId!, 'ACCEPT')} disabled={!data.proposalId} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
             <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Accept → create payments
           </Button>
           <Button size="sm" variant="outline" onClick={() => decideProposal(data.proposalId!, 'REJECT')} disabled={!data.proposalId} className="border-[#F27683]/40 text-[#F27683]">
@@ -139,7 +139,7 @@ export function IntelligenceView() {
               {sessions.isLoading ? (
                 <PanelSkeleton count={3} />
               ) : (sessions.data?.sessions ?? []).map((s) => (
-                <button key={s.id} onClick={() => loadSession(s.id)} className={`block w-full truncate rounded-lg px-2.5 py-2 text-left text-xs hover:bg-[#1d1826] ${sessionId === s.id ? 'bg-[#1d1826] text-[#E7B458]' : 'text-secondary'}`}>
+                <button key={s.id} onClick={() => loadSession(s.id)} className={`block w-full truncate rounded-lg px-2.5 py-2 text-left text-xs hover:bg-[#142436] ${sessionId === s.id ? 'bg-[#142436] text-[#39C6D8]' : 'text-secondary'}`}>
                   {s.title}
                 </button>
               ))}
@@ -151,10 +151,10 @@ export function IntelligenceView() {
               {sessions.isLoading ? (
                 <PanelSkeleton count={2} />
               ) : (sessions.data?.proposals ?? []).slice(0, 6).map((p) => (
-                <div key={p.id} className="rounded-lg border border-[#2E2540] bg-[#100D16] p-2.5">
+                <div key={p.id} className="rounded-lg border border-[#1D2E42] bg-[#0D1622] p-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate text-xs">{p.title}</span>
-                    <Badge variant="outline" className={`border text-[9px] ${p.status === 'PROPOSED' ? 'border-[#B79BF0]/40 text-[#B79BF0]' : p.status === 'ACCEPTED' || p.status === 'CONVERTED' ? 'border-[#43D48E]/40 text-[#43D48E]' : 'border-[#2E2540] text-dim'}`}>{p.status}</Badge>
+                    <Badge variant="outline" className={`border text-[9px] ${p.status === 'PROPOSED' ? 'border-[#8AA2F0]/40 text-[#8AA2F0]' : p.status === 'ACCEPTED' || p.status === 'CONVERTED' ? 'border-[#2ED3A6]/40 text-[#2ED3A6]' : 'border-[#1D2E42] text-dim'}`}>{p.status}</Badge>
                   </div>
                 </div>
               ))}
@@ -165,20 +165,20 @@ export function IntelligenceView() {
 
         {/* Chat */}
         <div className="lg:col-span-3">
-          <div className="flex h-[min(560px,calc(100dvh-14rem))] min-h-[380px] flex-col rounded-xl border border-[#2E2540] bg-[#15111D]">
-            <div className="flex items-center gap-2 border-b border-[#231C30] px-4 py-3">
-              <BrainCircuit className="h-4 w-4 text-[#B79BF0]" />
+          <div className="flex h-[min(560px,calc(100dvh-14rem))] min-h-[380px] flex-col rounded-xl border border-[#1D2E42] bg-[#101C2C]">
+            <div className="flex items-center gap-2 border-b border-[#16273C] px-4 py-3">
+              <BrainCircuit className="h-4 w-4 text-[#8AA2F0]" />
               <span className="text-sm font-medium">Relay Intelligence</span>
-              <span className="ml-auto rounded border border-[#2E2540] px-1.5 py-0.5 text-[10px] text-dim">no signing authority · no custody</span>
+              <span className="ml-auto rounded border border-[#1D2E42] px-1.5 py-0.5 text-[10px] text-dim">no signing authority · no custody</span>
             </div>
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
               {messages.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center gap-4">
-                  <BrainCircuit className="h-10 w-10 text-[#B79BF0]/40" />
+                  <BrainCircuit className="h-10 w-10 text-[#8AA2F0]/40" />
                   <div className="text-sm text-dim">Ask about your payments, propose a batch, or extract invoice details.</div>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {SUGGESTIONS.map((s) => (
-                      <button key={s} onClick={() => send(s)} className="rounded-lg border border-[#2E2540] bg-[#100D16] px-3 py-2 text-left text-xs text-secondary hover:border-[#B79BF0]/40 hover:text-foreground">
+                      <button key={s} onClick={() => send(s)} className="rounded-lg border border-[#1D2E42] bg-[#0D1622] px-3 py-2 text-left text-xs text-secondary hover:border-[#8AA2F0]/40 hover:text-foreground">
                         {s}
                       </button>
                     ))}
@@ -187,21 +187,21 @@ export function IntelligenceView() {
               ) : (
                 messages.map((m) => (
                   <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${m.role === 'user' ? 'bg-[#E7B458]/15 text-foreground' : 'border border-[#2E2540] bg-[#100D16] text-secondary'}`}>
+                    <div className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${m.role === 'user' ? 'bg-[#39C6D8]/15 text-foreground' : 'border border-[#1D2E42] bg-[#0D1622] text-secondary'}`}>
                       <div className="whitespace-pre-wrap">{m.content}</div>
                       {m.data?.kind === 'PROPOSAL' ? <div className="mt-2"><ProposalCard data={m.data} /></div> : null}
                       {m.data?.kind === 'INVOICE_EXTRACTION' ? (
-                        <div className="mt-2 rounded-lg border border-[#2E2540] bg-[#100D16] p-2 text-xs text-dim">
-                          <FileText className="mr-1 inline h-3 w-3 text-[#E7B458]" /> Extracted fields are suggestions only; amounts are recalculated on payment creation.
+                        <div className="mt-2 rounded-lg border border-[#1D2E42] bg-[#0D1622] p-2 text-xs text-dim">
+                          <FileText className="mr-1 inline h-3 w-3 text-[#39C6D8]" /> Extracted fields are suggestions only; amounts are recalculated on payment creation.
                         </div>
                       ) : null}
                     </div>
                   </div>
                 ))
               )}
-              {busy ? <div className="flex items-center gap-2 text-xs text-dim"><span className="h-2 w-2 animate-pulse rounded-full bg-[#B79BF0]" /> Relay Intelligence is thinking…</div> : null}
+              {busy ? <div className="flex items-center gap-2 text-xs text-dim"><span className="h-2 w-2 animate-pulse rounded-full bg-[#8AA2F0]" /> Relay Intelligence is thinking…</div> : null}
             </div>
-            <div className="border-t border-[#231C30] p-3">
+            <div className="border-t border-[#16273C] p-3">
               <div className="flex gap-2">
                 <Textarea
                   value={input}
@@ -215,9 +215,9 @@ export function IntelligenceView() {
                   }}
                   rows={2}
                   placeholder="e.g. Prepare the approved contributor payments for this month and flag duplicate recipients…"
-                  className="flex-1 resize-none border-[#2E2540] bg-[#100D16]"
+                  className="flex-1 resize-none border-[#1D2E42] bg-[#0D1622]"
                 />
-                <Button onClick={() => send()} disabled={busy || !input.trim()} className="bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
+                <Button onClick={() => send()} disabled={busy || !input.trim()} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

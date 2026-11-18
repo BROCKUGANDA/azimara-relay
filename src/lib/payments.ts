@@ -342,8 +342,8 @@ export async function requestQuote(paymentId: string, orgId: string): Promise<{ 
       await transition(fresh, 'APPROVED', { reason: 'PROVIDER_SETUP_REQUIRED — quote not obtained; payment held at APPROVED' })
       await notify(orgId, {
         type: 'INTEGRATION_SETUP_REQUIRED',
-        title: 'MultiHopper credentials required',
-        body: `Payment ${payment.reference} is approved but cannot be quoted until MultiHopper ${integration?.environment ?? 'DEVNET'} credentials are configured.`,
+        title: 'Execution rail credentials required',
+        body: `Payment ${payment.reference} is approved but cannot be quoted until execution-rail ${integration?.environment ?? 'DEVNET'} credentials are configured.`,
         link: '#/app/integrations',
       })
       return { ok: false, setupRequired: true, detail: err.detail }

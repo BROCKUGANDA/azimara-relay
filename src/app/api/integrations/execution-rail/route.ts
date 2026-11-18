@@ -3,11 +3,13 @@ import { ok, readJson, route, ApiError } from '@/lib/api'
 import { db } from '@/lib/db'
 import { encryptSecret } from '@/lib/crypto'
 import { audit } from '@/lib/audit'
-import { validateApiKeyForEnvironment, MULTIHOOPER_BASE_URLS } from '@/lib/multihopper'
+import { validateApiKeyForEnvironment } from '@/lib/multihopper'
 import { probeProvider } from '@/lib/worker-processor'
 
 export const GET = route(async ({ org }) => {
   const integration = await db.providerIntegration.findUnique({ where: { orgId_provider: { orgId: org.org.id, provider: 'MULTIHOPPER' } } })
+  // Provider hostnames stay server-side; the UI references environment names
+  // and this webhook path only (public-surface de-branding).
   return ok({
     environment: integration?.environment ?? 'DEVNET',
     configured: !!integration?.apiKeyCipher,
@@ -16,8 +18,7 @@ export const GET = route(async ({ org }) => {
     status: integration?.status ?? 'NOT_CONFIGURED',
     statusDetail: integration?.statusDetail ?? null,
     lastCheckAt: integration?.lastCheckAt ?? null,
-    baseUrl: MULTIHOOPER_BASE_URLS[(integration?.environment ?? 'DEVNET') as 'DEVNET' | 'PRODUCTION'],
-    webhookUrl: '/api/webhooks/multihopper',
+    webhookUrl: '/api/webhooks/execution-rail',
   })
 })
 
@@ -31,7 +32,7 @@ export const POST = route(async ({ org, auth, request }) => {
   const body = await readJson(request, configSchema)
   // Environments are isolated: a test key can never drive production.
   const check = validateApiKeyForEnvironment(body.apiKey, body.environment)
-  if (!check.ok) throw new ApiError('INVALID_API_KEY', check.reason ?? 'Invalid MultiHopper key', 400)
+  if (!check.ok) throw new ApiError('INVALID_API_KEY', check.reason ?? 'Invalid execution-rail key', 400)
   const last4 = body.apiKey.slice(-4)
   await db.providerIntegration.upsert({
     where: { orgId_provider: { orgId: org.org.id, provider: 'MULTIHOPPER' } },

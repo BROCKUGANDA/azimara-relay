@@ -13,25 +13,25 @@ import { haptic } from '@/lib/client/motion'
 import { LogoGlyph } from './glyphs'
 import { ShieldCheck, CheckCircle2, AlertTriangle, Building2 } from 'lucide-react'
 
-type Mode = 'login' | 'register' | 'verify' | 'mfa' | 'create-org' | 'invite'
+type Mode = 'login' | 'register' | 'verify' | 'mfa' | 'create-org' | 'invite' | 'forgot' | 'reset'
 
 function AuthFrame({ children, title, sub }: { children: React.ReactNode; title: string; sub: string }) {
   const { navigate } = useRouter()
   return (
-    <div className="relay-radial flex min-h-screen items-center justify-center bg-[#0C0A12] px-4 py-10">
+    <div className="relay-radial flex min-h-screen items-center justify-center bg-[#0A1220] px-4 py-10">
       <div className="relay-grid-bg absolute inset-0 pointer-events-none" />
       <div className="relative w-full max-w-md">
         <div className="mb-6 text-center">
           <LogoGlyph size={40} className="mx-auto" />
-          <div className="mt-3 text-sm font-semibold tracking-tight">AZIMARA <span className="text-[#E7B458]">RELAY</span></div>
+          <div className="mt-3 text-sm font-semibold tracking-tight">AZIMARA <span className="text-[#39C6D8]">RELAY</span></div>
         </div>
-        <Card className="border-[#2E2540] bg-[#15111D] p-6">
+        <Card className="border-[#1D2E42] bg-[#101C2C] p-6">
           <h1 className="text-lg font-semibold">{title}</h1>
           <p className="mt-1 text-xs text-dim">{sub}</p>
           <div className="mt-5">{children}</div>
         </Card>
         <div className="mt-4 text-center text-xs text-dim">
-          <button className="hover:text-[#E7B458]" onClick={() => navigate('/')}>← Back to site</button>
+          <button className="hover:text-[#39C6D8]" onClick={() => navigate('/')}>← Back to site</button>
         </div>
       </div>
     </div>
@@ -51,6 +51,10 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null)
   const [inviteState, setInviteState] = useState<'pending' | 'ok' | 'error' | 'needs-account'>('pending')
   const [inviteInfo, setInviteInfo] = useState<{ email?: string; orgName?: string }>({})
+  const [forgotState, setForgotState] = useState<'idle' | 'submitted'>('idle')
+  const [forgotDevLink, setForgotDevLink] = useState<string | null>(null)
+  const [resetDone, setResetDone] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState('')
   // Idempotency guard: React StrictMode double-invokes effects, and the loser
   // of two concurrent verify/accept calls (token already consumed → 400) must
   // never overwrite a success state.
@@ -149,6 +153,111 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
     }
   }
 
+  async function submitForgot() {
+    if (!email.trim()) return toast.error('Enter the email on your account')
+    setBusy(true)
+    try {
+      const res = await api<{ emailDelivery?: { resetToken?: string; note?: string } }>('/api/auth/password-reset', { json: { email: email.trim() } })
+      setForgotState('submitted')
+      const t = res.emailDelivery?.resetToken
+      if (t) setForgotDevLink(`#/reset/${t}`)
+      toast.success('If that email has an account, a reset link is on its way')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not submit the request')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function submitReset() {
+    // Read the token from the prop, not a mount-time state snapshot: the
+    // AuthView instance is reused across mode changes, so useState(token)
+    // would capture `undefined` from the forgot-mode mount and silently
+    // swallow the submission.
+    if (!token) return
+    if (password.length < 10) return toast.error('Password must be at least 10 characters')
+    if (password !== confirmPassword) return toast.error('Passwords do not match')
+    setBusy(true)
+    try {
+      await api('/api/auth/password-reset/confirm', { json: { token, password } })
+      setResetDone(true)
+      haptic('success')
+      toast.success('Password updated — sign in with your new password')
+    } catch (err) {
+      haptic('error')
+      toast.error(err instanceof Error ? err.message : 'Reset failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (mode === 'forgot') {
+    return (
+      <AuthFrame title="Reset your password" sub="We will email a single-use reset link to the address on your account.">
+        {forgotState === 'submitted' ? (
+          <div className="flex flex-col items-center gap-3 py-2 text-center">
+            <CheckCircle2 className="h-10 w-10 text-[#2ED3A6]" />
+            <div className="text-sm font-medium">Check your inbox</div>
+            <p className="text-xs text-dim">If an account exists for {email.trim()}, a reset link is on its way. The link expires in one hour.</p>
+            {forgotDevLink ? (
+              <div className="w-full rounded-lg border border-[#F2BB62]/30 bg-[#F2BB62]/5 p-3 text-left text-xs text-[#F2BB62]">
+                <div className="flex items-center gap-1.5 font-medium"><ShieldCheck className="h-3.5 w-3.5" /> Email delivery not configured in this environment</div>
+                <button className="mt-1.5 block w-full truncate rounded bg-[#0B0E1A] px-2 py-1.5 text-left font-mono text-[10px] text-[#39C6D8] hover:underline" onClick={() => { window.location.hash = forgotDevLink.slice(1) }}>
+                  {forgotDevLink}
+                </button>
+              </div>
+            ) : null}
+            <Button variant="outline" onClick={() => navigate('/login')} className="mt-2 border-[#263249]">Back to sign in</Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="email">Work email</Label>
+              <Input id="email" type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 border-[#263249] bg-[#0B0E1A]" />
+            </div>
+            <Button onClick={submitForgot} disabled={busy} className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
+              {busy ? 'Sending…' : 'Send reset link'}
+            </Button>
+            <div className="pt-1 text-center text-xs text-dim">
+              Remembered it? <button className="text-[#39C6D8] hover:underline" onClick={() => navigate('/login')}>Back to sign in</button>
+            </div>
+          </div>
+        )}
+      </AuthFrame>
+    )
+  }
+
+  if (mode === 'reset') {
+    return (
+      <AuthFrame title="Choose a new password" sub="Pick a strong password — at least 10 characters. All other sessions will be signed out.">
+        {resetDone ? (
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <CheckCircle2 className="h-10 w-10 text-[#2ED3A6]" />
+            <div className="text-sm font-medium">Password updated</div>
+            <p className="text-xs text-dim">Your new password is active and previous sessions were revoked.</p>
+            <Button onClick={() => navigate('/login')} className="mt-2 bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Go to sign in</Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="new-password">New password</Label>
+              <Input id="new-password" type="password" placeholder="Minimum 10 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1.5 border-[#263249] bg-[#0B0E1A]" />
+            </div>
+            <div>
+              <Label htmlFor="confirm-password">Confirm password</Label>
+              <Input id="confirm-password" type="password" placeholder="Repeat the new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onKeyDown={(e) => {
+                if (e.key === 'Enter' && !(e.nativeEvent instanceof KeyboardEvent && e.nativeEvent.isComposing)) submitReset()
+              }} className="mt-1.5 border-[#263249] bg-[#0B0E1A]" />
+            </div>
+            <Button onClick={submitReset} disabled={busy} className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
+              {busy ? 'Updating…' : 'Update password'}
+            </Button>
+          </div>
+        )}
+      </AuthFrame>
+    )
+  }
+
   if (mode === 'mfa') {
     return (
       <AuthFrame title="Two-factor authentication" sub="Enter the 6-digit code from your authenticator app.">
@@ -160,7 +269,7 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
               ))}
             </InputOTPGroup>
           </InputOTP>
-          <Button onClick={submitMfa} disabled={busy} className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
+          <Button onClick={submitMfa} disabled={busy} className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
             Verify and continue
           </Button>
         </div>
@@ -174,20 +283,20 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
         <div className="flex flex-col items-center gap-3 py-4 text-center">
           {verifyState === 'ok' ? (
             <>
-              <CheckCircle2 className="h-10 w-10 text-[#43D48E]" />
+              <CheckCircle2 className="h-10 w-10 text-[#2ED3A6]" />
               <div className="text-sm font-medium">Email verified</div>
               <p className="text-xs text-dim">You can now sign in and use all workspace features.</p>
-              <Button onClick={() => navigate('/login')} className="mt-2 bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">Go to sign in</Button>
+              <Button onClick={() => navigate('/login')} className="mt-2 bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Go to sign in</Button>
             </>
           ) : verifyState === 'error' ? (
             <>
               <AlertTriangle className="h-10 w-10 text-[#F27683]" />
               <div className="text-sm font-medium">Verification failed</div>
               <p className="text-xs text-dim">The link is invalid or expired. Register again to receive a fresh verification flow.</p>
-              <Button variant="outline" onClick={() => navigate('/register')} className="mt-2 border-[#2E2540]">Back to registration</Button>
+              <Button variant="outline" onClick={() => navigate('/register')} className="mt-2 border-[#1D2E42]">Back to registration</Button>
             </>
           ) : (
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#2E2540] border-t-[#E7B458]" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1D2E42] border-t-[#39C6D8]" />
           )}
         </div>
       </AuthFrame>
@@ -200,16 +309,16 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
         <div className="flex flex-col items-center gap-3 py-4 text-center">
           {inviteState === 'ok' ? (
             <>
-              <CheckCircle2 className="h-10 w-10 text-[#43D48E]" />
+              <CheckCircle2 className="h-10 w-10 text-[#2ED3A6]" />
               <div className="text-sm font-medium">You&apos;re in</div>
-              <Button onClick={() => navigate('/app')} className="mt-2 bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">Open workspace</Button>
+              <Button onClick={() => navigate('/app')} className="mt-2 bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Open workspace</Button>
             </>
           ) : inviteState === 'needs-account' ? (
             <>
-              <Building2 className="h-8 w-8 text-[#E7B458]" />
+              <Building2 className="h-8 w-8 text-[#39C6D8]" />
               <div className="text-sm font-medium">Create your account to accept</div>
               <p className="text-xs text-dim">The invited email ({inviteInfo.email ?? 'this address'}) has no account yet. Provide a password below to finish joining.</p>
-              <Input type="password" placeholder="Choose a password (min 10 chars)" value={password} onChange={(e) => setPassword(e.target.value)} className="border-[#2E2540] bg-[#100D16]" />
+              <Input type="password" placeholder="Choose a password (min 10 chars)" value={password} onChange={(e) => setPassword(e.target.value)} className="border-[#1D2E42] bg-[#0D1622]" />
               <Button
                 onClick={async () => {
                   if (password.length < 10) return toast.error('Password must be at least 10 characters')
@@ -226,7 +335,7 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
                   }
                 }}
                 disabled={busy}
-                className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"
+                className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"
               >
                 Accept invitation
               </Button>
@@ -238,7 +347,7 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
               <p className="text-xs text-dim">This invitation is revoked, expired, or already used.</p>
             </>
           ) : (
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#2E2540] border-t-[#E7B458]" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1D2E42] border-t-[#39C6D8]" />
           )}
         </div>
       </AuthFrame>
@@ -251,7 +360,7 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
         <div className="space-y-3">
           <div>
             <Label htmlFor="org-name">Organization name</Label>
-            <Input id="org-name" placeholder="Acme Treasury" value={orgName} onChange={(e) => setOrgName(e.target.value)} className="mt-1.5 border-[#2E2540] bg-[#100D16]" />
+            <Input id="org-name" placeholder="Acme Treasury" value={orgName} onChange={(e) => setOrgName(e.target.value)} className="mt-1.5 border-[#1D2E42] bg-[#0D1622]" />
           </div>
           <Button
             onClick={async () => {
@@ -268,11 +377,13 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
               }
             }}
             disabled={busy}
-            className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90"
+            className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"
           >
             Create organization
           </Button>
-          <button className="w-full text-center text-xs text-dim hover:text-[#E7B458]" onClick={() => navigate('/')}>Sign out instead</button>
+          {/* Must actually destroy the session: navigating alone bounces off
+              the authenticated-user guard straight back to this screen. */}
+          <button className="w-full text-center text-xs text-dim hover:text-[#39C6D8]" onClick={async () => { await session.signOut(); navigate('/login') }}>Sign out instead</button>
         </div>
       </AuthFrame>
     )
@@ -285,34 +396,39 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
         {isRegister && (
           <div>
             <Label htmlFor="name">Full name</Label>
-            <Input id="name" placeholder="Ada Obi" value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5 border-[#2E2540] bg-[#100D16]" />
+            <Input id="name" placeholder="Ada Obi" value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5 border-[#1D2E42] bg-[#0D1622]" />
           </div>
         )}
         <div>
           <Label htmlFor="email">Work email</Label>
-          <Input id="email" type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 border-[#2E2540] bg-[#100D16]" />
+          <Input id="email" type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5 border-[#1D2E42] bg-[#0D1622]" />
         </div>
         <div>
           <Label htmlFor="password">Password</Label>
           <Input id="password" type="password" placeholder={isRegister ? 'Minimum 10 characters' : '••••••••••'} value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => {
             // IME-composition Enter (CJK candidates confirm) must not submit.
             if (e.key === 'Enter' && !(e.nativeEvent instanceof KeyboardEvent && e.nativeEvent.isComposing)) { if (isRegister) register(); else login() }
-          }} className="mt-1.5 border-[#2E2540] bg-[#100D16]" />
+          }} className="mt-1.5 border-[#1D2E42] bg-[#0D1622]" />
         </div>
         {isRegister && (
           <div>
             <Label htmlFor="org">Organization (optional — create later)</Label>
-            <Input id="org" placeholder="Acme Treasury" value={orgName} onChange={(e) => setOrgName(e.target.value)} className="mt-1.5 border-[#2E2540] bg-[#100D16]" />
+            <Input id="org" placeholder="Acme Treasury" value={orgName} onChange={(e) => setOrgName(e.target.value)} className="mt-1.5 border-[#1D2E42] bg-[#0D1622]" />
           </div>
         )}
-        <Button onClick={isRegister ? register : login} disabled={busy} className="w-full bg-[#E7B458] font-medium text-[#221202] hover:bg-[#E7B458]/90">
+        <Button onClick={isRegister ? register : login} disabled={busy} className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
           {busy ? 'Working…' : isRegister ? 'Create account' : 'Sign in'}
         </Button>
+        {!isRegister && (
+          <div className="text-center">
+            <button className="text-xs text-dim hover:text-[#39C6D8]" onClick={() => navigate('/forgot')}>Forgot password?</button>
+          </div>
+        )}
         {devVerifyLink ? (
           <div className="rounded-lg border border-[#F2BB62]/30 bg-[#F2BB62]/5 p-3 text-xs text-[#F2BB62]">
             <div className="flex items-center gap-1.5 font-medium"><ShieldCheck className="h-3.5 w-3.5" /> Email delivery not configured in this environment</div>
             <p className="mt-1 text-[#F2BB62]/80">In production this link would be emailed. Development verification:</p>
-            <button className="mt-1.5 block w-full truncate rounded bg-[#100D16] px-2 py-1.5 text-left font-mono text-[10px] text-[#E7B458] hover:underline" onClick={() => {
+            <button className="mt-1.5 block w-full truncate rounded bg-[#0D1622] px-2 py-1.5 text-left font-mono text-[10px] text-[#39C6D8] hover:underline" onClick={() => {
               // SPA-internal navigation only: a reload here races the hashchange
               // router, which auto-verifies the token on the old page before the
               // fresh page repeats the call against a now-consumed token.
@@ -324,9 +440,9 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
         ) : null}
         <div className="pt-1 text-center text-xs text-dim">
           {isRegister ? (
-            <>Already have an account? <button className="text-[#E7B458] hover:underline" onClick={() => navigate('/login')}>Sign in</button></>
+            <>Already have an account? <button className="text-[#39C6D8] hover:underline" onClick={() => navigate('/login')}>Sign in</button></>
           ) : (
-            <>New to AZIMARA RELAY? <button className="text-[#E7B458] hover:underline" onClick={() => navigate('/register')}>Create an account</button></>
+            <>New to AZIMARA RELAY? <button className="text-[#39C6D8] hover:underline" onClick={() => navigate('/register')}>Create an account</button></>
           )}
         </div>
       </div>
