@@ -22,6 +22,31 @@ let zaiInstance: Awaited<ReturnType<typeof createZai>> | null = null
 let zaiFailed = false
 
 const ZAI_MODEL = process.env.ZAI_MODEL ?? 'glm-4.5'
+const GOOGLE_MODEL = process.env.GOOGLE_MODEL ?? 'gemini-flash-lite-latest'
+
+async function geminiChat(messages: ChatMessage[], opts?: { temperature?: number }): Promise<string> {
+  const key = process.env.GOOGLE_API_KEY
+  if (!key) throw new Error('GOOGLE_API_KEY not configured')
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GOOGLE_MODEL)}:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: messages.map((m) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        })),
+        generationConfig: { temperature: opts?.temperature ?? 0.2 },
+      }),
+    },
+  )
+  const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; error?: { message?: string } }
+  if (!res.ok) throw new Error(`Gemini API error ${res.status}: ${data?.error?.message ?? 'unknown'}`)
+  const content = data?.candidates?.[0]?.content?.parts?.map((p) => p?.text ?? '').join('') ?? ''
+  if (!content) throw new Error('Empty Gemini response')
+  return content
+}
 
 async function createZai() {
   // The SDK reads ./.z-ai-config at creation time. Persist it from env so the
@@ -47,6 +72,15 @@ async function createZai() {
 
 async function zaiChat(messages: ChatMessage[], opts?: { temperature?: number }): Promise<string> {
   if (zaiFailed) throw new Error('AI_PROVIDER_UNAVAILABLE')
+  // Google Gemini is the primary provider when configured; Z.AI is the
+  // fallback. This keeps Relay Intelligence available if one quota is spent.
+  if (process.env.GOOGLE_API_KEY) {
+    try {
+      return await geminiChat(messages, opts)
+    } catch {
+      // fall through to Z.AI
+    }
+  }
   try {
     if (!zaiInstance) zaiInstance = await createZai()
     const completion = (await zaiInstance.chat.completions.create({

@@ -35,6 +35,8 @@ const schema = z.object({
   ZAI_API_KEY: z.string().optional(),
   ZAI_BASE_URL: z.string().url().optional(),
   ZAI_MODEL: z.string().default('glm-4.5'),
+  GOOGLE_API_KEY: z.string().optional(),
+  GOOGLE_MODEL: z.string().default('gemini-flash-lite-latest'),
 })
 
 type Env = z.infer<typeof schema> & {
