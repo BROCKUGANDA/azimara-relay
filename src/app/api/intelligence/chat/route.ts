@@ -44,7 +44,7 @@ export const POST = route(async ({ org, auth, request }) => {
       return ok({ sessionId, message: { id: msg.id, role: 'assistant', content, data: { kind: 'INVOICE_EXTRACTION', extraction } } })
     } catch (err) {
       if (String(err).includes('AI_PROVIDER_UNAVAILABLE')) {
-        throw new ApiError('AI_PROVIDER_UNAVAILABLE', 'The AI provider is unreachable from this environment. Try again or continue manually.', 503)
+        throw new ApiError('AI_PROVIDER_UNAVAILABLE', 'The AI provider is unavailable (check connectivity or API quota/balance). Try again or continue manually.', 503)
       }
       throw err
     }
@@ -67,7 +67,7 @@ export const POST = route(async ({ org, auth, request }) => {
     })
   } catch (err) {
     if (String(err).includes('AI_PROVIDER_UNAVAILABLE')) {
-      await db.aiMessage.create({ data: { sessionId, role: 'assistant', content: 'The AI provider is currently unavailable. Deterministic tools (payment history, duplicate checks, exports) remain fully available.', dataJson: JSON.stringify({ kind: 'ERROR' }) } })
+      await db.aiMessage.create({ data: { sessionId, role: 'assistant', content: 'The AI provider is currently unavailable (check API quota/balance). Deterministic tools (payment history, duplicate checks, exports) remain fully available.', dataJson: JSON.stringify({ kind: 'ERROR' }) } })
       throw new ApiError('AI_PROVIDER_UNAVAILABLE', 'The AI provider is unreachable from this environment.', 503)
     }
     if (err instanceof SyntaxError || err instanceof z.ZodError) {
