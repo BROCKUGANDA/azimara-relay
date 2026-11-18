@@ -56,7 +56,7 @@ async function getTransport(): Promise<Transporter> {
 
 export function mailFrom(): { address: string; name: string } {
   const e = env()
-  return { address: e.SMTP_FROM ?? 'no-reply@relay.azimara.ae', name: e.SMTP_FROM_NAME ?? 'AZIMARA RELAY' }
+  return { address: e.SMTP_FROM ?? 'no-reply@aiazimara.com', name: e.SMTP_FROM_NAME ?? 'AZIMARA RELAY' }
 }
 
 export async function sendEmail(input: MailInput): Promise<MailResult> {
