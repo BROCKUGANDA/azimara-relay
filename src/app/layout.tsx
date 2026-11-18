@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_LOCALE, SITE_LOCALITY, SITE_COUNTRY, SITE_COUNTRY_CODE, SITE_REGION_CODE } from "@/lib/site";
 
 const geistSans = Geist({
@@ -157,7 +157,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
       >
         {children}
-        <Toaster />
+        <Toaster theme="dark" position="top-right" richColors closeButton />
         <script
           type="application/ld+json"
           // Structured data is static and first-party — dangerouslySetInnerHTML

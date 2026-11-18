@@ -107,9 +107,13 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
       } else {
         setDevVerifyLink(null)
       }
-      toast.success(res.emailDelivery?.configured ? 'Account created. Check your email to verify.' : 'Account created. Verify your email to continue.')
+      toast.success(res.emailDelivery?.configured ? 'Account created. Check your email to verify, then sign in.' : 'Account created. Verify your email to continue.')
       haptic('success')
-      if (orgName) await session.refresh()
+      if (res.emailDelivery?.configured) {
+        navigate('/login')
+      } else if (orgName) {
+        await session.refresh()
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Registration failed')
     } finally {
