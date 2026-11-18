@@ -1,5 +1,7 @@
 'use client'
 
+import { resolveErrorMessage } from '@/lib/client/error-messages'
+
 // Client API wrapper: session cookie auth + organization context header.
 // Errors surface in the documented shape { error: { code, message, details } }.
 
@@ -72,7 +74,9 @@ export async function api<T = unknown>(path: string, init?: RequestInit & { json
     ) {
       notifySessionExpired()
     }
-    throw new ApiClientError(code, err?.message ?? `Request failed (${res.status})`, res.status, err?.details ?? [])
+    const serverMessage = err?.message ?? `Request failed (${res.status})`
+    const message = resolveErrorMessage(code, serverMessage)
+    throw new ApiClientError(code, message, res.status, err?.details ?? [])
   }
   // A 2xx with an empty/missing body would silently return undefined cast to
   // T and crash the caller downstream — fail loudly instead.
