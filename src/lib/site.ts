@@ -1,7 +1,7 @@
 // Single source of truth for the public identity of the deployment.
 // SITE_URL must be overridden at deploy time if the product moves to another
 // domain — every canonical, sitemap entry and OG URL derives from it.
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://relay.azimara.ae'
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://relay.aiazimara.com'
 
 export const SITE_NAME = 'AZIMARA RELAY'
 export const ORG_NAME = 'AI Azimara'
