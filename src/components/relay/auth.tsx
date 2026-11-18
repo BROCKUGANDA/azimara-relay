@@ -96,14 +96,18 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
     if (password.length < 10) return toast.error('Password must be at least 10 characters')
     setBusy(true)
     try {
-      const res = await api<{ emailDelivery: { verificationToken: string } }>('/api/auth/register', {
+      const res = await api<{ emailDelivery: { configured: boolean; verificationToken?: string } }>('/api/auth/register', {
         json: { name: name.trim(), email: email.trim(), password, organizationName: orgName.trim() || undefined },
       })
-      // Email delivery is not configured in this environment: the verification
-      // link is surfaced directly (genuine unconfigured-channel behavior).
-      const link = `#/verify/${res.emailDelivery.verificationToken}`
-      setDevVerifyLink(link)
-      toast.success('Account created. Verify your email to continue.')
+      if (res.emailDelivery?.verificationToken) {
+        // Email delivery is not configured in this environment: the verification
+        // link is surfaced directly (genuine unconfigured-channel behavior).
+        const link = `#/verify/${res.emailDelivery.verificationToken}`
+        setDevVerifyLink(link)
+      } else {
+        setDevVerifyLink(null)
+      }
+      toast.success(res.emailDelivery?.configured ? 'Account created. Check your email to verify.' : 'Account created. Verify your email to continue.')
       haptic('success')
       if (orgName) await session.refresh()
     } catch (err) {
