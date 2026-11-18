@@ -1,0 +1,1 @@
+import fs from 'node:fs'; fs.mkdirSync('.next/standalone/.next',{recursive:true}); fs.cpSync('.next/static','.next/standalone/.next/static',{recursive:true,force:true}); fs.cpSync('public','.next/standalone/public',{recursive:true,force:true}); console.log('standalone assets copied');
