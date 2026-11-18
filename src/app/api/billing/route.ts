@@ -88,11 +88,11 @@ export const POST = route(async ({ org, auth, request }) => {
   if (usageExceeded) {
     throw new ApiError('PLAN_DOWNGRADE_BLOCKED', 'Current usage exceeds the target plan limits. Reduce usage or contact support.', 409)
   }
-  await db.organization.update({ where: { id: org.org.id }, data: { plan: body.plan } })
+  await db.organization.update({ where: { id: org.org.id }, data: { plan: body.plan, planStatus: 'ACTIVE' } })
   await db.subscription.upsert({
     where: { orgId: org.org.id },
-    create: { orgId: org.org.id, plan: body.plan, status: 'ACTIVE', seatLimit: ent.seats, periodStart: new Date(), periodEnd: new Date(Date.now() + 30 * 24 * 3600 * 1000) },
-    update: { plan: body.plan, status: 'ACTIVE', seatLimit: ent.seats },
+    create: { orgId: org.org.id, plan: body.plan, status: 'ACTIVE', seats: ent.seats, seatLimit: ent.seats, periodStart: new Date(), periodEnd: new Date(Date.now() + 30 * 24 * 3600 * 1000) },
+    update: { plan: body.plan, status: 'ACTIVE', seats: ent.seats, seatLimit: ent.seats },
   })
   await db.billingEvent.create({ data: { orgId: org.org.id, type: 'PLAN_CHANGED', dataJson: JSON.stringify({ from: previousPlan, to: body.plan }) } })
   await audit({ orgId: org.org.id, actorId: auth.user.id, action: 'PLAN_CHANGED', resourceType: 'Organization', resourceId: org.org.id, data: { from: previousPlan, to: body.plan } })

@@ -7,6 +7,7 @@ import { ApiError } from '@/lib/api'
 import { isValidSolanaAddress, SOL_MINT, SOL_DECIMALS } from '@/lib/solana'
 import { parseAmountToBaseUnits, sumBase, formatBaseUnits } from '@/lib/money'
 import { DEFAULT_CAPABILITY } from '@/lib/multihopper'
+import { entitlementsFor } from '@/lib/entitlements'
 import { audit } from '@/lib/audit'
 import type { Prisma } from '@prisma/client'
 
@@ -29,6 +30,12 @@ export async function createBatch(
   const wallet = await db.wallet.findFirst({ where: { id: input.sourceWalletId, orgId, revokedAt: null } })
   if (!wallet) throw new ApiError('INVALID_WALLET', 'Source wallet not found for this organization', 400)
   if (wallet.ownershipStatus !== 'VERIFIED') throw new ApiError('WALLET_NOT_VERIFIED', 'Source wallet ownership must be verified first', 400)
+
+  const org = await db.organization.findUnique({ where: { id: orgId } })
+  const ent = entitlementsFor(org?.plan)
+  if (input.items.length > ent.maxBatchItems) {
+    throw new ApiError('BATCH_SIZE_EXCEEDED', `Your plan allows up to ${ent.maxBatchItems} items per batch. Upgrade to raise this limit.`, 402)
+  }
 
   const asset = input.mint === SOL_MINT ? null : await db.supportedAsset.findUnique({ where: { mint: input.mint } })
   if (input.mint !== SOL_MINT && (!asset || !asset.enabled)) throw new ApiError('UNSUPPORTED_ASSET', `Mint ${input.mint} is not enabled`, 400)

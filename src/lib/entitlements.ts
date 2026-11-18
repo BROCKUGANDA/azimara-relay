@@ -68,8 +68,10 @@ export const PLANS: Record<PlanId, Entitlements> = {
   },
 }
 
-export function entitlementsFor(plan: string): Entitlements {
-  return PLANS[(plan as PlanId) in PLANS ? (plan as PlanId) : 'STARTER']
+export function entitlementsFor(plan: string | null | undefined): Entitlements {
+  const normalized = String(plan ?? '').trim().toUpperCase()
+  const resolved = (normalized in PLANS ? normalized : 'STARTER') as PlanId
+  return PLANS[resolved]
 }
 
 export class EntitlementError extends Error {

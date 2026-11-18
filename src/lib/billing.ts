@@ -418,6 +418,8 @@ async function confirmInvoiceWithTransfer(invoiceId: string, transfer: IncomingT
   const months = existing.months
   if (existing.kind === 'UPGRADE') {
     const ent = entitlementsFor(existing.plan)
+    // Apply the paid plan to BOTH the organization and its subscription so the
+    // entitlements, seat limit and plan status all reflect what was paid for.
     await db.organization.update({ where: { id: existing.orgId }, data: { plan: existing.plan, planStatus: 'ACTIVE' } })
     await db.subscription.upsert({
       where: { orgId: existing.orgId },
@@ -425,6 +427,7 @@ async function confirmInvoiceWithTransfer(invoiceId: string, transfer: IncomingT
         orgId: existing.orgId,
         plan: existing.plan,
         status: 'ACTIVE',
+        seats: ent.seats,
         seatLimit: ent.seats,
         periodStart: new Date(),
         periodEnd: new Date(Date.now() + months * MONTH_MS),
@@ -432,6 +435,7 @@ async function confirmInvoiceWithTransfer(invoiceId: string, transfer: IncomingT
       update: {
         plan: existing.plan,
         status: 'ACTIVE',
+        seats: ent.seats,
         seatLimit: ent.seats,
         periodStart: new Date(),
         periodEnd: new Date(Date.now() + months * MONTH_MS),
@@ -450,19 +454,29 @@ async function confirmInvoiceWithTransfer(invoiceId: string, transfer: IncomingT
   } else {
     const sub = await db.subscription.findUnique({ where: { orgId: existing.orgId } })
     const from = sub && sub.periodEnd > new Date() ? sub.periodEnd : new Date()
+    const ent = entitlementsFor(existing.plan)
+    // Renewals settle the paid plan too: keep org + subscription plan, seats and
+    // limits in sync with the invoice that was actually paid.
+    await db.organization.update({ where: { id: existing.orgId }, data: { plan: existing.plan, planStatus: 'ACTIVE' } })
     await db.subscription.upsert({
       where: { orgId: existing.orgId },
       create: {
         orgId: existing.orgId,
         plan: existing.plan,
         status: 'ACTIVE',
-        seatLimit: entitlementsFor(existing.plan).seats,
+        seats: ent.seats,
+        seatLimit: ent.seats,
         periodStart: new Date(),
         periodEnd: new Date(from.getTime() + months * MONTH_MS),
       },
-      update: { status: 'ACTIVE', periodEnd: new Date(from.getTime() + months * MONTH_MS) },
+      update: {
+        plan: existing.plan,
+        status: 'ACTIVE',
+        seats: ent.seats,
+        seatLimit: ent.seats,
+        periodEnd: new Date(from.getTime() + months * MONTH_MS),
+      },
     })
-    await db.organization.update({ where: { id: existing.orgId }, data: { planStatus: 'ACTIVE' } })
     await db.billingEvent.create({
       data: { orgId: existing.orgId, type: 'RENEWAL_PAID', dataJson: JSON.stringify({ plan: existing.plan, invoiceId: invoiceId, signature: transfer.signature, amountBaseUnits: transfer.amountBaseUnits, months }) },
     })

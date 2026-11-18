@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { buildCsv } from '@/lib/csv'
 import { audit } from '@/lib/audit'
 import { formatBaseUnits } from '@/lib/money'
+import { entitlementsFor, assertFeature } from '@/lib/entitlements'
 import { safeJsonParse } from '@/lib/safe-json'
 
 export const GET = route(async ({ org }) => {
@@ -16,6 +17,8 @@ export const GET = route(async ({ org }) => {
 const createSchema = z.object({ kind: z.enum(['PAYMENTS', 'RECONCILIATION', 'LEDGER', 'AUDIT']), days: z.number().int().min(1).max(365).default(90) })
 
 export const POST = route(async ({ org, auth, request }) => {
+  const ent = entitlementsFor(org.org.plan)
+  assertFeature(ent, 'exports')
   const body = await readJson(request, createSchema)
   const since = new Date(Date.now() - body.days * 86_400_000)
   let csv = ''

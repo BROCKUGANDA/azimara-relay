@@ -14,17 +14,20 @@ export async function createOrganization(user: { id: string; name: string; email
     data: {
       name,
       slug: slugify(name),
+      plan: 'STARTER',
+      planStatus: 'TRIALING',
       // New organizations follow the deployment network (mainnet-beta by default).
       settingsJson: JSON.stringify({ network: env().SOLANA_NETWORK, requireMfa: false }),
       onboardingJson: JSON.stringify({ steps: {} }),
     },
   })
+  const ent = entitlementsFor(org.plan)
   await db.membership.create({ data: { orgId: org.id, userId: user.id, role: 'OWNER' } })
   await db.approvalPolicy.create({
     data: { orgId: org.id, name: 'Default policy', version: 1, active: true, rulesJson: JSON.stringify(DEFAULT_RULES), createdBy: user.id },
   })
   await db.subscription.create({
-    data: { orgId: org.id, plan: org.plan, status: 'TRIALING', seatLimit: entitlementsFor(org.plan).seats, periodEnd: new Date(Date.now() + 30 * 24 * 3600 * 1000) },
+    data: { orgId: org.id, plan: org.plan, status: 'TRIALING', seats: ent.seats, seatLimit: ent.seats, periodEnd: new Date(Date.now() + 30 * 24 * 3600 * 1000) },
   })
   await db.providerIntegration.create({
     data: { orgId: org.id, provider: 'MULTIHOPPER', environment: 'DEVNET', capabilityJson: JSON.stringify({ maxDestinations: 20 }), status: 'NOT_CONFIGURED' },
