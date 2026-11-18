@@ -21,7 +21,26 @@ type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
 let zaiInstance: Awaited<ReturnType<typeof createZai>> | null = null
 let zaiFailed = false
 
+const ZAI_MODEL = process.env.ZAI_MODEL ?? 'glm-4.5'
+
 async function createZai() {
+  // The SDK reads ./.z-ai-config at creation time. Persist it from env so the
+  // key never lives in source control and survives standalone redeploys.
+  const key = process.env.ZAI_API_KEY
+  if (key) {
+    const fs = await import('node:fs/promises')
+    const path = await import('node:path')
+    const configPath = path.join(process.cwd(), '.z-ai-config')
+    const config = JSON.stringify({
+      baseUrl: process.env.ZAI_BASE_URL ?? 'https://api.z.ai/api/paas/v4',
+      apiKey: key,
+    })
+    try {
+      await fs.writeFile(configPath, config, { mode: 0o600 })
+    } catch {
+      // Best-effort: the SDK may already have a config in place.
+    }
+  }
   const mod = await import('z-ai-web-dev-sdk')
   return mod.default.create()
 }
@@ -31,6 +50,7 @@ async function zaiChat(messages: ChatMessage[], opts?: { temperature?: number })
   try {
     if (!zaiInstance) zaiInstance = await createZai()
     const completion = (await zaiInstance.chat.completions.create({
+      model: ZAI_MODEL,
       messages,
       temperature: opts?.temperature ?? 0.2,
     })) as { choices?: { message?: { content?: string } }[] }

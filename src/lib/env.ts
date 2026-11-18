@@ -32,6 +32,9 @@ const schema = z.object({
   MULTIHOPPER_API_KEY: z.string().optional(),
   MULTIHOPPER_WEBHOOK_SECRET: z.string().optional(),
   AI_PROVIDER: z.string().default('ZAI'),
+  ZAI_API_KEY: z.string().optional(),
+  ZAI_BASE_URL: z.string().url().optional(),
+  ZAI_MODEL: z.string().default('glm-4.5'),
 })
 
 type Env = z.infer<typeof schema> & {
