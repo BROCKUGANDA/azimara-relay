@@ -23,9 +23,17 @@ export type MailResult = {
 let transporter: Transporter | null = null
 let transporterKey: string | null = null
 
+function resendConfigured(): boolean {
+  return !!env().RESEND_API_KEY
+}
+
 function smtpConfigured(): boolean {
   const e = env()
   return !!e.SMTP_HOST && !!e.SMTP_PORT
+}
+
+function mailConfigured(): boolean {
+  return resendConfigured() || smtpConfigured()
 }
 
 async function getTransport(): Promise<Transporter> {
@@ -52,6 +60,34 @@ export function mailFrom(): { address: string; name: string } {
 }
 
 export async function sendEmail(input: MailInput): Promise<MailResult> {
+  if (resendConfigured()) {
+    try {
+      const from = mailFrom()
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env().RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `${from.name} <${from.address}>`,
+          to: [input.to],
+          subject: input.subject,
+          text: input.text,
+          html: input.html,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        console.error(JSON.stringify({ level: 'error', msg: 'resend_delivery_failed', status: res.status, reason: String((data as any)?.message ?? res.statusText).slice(0, 200) }))
+        return { delivered: false, reason: 'RESEND_DELIVERY_FAILED' }
+      }
+      return { delivered: true, messageId: (data as any)?.id }
+    } catch (err) {
+      console.error(JSON.stringify({ level: 'error', msg: 'resend_delivery_failed', reason: String(err instanceof Error ? err.message : err).slice(0, 200) }))
+      return { delivered: false, reason: 'RESEND_DELIVERY_FAILED' }
+    }
+  }
   if (!smtpConfigured()) {
     return { delivered: false, reason: 'SMTP_NOT_CONFIGURED' }
   }
@@ -140,5 +176,5 @@ function escapeHtml(s: string): string {
 }
 
 export function isMailConfigured(): boolean {
-  return smtpConfigured()
+  return mailConfigured()
 }

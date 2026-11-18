@@ -19,6 +19,8 @@ const schema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   SMTP_FROM: z.string().email().optional(),
   SMTP_FROM_NAME: z.string().optional(),
+  // Resend HTTP API (preferred in environments where outbound SMTP is blocked).
+  RESEND_API_KEY: z.string().optional(),
   // Where website contact submissions are delivered (best-effort email; the
   // record is always persisted to the database first).
   CONTACT_INBOX: z.string().email().optional(),
