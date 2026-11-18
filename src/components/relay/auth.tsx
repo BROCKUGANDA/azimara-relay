@@ -25,7 +25,7 @@ function AuthFrame({ children, title, sub }: { children: React.ReactNode; title:
           <LogoGlyph size={40} className="mx-auto" />
           <div className="mt-3 text-sm font-semibold tracking-tight">AZIMARA <span className="text-[#39C6D8]">RELAY</span></div>
         </div>
-        <Card className="border-[#1D2E42] bg-[#101C2C] p-6">
+        <Card className="view-enter border-[#1D2E42] bg-[#101C2C] p-6">
           <h1 className="text-lg font-semibold">{title}</h1>
           <p className="mt-1 text-xs text-dim">{sub}</p>
           <div className="mt-5">{children}</div>
@@ -272,6 +272,16 @@ export function AuthView({ mode, token }: { mode: Mode; token?: string }) {
           <Button onClick={submitMfa} disabled={busy} className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
             Verify and continue
           </Button>
+          {/* A wrong device / lost code must not trap the user on this screen. */}
+          <button
+            className="text-center text-xs text-dim hover:text-[#39C6D8]"
+            onClick={async () => {
+              await session.signOut()
+              navigate('/login')
+            }}
+          >
+            ← Cancel and back to sign in
+          </button>
         </div>
       </AuthFrame>
     )

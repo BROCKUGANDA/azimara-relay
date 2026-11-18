@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useApi, api } from '@/lib/client/hooks'
+import { useRouter } from '@/lib/client/store'
 import { PageHeader, EmptyState, ErrorState, DataTable, SectionCard } from '../ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ type KeyRow = { id: string; name: string; prefix: string; environment: string; s
 const ALL_SCOPES = ['payments:read', 'payments:create', 'recipients:read', 'recipients:create', 'treasury:read']
 
 export function ApiKeysView() {
+  const { navigate } = useRouter()
   const keys = useApi<{ keys: KeyRow[]; entitlement: { apiKeys: number; apiAccess: boolean } }>(['api-keys'], '/api/api-keys')
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
@@ -59,7 +61,7 @@ export function ApiKeysView() {
         actions={
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setCreatedKey(null) }}>
             <DialogTrigger asChild><Button className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Plus className="mr-1.5 h-4 w-4" /> Create key</Button></DialogTrigger>
-            <DialogContent className="border-[#1D2E42] bg-[#101C2C]">
+            <DialogContent aria-describedby={undefined} className="border-[#1D2E42] bg-[#101C2C]">
               <DialogHeader><DialogTitle>Create API key</DialogTitle></DialogHeader>
               {createdKey ? (
                 <div>
@@ -103,8 +105,9 @@ export function ApiKeysView() {
       />
 
       {keys.data && !keys.data.entitlement.apiAccess ? (
-        <div className="mb-4 rounded-xl border border-[#F2BB62]/30 bg-[#F2BB62]/5 px-4 py-3 text-xs text-[#F2BB62]">
-          Developer API access requires the Growth plan or above. Keys are listed but new key creation is blocked until you upgrade.
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#F2BB62]/30 bg-[#F2BB62]/5 px-4 py-3 text-xs text-[#F2BB62]">
+          <span>Developer API access requires the Growth plan or above. Keys are listed but new key creation is blocked until you upgrade.</span>
+          <Button size="sm" variant="outline" className="border-[#F2BB62]/40 text-[#F2BB62]" onClick={() => navigate('/app/billing')}>View plans &amp; upgrade</Button>
         </div>
       ) : null}
       {keys.isError ? <ErrorState message={String(keys.error)} retry={() => keys.refetch()} /> : null}

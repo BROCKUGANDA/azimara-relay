@@ -1,7 +1,8 @@
 'use client'
 
 import { useRouter, useSession } from '@/lib/client/store'
-import { useApi } from '@/lib/client/hooks'
+import { useApi, api } from '@/lib/client/hooks'
+import { toast } from 'sonner'
 import { formatAmount, timeAgo } from '@/lib/client/format'
 import { haptic } from '@/lib/client/motion'
 import { PageHeader, MetricCard, StatusBadge, EmptyState, SectionCard, ErrorState, Amount } from '../ui'
@@ -71,7 +72,7 @@ export function OverviewView() {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* Onboarding checklist */}
+        {/* Onboarding checklist — dismissible (PATCH /api/onboarding) */}
         <SectionCard title="Workspace setup" description="Guided checklist — real completion state, not decorative progress." className="lg:col-span-1">
           {onboarding.isLoading ? (
             <Skeleton className="h-40 bg-[#142436]" />
@@ -86,7 +87,22 @@ export function OverviewView() {
                   </span>
                 </button>
               ))}
-              <div className="pt-1 text-[11px] text-dim">{onboarding.data?.completed ?? 0}/{onboarding.data?.total ?? 5} complete</div>
+              <div className="flex items-center justify-between pt-1">
+                <div className="text-[11px] text-dim">{onboarding.data?.completed ?? 0}/{onboarding.data?.total ?? 5} complete</div>
+                <button
+                  className="text-[11px] text-dim hover:text-[#39C6D8]"
+                  onClick={async () => {
+                    try {
+                      await api('/api/onboarding', { method: 'PATCH', json: { dismissed: true } })
+                      onboarding.refetch()
+                    } catch {
+                      toast.error('Could not dismiss the checklist')
+                    }
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
           )}
         </SectionCard>

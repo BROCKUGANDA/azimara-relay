@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronsUpDown, Building2, X, Menu, Send } from 'lucide-react'
+import { ChevronsUpDown, Building2, X, Menu, Send, CheckCheck } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { ViewBoundary } from './states'
 import {
@@ -96,9 +97,23 @@ const ROUTE_PERMISSIONS: { prefix: string; permission: string }[] = [
   { prefix: '/app/team', permission: 'team:manage' },
   { prefix: '/app/audit', permission: 'audit:read' },
   { prefix: '/app/billing', permission: 'billing:manage' },
+  { prefix: '/app/settings', permission: 'org:read' },
 ]
 
 type Notification = { id: string; type: string; title: string; body: string | null; link: string | null; readAt: string | null; createdAt: string }
+
+function NotificationRow({ n, onOpen }: { n: Notification; onOpen: (n: Notification) => void }) {
+  return (
+    <button
+      className={cn('relay-press-sm block w-full border-b border-[#16273C] px-3 py-2.5 text-left last:border-0 hover:bg-[#1A2C44]', !n.readAt && 'bg-[#39C6D8]/5')}
+      onClick={() => onOpen(n)}
+    >
+      <div className="text-xs font-medium">{n.title}</div>
+      {n.body ? <div className="mt-0.5 line-clamp-2 text-[11px] text-dim">{n.body}</div> : null}
+      <div className="mt-1 text-[10px] text-dim">{timeAgo(n.createdAt)}</div>
+    </button>
+  )
+}
 
 export function AppShell() {
   const { path, navigate } = useRouter()
@@ -108,6 +123,7 @@ export function AppShell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [notifOpen, setNotifOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [notifAllOpen, setNotifAllOpen] = useState(false)
   const [bellSwing, setBellSwing] = useState(false)
   const prevUnread = useRef(0)
 
@@ -161,6 +177,29 @@ export function AppShell() {
   }, [activeOrg?.id])
 
   const unread = notifications.filter((n) => !n.readAt).length
+
+  // One funnel for both the dropdown and the view-all dialog.
+  async function openNotification(n: Notification) {
+    await api('/api/notifications', { json: { ids: [n.id], markRead: true } }).catch(() => undefined)
+    setNotifications((list) => list.map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)))
+    setNotifOpen(false)
+    // Only navigate DB-supplied links that point back into the app —
+    // anything else is dropped (never an open redirect).
+    if (n.link && n.link.replace('#', '').startsWith('/app')) go(n.link.replace('#', ''))
+  }
+
+  async function markAllRead() {
+    const ids = notifications.filter((n) => !n.readAt).slice(0, 100).map((n) => n.id)
+    if (ids.length === 0) return
+    try {
+      await api('/api/notifications', { json: { ids, markRead: true } })
+      const now = new Date().toISOString()
+      setNotifications((list) => list.map((x) => ({ ...x, readAt: x.readAt ?? now })))
+      haptic('success')
+    } catch {
+      toast.error('Could not mark notifications as read')
+    }
+  }
 
   if (!activeOrg) return null
 
@@ -245,30 +284,24 @@ export function AppShell() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))] border-[#1D2E42] bg-[#142436]">
-                <DropdownMenuLabel className="text-xs">Notifications</DropdownMenuLabel>
+                <div className="flex items-center justify-between px-3 py-1.5">
+                  <DropdownMenuLabel className="px-0 text-xs">Notifications</DropdownMenuLabel>
+                  {unread > 0 ? (
+                    <button className="flex items-center gap-1 text-[10px] text-[#39C6D8] hover:underline" onClick={markAllRead}>
+                      <CheckCheck className="h-3 w-3" /> Mark all read
+                    </button>
+                  ) : null}
+                </div>
                 <div className="max-h-80 overflow-y-auto">
                   {notifications.length === 0 ? (
                     <div className="px-3 py-6 text-center text-xs text-dim">No notifications yet</div>
                   ) : (
-                    notifications.slice(0, 12).map((n) => (
-                      <button
-                        key={n.id}
-                        className={cn('relay-press-sm block w-full border-b border-[#16273C] px-3 py-2.5 text-left last:border-0 hover:bg-[#1A2C44]', !n.readAt && 'bg-[#39C6D8]/5')}
-                        onClick={async () => {
-                          await api('/api/notifications', { json: { ids: [n.id], markRead: true } }).catch(() => undefined)
-                          setNotifOpen(false)
-                          // Only navigate DB-supplied links that point back into
-                          // the app — anything else is dropped.
-                          if (n.link && n.link.replace('#', '').startsWith('/app')) go(n.link.replace('#', ''))
-                        }}
-                      >
-                        <div className="text-xs font-medium">{n.title}</div>
-                        {n.body ? <div className="mt-0.5 line-clamp-2 text-[11px] text-dim">{n.body}</div> : null}
-                        <div className="mt-1 text-[10px] text-dim">{timeAgo(n.createdAt)}</div>
-                      </button>
-                    ))
+                    notifications.slice(0, 12).map((n) => <NotificationRow key={n.id} n={n} onOpen={openNotification} />)
                   )}
                 </div>
+                <button className="block w-full border-t border-[#16273C] px-3 py-2.5 text-center text-[11px] text-[#39C6D8] hover:bg-[#1A2C44]" onClick={() => { setNotifOpen(false); setNotifAllOpen(true) }}>
+                  View all notifications
+                </button>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
@@ -321,6 +354,30 @@ export function AppShell() {
       </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+
+      {/* Full notification history — the dropdown intentionally previews only
+          the latest 12; this dialog lists all of them. */}
+      <Dialog open={notifAllOpen} onOpenChange={setNotifAllOpen}>
+        <DialogContent aria-describedby={undefined} className="max-h-[85vh] overflow-y-auto border-[#1D2E42] bg-[#142436] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between text-base font-semibold">
+              All notifications
+              {unread > 0 ? (
+                <button className="flex items-center gap-1 text-[11px] font-normal text-[#39C6D8] hover:underline" onClick={markAllRead}>
+                  <CheckCheck className="h-3 w-3" /> Mark all read
+                </button>
+              ) : null}
+            </DialogTitle>
+          </DialogHeader>
+          {notifications.length === 0 ? (
+            <div className="py-8 text-center text-xs text-dim">No notifications yet — approvals, payments and security events will appear here.</div>
+          ) : (
+            <div className="-mx-2 rounded-lg border border-[#1D2E42]">
+              {notifications.map((n) => <NotificationRow key={n.id} n={n} onOpen={(x) => { setNotifAllOpen(false); void openNotification(x) }} />)}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

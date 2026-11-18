@@ -12,8 +12,24 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Wallet, RefreshCw, Trash2, ShieldCheck, PenLine } from 'lucide-react'
+import { Wallet, RefreshCw, Trash2, ShieldCheck, PenLine, History, Pencil } from 'lucide-react'
 import { walletAvailable, walletName, connectWallet, signMessageBytes, toBase58 } from '@/lib/client/wallet'
+import { haptic } from '@/lib/client/motion'
+
+// Detail rows re-use the shape of the single-wallet endpoint.
+type WalletDetail = {
+  id: string
+  label: string
+  address: string
+  network: string
+  kind: string
+  ownershipStatus: string
+  balance: { available: boolean; sol?: { lamports: string }; tokens?: { mint: string; amount: string; decimals: number | null }[] } | null
+  balanceAt: string | null
+  verifiedAt: string | null
+  revokedAt: string | null
+  history: { id: string; type: string; createdAt: string; data: Record<string, unknown> }[]
+}
 
 type WalletRow = {
   id: string
@@ -38,6 +54,12 @@ export function WalletsView() {
   const [busy, setBusy] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [verifyMsg, setVerifyMsg] = useState<{ walletId: string; message: string } | null>(null)
+  // Edit flow (rename / re-categorize) and the detail-history dialog.
+  const [editing, setEditing] = useState<WalletRow | null>(null)
+  const [editForm, setEditForm] = useState({ label: '', kind: 'TREASURY' })
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const [detail, setDetail] = useState<WalletDetail | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   const extensionAvailable = walletAvailable()
 
@@ -114,6 +136,44 @@ export function WalletsView() {
     }
   }
 
+  async function openEdit(w: WalletRow) {
+    setEditing(w)
+    setEditForm({ label: w.label, kind: w.kind })
+  }
+
+  async function saveEdit() {
+    if (!editing) return
+    if (!editForm.label.trim()) return toast.error('Label is required')
+    if (editForm.label.trim().length > 60) return toast.error('Label must be 60 characters or fewer')
+    setBusy(true)
+    try {
+      await api(`/api/wallets/${editing.id}`, { method: 'PATCH', json: { label: editForm.label.trim(), kind: editForm.kind } })
+      toast.success('Wallet updated')
+      setEditing(null)
+      wallets.refetch()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Update failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function openDetail(walletId: string) {
+    haptic('tap')
+    setDetailId(walletId)
+    setDetail(null)
+    setDetailLoading(true)
+    try {
+      const d = await api<WalletDetail>(`/api/wallets/${walletId}`)
+      setDetail(d)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not load wallet history')
+      setDetailId(null)
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -181,6 +241,75 @@ export function WalletsView() {
       />
 
       {wallets.isError ? <ErrorState message={String(wallets.error)} retry={() => wallets.refetch()} /> : null}
+
+      {/* Edit dialog — rename / re-categorize */}
+      {editing ? (
+        <Dialog open onOpenChange={(o) => { if (!o) setEditing(null) }}>
+          <DialogContent aria-describedby={undefined} className="border-[#1D2E42] bg-[#101C2C]">
+            <DialogHeader><DialogTitle>Edit wallet</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label>Label</Label>
+                <Input value={editForm.label} onChange={(e) => setEditForm({ ...editForm, label: e.target.value })} className="mt-1 border-[#1D2E42] bg-[#0D1622]" />
+              </div>
+              <div>
+                <Label>Kind</Label>
+                <Select value={editForm.kind} onValueChange={(v) => setEditForm({ ...editForm, kind: v })}>
+                  <SelectTrigger className="mt-1 border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
+                  <SelectContent className="border-[#1D2E42] bg-[#142436]">
+                    <SelectItem value="TREASURY">Treasury</SelectItem>
+                    <SelectItem value="OPERATIONAL">Operational</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-[11px] text-dim">The address and network are immutable — a wrong address should be revoked and re-registered.</p>
+              <div className="flex gap-2">
+                <Button onClick={saveEdit} disabled={busy} className="flex-1 bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Save changes</Button>
+                <Button variant="outline" onClick={() => setEditing(null)} disabled={busy} className="border-[#1D2E42]">Discard</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+
+      {/* Detail/history dialog — consumption of the single-wallet endpoint */}
+      {detailId ? (
+        <Dialog open onOpenChange={(o) => { if (!o) setDetailId(null) }}>
+          <DialogContent aria-describedby={undefined} className="max-h-[85vh] overflow-y-auto border-[#1D2E42] bg-[#101C2C] sm:max-w-lg">
+            <DialogHeader><DialogTitle>Wallet history</DialogTitle></DialogHeader>
+            {detailLoading || !detail ? (
+              <div className="space-y-2 py-2" aria-hidden>
+                {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-8 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${i * 70}ms` }} />)}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-[#1D2E42] bg-[#0D1622] p-3 text-xs">
+                  <div className="flex justify-between gap-3"><span className="text-dim">Label</span><span>{detail.label}</span></div>
+                  <div className="mt-1 flex justify-between gap-3"><span className="text-dim">Address</span><span className="font-mono">{shortAddress(detail.address, 8)}</span></div>
+                  <div className="mt-1 flex justify-between gap-3"><span className="text-dim">Network</span><span>{detail.network}</span></div>
+                  <div className="mt-1 flex justify-between gap-3"><span className="text-dim">Balance</span><span className="font-mono tabular-nums">{detail.balance?.available ? `${formatAmount(detail.balance.sol?.lamports ?? '0', 9)} SOL` : 'unavailable'}</span></div>
+                </div>
+                <div>
+                  <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-dim">Event history (latest 20)</div>
+                  {detail.history.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-[#1D2E42] px-3 py-4 text-center text-xs text-dim">No events recorded yet</div>
+                  ) : (
+                    <div className="max-h-56 space-y-1.5 overflow-y-auto">
+                      {detail.history.map((e) => (
+                        <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-[#1D2E42]/60 bg-[#0D1622] px-3 py-2 text-xs">
+                          <span className="text-secondary">{e.type.replaceAll('_', ' ')}</span>
+                          <span className="shrink-0 text-[10px] text-dim">{timeAgo(e.createdAt)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      ) : null}
+
       {verifyMsg ? (
         <div className="mb-4">
           <SetupRequiredState
@@ -239,6 +368,14 @@ export function WalletsView() {
                   {w.verifiedAt ? `Verified ${timeAgo(w.verifiedAt)} · ` : ''}Last event {w.recentEvents[0] ? `${w.recentEvents[0].type} ${timeAgo(w.recentEvents[0].createdAt)}` : '—'}
                 </div>
                 <div className="flex gap-1.5">
+                  {!w.revokedAt ? (
+                    <Button size="sm" variant="ghost" aria-label="Edit wallet" className="h-9 w-9 justify-center text-xs text-dim" title="Rename / re-categorize" onClick={() => openEdit(w)}>
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  ) : null}
+                  <Button size="sm" variant="ghost" aria-label="Wallet history" className="h-9 w-9 justify-center text-xs text-dim" title="Event history" onClick={() => openDetail(w.id)}>
+                    <History className="h-3 w-3" />
+                  </Button>
                   {!w.revokedAt && w.ownershipStatus !== 'VERIFIED' ? (
                     <Button size="sm" variant="outline" className="h-9 border-[#1D2E42] px-3 text-xs" onClick={() => verifyOwnership(w.id)} disabled={verifying}>
                       <ShieldCheck className="mr-1 h-3 w-3" /> Verify

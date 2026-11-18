@@ -69,7 +69,7 @@ export function BatchesView({ initialBatchId }: { initialBatchId?: string }) {
             <DialogTrigger asChild>
               <Button className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Layers className="mr-1.5 h-4 w-4" /> New batch</Button>
             </DialogTrigger>
-            <DialogContent className="border-[#1D2E42] bg-[#101C2C] sm:max-w-3xl">
+            <DialogContent aria-describedby={undefined} className="border-[#1D2E42] bg-[#101C2C] sm:max-w-3xl">
               <DialogHeader><DialogTitle>Batch payment builder</DialogTitle></DialogHeader>
               <BatchBuilder onClose={(id) => { setBuildOpen(false); if (id) setSelected(id) }} />
             </DialogContent>
@@ -244,14 +244,18 @@ function BatchBuilder({ onClose }: { onClose: (id?: string) => void }) {
 
 function BatchDetailPanel({ detail, batchId, onBack, onChanged, navigate }: { detail: BatchDetail; batchId: string; onBack: () => void; onChanged: () => void; navigate: (to: string) => void }) {
   const [busy, setBusy] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const b = detail.batch
 
-  async function run(action: 'validate' | 'execute') {
+  async function run(action: 'validate' | 'execute' | 'cancel') {
     setBusy(true)
     try {
       const res = await api<{ created?: { reference: string }[]; failed?: unknown[]; batchStatus?: string }>(`/api/batches/${batchId}/actions`, { json: { action } })
       if (action === 'execute') {
         toast.success(`Batch executed: ${res.created?.length ?? 0} payments created${res.failed?.length ? `, ${res.failed.length} failed` : ''}`)
+      } else if (action === 'cancel') {
+        toast.success('Batch cancelled — no payments were created')
+        setConfirmCancel(false)
       } else {
         toast.success('Batch revalidated')
       }
@@ -279,6 +283,14 @@ function BatchDetailPanel({ detail, batchId, onBack, onChanged, navigate }: { de
               <>
                 <Button size="sm" variant="outline" onClick={() => run('validate')} disabled={busy} className="border-[#1D2E42]">Revalidate</Button>
                 <Button size="sm" onClick={() => run('execute')} disabled={busy} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Play className="mr-1.5 h-3.5 w-3.5" /> Create payments</Button>
+                {confirmCancel ? (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => setConfirmCancel(false)} disabled={busy} className="border-[#1D2E42]">Keep batch</Button>
+                    <Button size="sm" variant="destructive" onClick={() => run('cancel')} disabled={busy}>Confirm cancel</Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="ghost" onClick={() => setConfirmCancel(true)} disabled={busy} className="text-xs text-[#F27683] hover:text-[#F27683]">Cancel batch</Button>
+                )}
               </>
             ) : null}
           </div>

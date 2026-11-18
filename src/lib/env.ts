@@ -19,6 +19,9 @@ const schema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   SMTP_FROM: z.string().email().optional(),
   SMTP_FROM_NAME: z.string().optional(),
+  // Where website contact submissions are delivered (best-effort email; the
+  // record is always persisted to the database first).
+  CONTACT_INBOX: z.string().email().optional(),
   TREASURY_ADDRESS: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, 'Treasury address must be a base58 Solana public key').optional(),
   BILLING_MINT: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/).optional(),
   BILLING_MINT_DECIMALS: z.coerce.number().int().min(0).max(11).default(6),

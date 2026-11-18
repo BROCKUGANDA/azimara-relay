@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
-import { ShieldCheck, KeyRound, LogOut, Building2 } from 'lucide-react'
+import { ShieldCheck, KeyRound, LogOut, Building2, MailCheck, ShieldOff } from 'lucide-react'
 import { setupTotpClient, enableTotpClient } from '@/lib/client/mfa'
 import { getMotionPrefs, setMotionPref, haptic, hapticsSupported, subscribeMotionPrefs, type MotionPrefs } from '@/lib/client/motion'
 
@@ -49,7 +49,12 @@ export function SettingsView() {
   const [mfa, setMfa] = useState<{ secret: string; otpauthUri: string } | null>(null)
   const [mfaCode, setMfaCode] = useState('')
   const [mfaBusy, setMfaBusy] = useState(false)
+  const [mfaDisableOpen, setMfaDisableOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [pwCurrent, setPwCurrent] = useState('')
+  const [pwNext, setPwNext] = useState('')
+  const [pwConfirm, setPwConfirm] = useState('')
+  const [devVerifyToken, setDevVerifyToken] = useState<string | null>(null)
 
   const isOwner = session.activeOrg?.role === 'OWNER'
 
@@ -117,6 +122,57 @@ export function SettingsView() {
     }
   }
 
+  async function disableMfa() {
+    if (mfaBusy) return
+    if (mfaCode.length !== 6) return toast.error('Enter the current 6-digit code to disable MFA')
+    setMfaBusy(true)
+    try {
+      await api('/api/auth/mfa', { json: { action: 'disable', code: mfaCode } })
+      toast.success('MFA disabled — re-enable it any time')
+      setMfaDisableOpen(false)
+      setMfaCode('')
+      session.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Invalid code')
+    } finally {
+      setMfaBusy(false)
+    }
+  }
+
+  async function changePassword() {
+    if (busy) return
+    if (pwNext.length < 10) return toast.error('New password must be at least 10 characters')
+    if (pwNext !== pwConfirm) return toast.error('New passwords do not match')
+    setBusy(true)
+    try {
+      await api('/api/auth/password-change', { json: { currentPassword: pwCurrent, newPassword: pwNext } })
+      toast.success('Password updated — other sessions were signed out')
+      setPwCurrent(''); setPwNext(''); setPwConfirm('')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Password change failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function resendVerification() {
+    if (busy) return
+    setBusy(true)
+    try {
+      const res = await api<{ sent: boolean; emailDelivery: { configured: boolean; verificationToken?: string; note: string } }>('/api/auth/resend-verification', { json: {} })
+      if (res.emailDelivery.configured) {
+        toast.success('Verification link emailed')
+      } else {
+        setDevVerifyToken(res.emailDelivery.verificationToken ?? null)
+        toast.info('Email delivery not configured — verification link surfaced below')
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not resend')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader title="Settings" description="Organization profile, security and workspace preferences." breadcrumb={['Relay', 'Administration', 'Settings']} />
@@ -163,7 +219,17 @@ export function SettingsView() {
               </div>
               {!session.mfaEnabled ? (
                 <Button size="sm" onClick={startMfa} variant="outline" className="border-[#1D2E42]">Set up</Button>
-              ) : null}
+              ) : mfaDisableOpen ? (
+                <div className="flex items-center gap-2">
+                  <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Code" className="w-24 border-[#1D2E42] bg-[#0D1622] font-mono" aria-label="Current authenticator code" />
+                  <Button size="sm" variant="destructive" onClick={disableMfa} disabled={mfaBusy}>Disable</Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setMfaDisableOpen(false); setMfaCode('') }} className="text-dim">Keep</Button>
+                </div>
+              ) : (
+                <Button size="sm" onClick={() => setMfaDisableOpen(true)} variant="ghost" className="text-xs text-[#F27683] hover:text-[#F27683]">
+                  <ShieldOff className="mr-1 h-3.5 w-3.5" /> Disable
+                </Button>
+              )}
             </div>
             {mfa ? (
               <div className="rounded-lg border border-[#39C6D8]/30 bg-[#39C6D8]/5 p-3">
@@ -241,9 +307,44 @@ export function SettingsView() {
           </div>
         </SectionCard>
 
+        <SectionCard title="Password" description="Changing your password signs out every other session — this device stays signed in.">
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="pw-current">Current password</Label>
+              <Input id="pw-current" type="password" value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} autoComplete="current-password" className="mt-1 border-[#1D2E42] bg-[#0D1622]" />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="pw-next">New password</Label>
+                <Input id="pw-next" type="password" value={pwNext} onChange={(e) => setPwNext(e.target.value)} placeholder="Minimum 10 characters" autoComplete="new-password" className="mt-1 border-[#1D2E42] bg-[#0D1622]" />
+              </div>
+              <div>
+                <Label htmlFor="pw-confirm">Confirm new password</Label>
+                <Input id="pw-confirm" type="password" value={pwConfirm} onChange={(e) => setPwConfirm(e.target.value)} autoComplete="new-password" onKeyDown={(e) => { if (e.key === 'Enter' && !(e.nativeEvent instanceof KeyboardEvent && e.nativeEvent.isComposing)) changePassword() }} className="mt-1 border-[#1D2E42] bg-[#0D1622]" />
+              </div>
+            </div>
+            <Button onClick={changePassword} disabled={busy || !pwCurrent || !pwNext || !pwConfirm} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">Update password</Button>
+          </div>
+        </SectionCard>
+
         <SectionCard title="Session">
           <div className="space-y-3">
             <div className="text-xs text-dim">Signed in as <span className="text-secondary">{session.user?.email}</span>{session.emailVerified ? '' : ' — email not yet verified'}</div>
+            {!session.emailVerified ? (
+              <div className="rounded-lg border border-[#F2BB62]/30 bg-[#F2BB62]/5 p-3">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-[#F2BB62]"><MailCheck className="h-3.5 w-3.5" /> Verify your email</div>
+                <p className="mt-1 text-[11px] text-[#F2BB62]/80">Unverified accounts keep working, but recovery emails cannot reach you.</p>
+                <Button size="sm" variant="outline" onClick={resendVerification} disabled={busy} className="mt-2 border-[#F2BB62]/40 text-[#F2BB62]">Resend verification link</Button>
+                {devVerifyToken ? (
+                  <button
+                    className="mt-2 block w-full truncate rounded bg-[#0D1622] px-2 py-1.5 text-left font-mono text-[10px] text-[#39C6D8] hover:underline"
+                    onClick={() => { window.location.hash = `/verify/${devVerifyToken}` }}
+                  >
+                    #/verify/{devVerifyToken}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             <Button
               variant="outline"
               onClick={async () => {

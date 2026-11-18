@@ -213,4 +213,18 @@ export async function executeBatch(batchId: string, orgId: string, actorId: stri
   return { created, failed, batchStatus: allFailed ? 'FAILED' : failed.length > 0 ? 'PARTIAL' : 'COMPLETED' }
 }
 
+/// Cancels a batch that has not started execution. Once child payments exist
+/// the batch is terminal history — those payments follow their own lifecycle.
+export async function cancelBatch(batchId: string, orgId: string, actorId: string) {
+  const batch = await db.paymentBatch.findFirst({ where: { id: batchId, orgId } })
+  if (!batch) throw new ApiError('NOT_FOUND', 'Batch not found', 404)
+  const cancellable = ['DRAFT', 'VALIDATING', 'AWAITING_APPROVAL']
+  if (!cancellable.includes(batch.status)) {
+    throw new ApiError('INVALID_STATE', `A batch that is ${batch.status} can no longer be cancelled — revoke its child payments individually instead`, 409)
+  }
+  await db.paymentBatch.update({ where: { id: batch.id }, data: { status: 'CANCELLED' } })
+  await audit({ orgId, actorId, action: 'BATCH_CANCELLED', resourceType: 'PaymentBatch', resourceId: batch.id })
+  return { cancelled: true, batchStatus: 'CANCELLED' }
+}
+
 export { batchReference }

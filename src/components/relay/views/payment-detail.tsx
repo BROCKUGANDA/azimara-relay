@@ -1,16 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/client/hooks'
 import { formatAmount, shortAddress, shortHash, formatDateTime, timeAgo } from '@/lib/client/format'
+import { copyText } from '@/lib/client/clipboard'
 import { PageHeader, StatusBadge, Amount, SectionCard, ErrorState, SetupRequiredState } from '../ui'
 import { DetailSkeleton } from '../states'
 import { ProgressFlow } from '../motion'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { haptic } from '@/lib/client/motion'
-import { ArrowLeft, CheckCircle2, Circle, XCircle, ExternalLink, Quote, RefreshCw, Play, FileSignature, ShieldCheck, Ban } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Circle, XCircle, ExternalLink, Quote, RefreshCw, Play, FileSignature, ShieldCheck, Ban, Copy, Wallet } from 'lucide-react'
 
 type Detail = {
   payment: {
@@ -90,6 +93,31 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
   const terminated = d ? ['REJECTED', 'CANCELLED', 'FAILED', 'QUOTE_EXPIRED', 'TRANSFER_EXPIRED', 'REFUNDED', 'RECOVERABLE', 'RESCUED', 'MANUAL_REVIEW', 'RECONCILIATION_REQUIRED'].includes(d.payment.status) : false
   const rawQuote = d?.quote ? (JSON.stringify(d.quote.rawResponse, null, 2) ?? '') : ''
 
+  // Signing workflow state — the non-custodial execution sequence runs in the
+  // user's own wallet, so the UI orchestrates it instead of hiding it.
+  const [preparedBundles, setPreparedBundles] = useState<string | null>(null)
+  const [keeperSig, setKeeperSig] = useState('')
+  const [routeInitSigs, setRouteInitSigs] = useState('')
+  const [confirmCancel, setConfirmCancel] = useState(false)
+
+  // Return visitors land mid-workflow (page reload, deep link): hydrate the
+  // prepared bundles from the stored provider progress so the panel is usable
+  // without re-calling prepare (prepare is idempotent but costs a provider round-trip).
+  useEffect(() => {
+    if (!d || preparedBundles !== null) return
+    const progress = d.providerTransfer?.progress
+    if (progress && typeof progress === 'object' && Object.keys(progress).length > 0) {
+      try {
+        setPreparedBundles(JSON.stringify(progress, null, 2))
+      } catch {
+        // progressJson is provider-controlled; a malformed blob simply means
+        // the user re-prepares explicitly.
+      }
+    }
+    // d (the fetched detail) is the only intentional trigger: preparedBundles
+    // acts as a run-once guard, not a dependency.
+  }, [d])
+
   async function act(action: string, body?: Record<string, unknown>, method: string = 'POST') {
     setBusy(action)
     haptic('tap')
@@ -98,12 +126,48 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
       haptic('success')
       toast.success(`${action.replace('-', ' ')} completed`)
       detail.refetch()
+      return true
     } catch (err) {
       haptic('error')
       toast.error(err instanceof Error ? err.message : 'Action failed')
+      return false
     } finally {
       setBusy(null)
     }
+  }
+
+  async function prepare() {
+    setBusy('prepare')
+    haptic('tap')
+    try {
+      const res = await api<{ bundles: Record<string, unknown>; note: string }>(`/api/payments/${paymentId}/prepare`, { json: {} })
+      setPreparedBundles(JSON.stringify(res.bundles, null, 2))
+      haptic('success')
+      toast.success('Bundle prepared — sign the keeper funding transaction in your wallet')
+      detail.refetch()
+    } catch (err) {
+      haptic('error')
+      toast.error(err instanceof Error ? err.message : 'Prepare failed')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function submitKeeperSignature() {
+    const sig = keeperSig.trim()
+    if (!/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(sig)) return toast.error('That does not look like a Solana transaction signature (base58)')
+    const okFlag = await act('broadcast', { keeperSignature: sig })
+    if (okFlag) { setKeeperSig(''); toast.info('Next: broadcast the remaining transactions, wait for onchain confirmation, then submit route-init signatures below') }
+  }
+
+  async function submitRouteInitSignatures() {
+    const sigs = routeInitSigs.split(/[\n,]/).map((s) => s.trim()).filter(Boolean)
+    if (sigs.length === 0) return toast.error('Paste at least one signature (or an empty line to confirm with none)')
+    for (const s of sigs) {
+      if (!/^[1-9A-HJ-NP-Za-km-z]{32,128}$/.test(s)) return toast.error(`Invalid signature format: ${s.slice(0, 16)}…`)
+    }
+    const okFlag = await act('confirm', { routeInitSignatures: sigs })
+    if (okFlag) { setRouteInitSigs(''); toast.info('Route-init confirmed — use Sync status to track provider processing') }
   }
 
   async function approve(decision: 'APPROVED' | 'REJECTED') {
@@ -157,8 +221,8 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                     <Play className="mr-1.5 h-3.5 w-3.5" /> Start execution
                   </Button>
                 ) : null}
-                {d.payment.status === 'AWAITING_SIGNATURE' ? (
-                  <Button size="sm" onClick={() => act('prepare')} disabled={busy !== null} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
+                {['AWAITING_SIGNATURE', 'FUNDING_BROADCAST'].includes(d.payment.status) ? (
+                  <Button size="sm" onClick={prepare} disabled={busy !== null} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
                     <FileSignature className="mr-1.5 h-3.5 w-3.5" /> Prepare bundle
                   </Button>
                 ) : null}
@@ -168,9 +232,16 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
                   </Button>
                 ) : null}
                 {['DRAFT', 'VALIDATING', 'PENDING_APPROVAL', 'APPROVED', 'QUOTED', 'AWAITING_SIGNATURE', 'QUOTE_EXPIRED'].includes(d.payment.status) ? (
-                  <Button size="sm" variant="ghost" onClick={() => act('cancel')} disabled={busy !== null} className="text-[#F27683]">
-                    <Ban className="mr-1.5 h-3.5 w-3.5" /> Cancel
-                  </Button>
+                  confirmCancel ? (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => setConfirmCancel(false)} disabled={busy !== null} className="border-[#1D2E42]">Keep payment</Button>
+                      <Button size="sm" variant="destructive" onClick={async () => { const okFlag = await act('cancel'); if (okFlag) setConfirmCancel(false) }} disabled={busy !== null}>Confirm cancel</Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="ghost" onClick={() => setConfirmCancel(true)} disabled={busy !== null} className="text-[#F27683]">
+                      <Ban className="mr-1.5 h-3.5 w-3.5" /> Cancel
+                    </Button>
+                  )
                 ) : null}
               </div>
             }
@@ -202,6 +273,83 @@ export function PaymentDetailView({ paymentId, navigate }: { paymentId: string; 
             <div className="mb-5 rounded-xl border border-[#F27683]/30 bg-[#F27683]/5 px-4 py-3 text-xs text-[#F27683]">
               <span className="font-medium">Last error:</span> {d.payment.lastError}
             </div>
+          ) : null}
+
+          {/* Non-custodial signing workflow — the actual execution hand-off.
+              Shown from AWAITING_SIGNATURE until the provider takes over. */}
+          {['AWAITING_SIGNATURE', 'FUNDING_BROADCAST', 'FUNDING_CONFIRMED', 'INITIALIZATION_BROADCAST'].includes(d.payment.status) ? (
+            <SectionCard
+              className="mb-5"
+              title="Signing workflow"
+              description="Relay is non-custodial: the transactions are signed in your own wallet, then handed back to the relay step by step."
+            >
+              <ol className="space-y-4">
+                <li className="flex gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#1D2E42] bg-[#0D1622] text-[11px] font-bold text-[#39C6D8]">1</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-medium">Prepare the transaction bundle</div>
+                    <p className="mt-0.5 text-[11px] text-dim">Fetches the unsigned transactions from the execution rail. Nothing is submitted yet.</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={prepare} disabled={busy !== null} className="border-[#1D2E42]">
+                        <FileSignature className="mr-1.5 h-3.5 w-3.5" /> {preparedBundles ? 'Re-prepare' : 'Prepare bundle'}
+                      </Button>
+                      {preparedBundles ? (
+                        <Button size="sm" variant="ghost" className="text-xs text-dim" onClick={async () => {
+                          const okFlag = await copyText(preparedBundles)
+                          if (okFlag) toast.success('Bundle copied — sign the keeper funding transaction in your wallet')
+                          else toast.error('Copy failed — select the JSON manually')
+                        }}>
+                          <Copy className="mr-1 h-3 w-3" /> Copy bundle JSON
+                        </Button>
+                      ) : null}
+                    </div>
+                    {preparedBundles ? (
+                      <pre className="mt-2 max-h-44 overflow-auto rounded-lg border border-[#1D2E42] bg-[#0A1220] p-3 font-mono text-[10px] leading-relaxed text-dim">{preparedBundles.length > 12000 ? preparedBundles.slice(0, 12000) + '\n… truncated (use Copy for the full bundle)' : preparedBundles}</pre>
+                    ) : null}
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#1D2E42] bg-[#0D1622] text-[11px] font-bold text-[#39C6D8]">2</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-medium">Submit the keeper funding signature</div>
+                    <p className="mt-0.5 text-[11px] text-dim">Sign and broadcast the keeper funding transaction in your wallet, then paste its transaction signature here.</p>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        value={keeperSig}
+                        onChange={(e) => setKeeperSig(e.target.value)}
+                        placeholder="Keeper funding transaction signature (base58)"
+                        className="min-w-0 flex-1 border-[#1D2E42] bg-[#0D1622] font-mono text-xs"
+                        aria-label="Keeper funding signature"
+                      />
+                      <Button size="sm" onClick={submitKeeperSignature} disabled={busy !== null || !keeperSig.trim()} className="shrink-0 bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
+                        <Wallet className="mr-1.5 h-3.5 w-3.5" /> Submit signature
+                      </Button>
+                    </div>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#1D2E42] bg-[#0D1622] text-[11px] font-bold text-[#39C6D8]">3</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-medium">Confirm route-init signatures after onchain confirmation</div>
+                    <p className="mt-0.5 text-[11px] text-dim">After the remaining transactions reach onchain confirmation, paste their signatures — one per line — to finalize the hand-off.</p>
+                    <textarea
+                      value={routeInitSigs}
+                      onChange={(e) => setRouteInitSigs(e.target.value)}
+                      rows={3}
+                      placeholder="Signature 1\nSignature 2"
+                      className="mt-2 w-full rounded-lg border border-[#1D2E42] bg-[#0D1622] p-2.5 font-mono text-xs text-secondary"
+                      aria-label="Route-init signatures"
+                    />
+                    <Button size="sm" onClick={submitRouteInitSignatures} disabled={busy !== null || !routeInitSigs.trim()} className="mt-2 bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90">
+                      <ShieldCheck className="mr-1.5 h-3.5 w-3.5" /> Finalize confirmation
+                    </Button>
+                  </div>
+                </li>
+              </ol>
+              <p className="mt-4 border-t border-[#16273C] pt-3 text-[11px] text-dim">
+                Every submitted signature is recorded under Transaction signatures below with a Solana Explorer link. Status only advances on verified evidence — use <span className="text-secondary">Sync status</span> after onchain confirmations.
+              </p>
+            </SectionCard>
           ) : null}
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">

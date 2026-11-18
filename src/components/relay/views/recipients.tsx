@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useApi, api } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { timeAgo, shortAddress } from '@/lib/client/format'
-import { PageHeader, StatusBadge, EmptyState, ErrorState, DataTable, SectionCard } from '../ui'
+import { PageHeader, StatusBadge, EmptyState, ErrorState, DataTable } from '../ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +12,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Users, Upload, Download, Pencil, Archive } from 'lucide-react'
+import { Users, Upload, Download, Pencil, Archive, History, ArchiveRestore } from 'lucide-react'
+import { haptic } from '@/lib/client/motion'
 
 type RecipientRow = {
   id: string
@@ -54,6 +55,11 @@ export function RecipientsView() {
   const [importOpen, setImportOpen] = useState(false)
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; failed: number; results: { row: number; name: string; status: string; error?: string }[] } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  // Detail drawer: change history + recent payments from the single-recipient
+  // endpoint — the "full change history" the page copy promises.
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detail, setDetail] = useState<{ recipient: RecipientRow & { groupId: string | null }; changeHistory: { id: string; field: string; oldValue: string | null; newValue: string | null; invalidatesApproval: boolean; createdAt: string }[]; recentPayments: { id: string; reference: string; status: string; amountBaseUnits: string; mint: string; createdAt: string }[] } | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   function openEdit(r: RecipientRow) {
     setEditRecipient(r)
@@ -92,6 +98,33 @@ export function RecipientsView() {
     }
   }
 
+  async function restore(r: RecipientRow) {
+    haptic('select')
+    try {
+      await api(`/api/recipients/${r.id}`, { method: 'PATCH', json: { status: 'ACTIVE' } })
+      toast.success('Recipient restored to active')
+      recipients.refetch()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Restore failed')
+    }
+  }
+
+  async function openDetail(r: RecipientRow) {
+    haptic('tap')
+    setDetailOpen(true)
+    setDetail(null)
+    setDetailLoading(true)
+    try {
+      const d = await api<{ recipient: RecipientRow & { groupId: string | null }; changeHistory: { id: string; field: string; oldValue: string | null; newValue: string | null; invalidatesApproval: boolean; createdAt: string }[]; recentPayments: { id: string; reference: string; status: string; amountBaseUnits: string; mint: string; createdAt: string }[] }>(`/api/recipients/${r.id}`)
+      setDetail(d)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not load history')
+      setDetailOpen(false)
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
   async function importCsv(text: string) {
     setBusy(true)
     try {
@@ -120,7 +153,7 @@ export function RecipientsView() {
               <DialogTrigger asChild>
                 <Button className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Users className="mr-1.5 h-4 w-4" /> Add recipient</Button>
               </DialogTrigger>
-              <DialogContent className="border-[#1D2E42] bg-[#101C2C]">
+              <DialogContent aria-describedby={undefined} className="border-[#1D2E42] bg-[#101C2C]">
                 <DialogHeader><DialogTitle>Add recipient</DialogTitle></DialogHeader>
                 <RecipientForm form={form} setForm={setForm} busy={busy} onSave={save} saveLabel="Add recipient" />
               </DialogContent>
@@ -169,8 +202,15 @@ export function RecipientsView() {
           { key: 'st', header: 'Status', render: (r) => <StatusBadge status={r.status === 'ACTIVE' ? 'COMPLETED' : r.status === 'DISABLED' ? 'QUOTE_EXPIRED' : 'CANCELLED'} label={r.status} /> },
           { key: 'act', header: '', className: 'text-right', render: (r) => (
             <div className="flex justify-end gap-1">
-              <Button size="sm" variant="ghost" aria-label="Edit recipient" className="h-9 w-9 justify-center text-xs text-dim" title="Edit recipient" onClick={() => openEdit(r)}><Pencil className="h-3 w-3" /></Button>
-              <Button size="sm" variant="ghost" aria-label="Archive recipient" className="h-9 w-9 justify-center text-xs text-[#F27683]" title="Archive recipient" onClick={() => archive(r)}><Archive className="h-3 w-3" /></Button>
+              <Button size="sm" variant="ghost" aria-label="Change history" className="h-9 w-9 justify-center text-xs text-dim" title="Change history & recent payments" onClick={() => openDetail(r)}><History className="h-3 w-3" /></Button>
+              {r.status === 'ARCHIVED' ? (
+                <Button size="sm" variant="ghost" aria-label="Restore recipient" className="h-9 w-9 justify-center text-xs text-[#2ED3A6]" title="Restore to active" onClick={() => restore(r)}><ArchiveRestore className="h-3 w-3" /></Button>
+              ) : (
+                <>
+                  <Button size="sm" variant="ghost" aria-label="Edit recipient" className="h-9 w-9 justify-center text-xs text-dim" title="Edit recipient" onClick={() => openEdit(r)}><Pencil className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" aria-label="Archive recipient" className="h-9 w-9 justify-center text-xs text-[#F27683]" title="Archive recipient" onClick={() => archive(r)}><Archive className="h-3 w-3" /></Button>
+                </>
+              )}
             </div>
           ) },
         ]}
@@ -178,16 +218,65 @@ export function RecipientsView() {
 
       {/* Edit dialog */}
       <Dialog open={!!editRecipient} onOpenChange={(o) => { if (!o) setEditRecipient(null) }}>
-        <DialogContent className="border-[#1D2E42] bg-[#101C2C]">
+        <DialogContent aria-describedby={undefined} className="border-[#1D2E42] bg-[#101C2C]">
           <DialogHeader><DialogTitle>Edit recipient</DialogTitle></DialogHeader>
           <RecipientForm form={form} setForm={setForm} busy={busy} onSave={save} saveLabel="Save changes" editMode />
           <p className="text-[11px] text-[#F2BB62]">Changing a recipient&apos;s address invalidates pending approvals and forces a new review — recorded in the change history.</p>
         </DialogContent>
       </Dialog>
 
+      {/* Change-history drawer */}
+      <Dialog open={detailOpen} onOpenChange={(o) => { if (!o) setDetailOpen(false) }}>
+        <DialogContent aria-describedby={undefined} className="max-h-[85vh] overflow-y-auto border-[#1D2E42] bg-[#101C2C] sm:max-w-lg">
+          <DialogHeader><DialogTitle>Recipient history{detail ? ` — ${detail.recipient.name}` : ''}</DialogTitle></DialogHeader>
+          {detailLoading || !detail ? (
+            <div className="space-y-2 py-2" aria-hidden>
+              {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-8 rounded bg-[#142436] relay-shimmer" style={{ animationDelay: `${i * 70}ms` }} />)}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-dim">Change history (latest 20)</div>
+                {detail.changeHistory.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-[#1D2E42] px-3 py-4 text-center text-xs text-dim">No changes recorded yet</div>
+                ) : (
+                  <div className="max-h-48 space-y-1.5 overflow-y-auto">
+                    {detail.changeHistory.map((c) => (
+                      <div key={c.id} className="rounded-lg border border-[#1D2E42]/60 bg-[#0D1622] px-3 py-2 text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-secondary">{c.field}</span>
+                          <span className="shrink-0 text-[10px] text-dim">{timeAgo(c.createdAt)}</span>
+                        </div>
+                        <div className="mt-0.5 font-mono text-[10px] text-dim">{c.oldValue ? `${shortAddress(c.oldValue, 4)} → ` : ''}{c.newValue ? shortAddress(c.newValue, 4) : '—'}</div>
+                        {c.invalidatesApproval ? <div className="mt-0.5 text-[10px] text-[#F2BB62]">Invalidated pending approvals</div> : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-dim">Recent payments (latest 10)</div>
+                {detail.recentPayments.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-[#1D2E42] px-3 py-4 text-center text-xs text-dim">No payments yet</div>
+                ) : (
+                  <div className="max-h-44 space-y-1.5 overflow-y-auto">
+                    {detail.recentPayments.map((p) => (
+                      <button key={p.id} className="flex w-full items-center justify-between gap-2 rounded-lg border border-[#1D2E42]/60 bg-[#0D1622] px-3 py-2 text-left text-xs hover:bg-[#142436]" onClick={() => { setDetailOpen(false); navigate(`/app/payments/${p.id}`) }}>
+                        <span className="font-mono text-[#39C6D8]">{p.reference}</span>
+                        <span className="flex items-center gap-2"><StatusBadge status={p.status} /><span className="text-[10px] text-dim">{timeAgo(p.createdAt)}</span></span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Import dialog */}
       <Dialog open={importOpen} onOpenChange={(o) => { setImportOpen(o); if (!o) setImportResult(null) }}>
-        <DialogContent className="border-[#1D2E42] bg-[#101C2C] sm:max-w-2xl">
+        <DialogContent aria-describedby={undefined} className="border-[#1D2E42] bg-[#101C2C] sm:max-w-2xl">
           <DialogHeader><DialogTitle>Import recipients from CSV</DialogTitle></DialogHeader>
           <p className="text-xs text-dim">Columns: <code className="font-mono text-[#39C6D8]">name</code>, <code className="font-mono text-[#39C6D8]">address</code>, optional <code className="font-mono">category, reference, notes</code>. Duplicates are skipped with reasons.</p>
           <input
@@ -265,5 +354,3 @@ function RecipientForm({ form, setForm, busy, onSave, saveLabel, editMode }: {
     </div>
   )
 }
-
-void SectionCard

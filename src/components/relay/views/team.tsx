@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useApi, api } from '@/lib/client/hooks'
-import { useRouter, useSession } from '@/lib/client/store'
+import { useSession } from '@/lib/client/store'
 import { timeAgo } from '@/lib/client/format'
 import { PageHeader, EmptyState, ErrorState, DataTable, SectionCard } from '../ui'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { UserPlus, Trash2, Copy } from 'lucide-react'
+import { UserPlus, Trash2, Copy, RefreshCw } from 'lucide-react'
+import { copyText } from '@/lib/client/clipboard'
 
 type Member = { id: string; userId: string; email: string; name: string; role: string; lastLoginAt: string | null; joinedAt: string }
 type Invite = { id: string; email: string; role: string; status: string; expiresAt: string; createdAt: string }
@@ -26,7 +27,6 @@ function inviteExpiryLabel(expiresAt: string): string {
 }
 
 export function TeamView() {
-  const { navigate } = useRouter()
   const session = useSession()
   const members = useApi<{ members: Member[]; roles: string[]; seatLimit: number }>(['members'], '/api/members')
   const invites = useApi<{ invitations: Invite[]; seatLimit: number; membersCount: number }>(['invitations'], '/api/invitations')
@@ -88,6 +88,21 @@ export function TeamView() {
     }
   }
 
+  async function resendInvite(invitationId: string, email: string) {
+    setBusy(true)
+    try {
+      const res = await api<{ inviteUrl: string; emailDeliveryConfigured: boolean; deliveryNote: string }>('/api/invitations', { method: 'PATCH', json: { invitationId } })
+      const copied = await copyText(res.inviteUrl)
+      if (res.emailDeliveryConfigured) toast.success(`Fresh invitation link emailed to ${email}${copied ? ' and copied' : ''}`)
+      else toast.success(`Fresh link copied — share it with ${email} directly (email delivery not configured)`)
+      invites.refetch()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Resend failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -98,7 +113,7 @@ export function TeamView() {
           canManage ? (
             <Dialog open={inviteOpen} onOpenChange={(o) => { setInviteOpen(o); if (!o) setInviteLink(null) }}>
               <DialogTrigger asChild><Button className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><UserPlus className="mr-1.5 h-4 w-4" /> Invite member</Button></DialogTrigger>
-              <DialogContent className="border-[#1D2E42] bg-[#101C2C]">
+              <DialogContent aria-describedby={undefined} className="border-[#1D2E42] bg-[#101C2C]">
                 <DialogHeader><DialogTitle>Invite a member</DialogTitle></DialogHeader>
                 {inviteLink ? (
                   <div className="rounded-lg border border-[#2ED3A6]/40 bg-[#2ED3A6]/5 p-3 text-xs">
@@ -159,7 +174,14 @@ export function TeamView() {
                   <div className="text-xs">{i.email} <span className="text-dim">· {i.role.replaceAll('_', ' ')}</span></div>
                   <div className="text-[10px] text-dim">{inviteExpiryLabel(i.expiresAt)}</div>
                 </div>
-                {canManage ? <Button size="sm" variant="ghost" className="h-9 px-3 text-xs text-[#F27683]" onClick={() => revokeInvite(i.id)}>Revoke</Button> : null}
+                {canManage ? (
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" className="h-9 px-3 text-xs text-dim" disabled={busy} onClick={() => resendInvite(i.id, i.email)}>
+                      <RefreshCw className="mr-1 h-3 w-3" /> Resend / copy link
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-9 px-3 text-xs text-[#F27683]" onClick={() => revokeInvite(i.id)}>Revoke</Button>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

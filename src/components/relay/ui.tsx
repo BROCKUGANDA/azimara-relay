@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { formatAmount } from '@/lib/client/format'
 import { TableSkeleton } from './states'
-import { Tilt3D, CountUp } from './motion'
+import { Tilt3D, CountUp, Reveal } from './motion'
 
 // Payment status tones per PRD §8.6 — every state visually distinct.
 const TONES: Record<string, { bg: string; text: string; border: string; dot: string }> = {
@@ -183,7 +183,13 @@ export function DataTable<T>({ rows, columns, empty, keyOf, minWidth = 640, load
           {rows.map((row, i) => (
             // Index-suffixed keys: duplicate business keys (repeated names,
             // identical rows) must not break React reconciliation.
-            <tr key={`${keyOf(row)}-${i}`} className="border-b border-[#16273C] transition-colors duration-150 last:border-0 hover:bg-[#142436]">
+            // Staggered entrance: CSS-only, transform/opacity, capped at 360ms
+            // so long lists never feel slow; motion-off/reduced-motion kill it.
+            <tr
+              key={`${keyOf(row)}-${i}`}
+              className="relay-row-in border-b border-[#16273C] transition-colors duration-150 last:border-0 hover:bg-[#142436]"
+              style={{ animationDelay: `${Math.min(i * 26, 360)}ms` }}
+            >
               {columns.map((c) => (
                 <td key={c.key} className={cn('px-3 py-3 align-middle md:px-4', c.className)}>
                   {c.render(row)}
@@ -203,7 +209,9 @@ export function Mono({ children, className }: { children: React.ReactNode; class
 
 export function SectionCard({ title, description, children, actions, className }: { title: string; description?: string; children: React.ReactNode; actions?: React.ReactNode; className?: string }) {
   return (
-    <section className={cn('rounded-xl border border-[#1D2E42] bg-[#101C2C]', className)}>
+    // Scroll reveal wrapper: every card rises gently into view. Reveal gates
+    // itself on the motion preference and renders statically when off.
+    <Reveal as="section" variant="rise" className={cn('rounded-xl border border-[#1D2E42] bg-[#101C2C]', className)}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#16273C] px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold">{title}</h2>
@@ -212,6 +220,6 @@ export function SectionCard({ title, description, children, actions, className }
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
       <div className="p-4">{children}</div>
-    </section>
+    </Reveal>
   )
 }

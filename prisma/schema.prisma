@@ -697,6 +697,26 @@ model Notification {
   @@index([orgId, readAt, createdAt])
 }
 
+// ─── Public contact pipeline (marketing site form) ─────────────────────────
+// Every submission is persisted BEFORE any delivery attempt, so the sales /
+// security pipeline never depends on SMTP availability.
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  company   String?
+  topic     String   @default("general") // general | sales | integrations | security | support
+  message   String
+  status    String   @default("NEW")     // NEW | ACKNOWLEDGED | CLOSED
+  ipHash    String?
+  deliveredToInbox Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
+
 // ─── Billing (entitlements; no payment collection configured) ──────────────
 
 model Subscription {

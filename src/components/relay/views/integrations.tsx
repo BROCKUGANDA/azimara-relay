@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useApi, api } from '@/lib/client/hooks'
-import { PageHeader, EmptyState, ErrorState, SectionCard, SetupRequiredState } from '../ui'
+import { PageHeader, ErrorState, SectionCard, SetupRequiredState } from '../ui'
 import { PanelSkeleton } from '../states'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatDateTime } from '@/lib/client/format'
 import { toast } from 'sonner'
-import { Blocks, RefreshCw, Trash2, CheckCircle2, XCircle, ShieldCheck, Wallet, Droplets, ArrowRightLeft } from 'lucide-react'
+import { RefreshCw, Trash2, CheckCircle2, XCircle, ShieldCheck, Wallet, Droplets, ArrowRightLeft } from 'lucide-react'
 
 type Status = {
   multihopper: { configured: boolean; environment: string; status: string; statusDetail: string | null; lastCheckAt: string | null; capability: { maxDestinations: number }; webhookConfigured: boolean; verificationNote: string }
@@ -269,5 +269,3 @@ function StatusPill({ ok }: { ok: boolean }) {
   )
 }
 
-void EmptyState
-void Blocks

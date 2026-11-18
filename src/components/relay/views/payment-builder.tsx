@@ -59,7 +59,6 @@ export function PaymentBuilderView() {
   const assets = useApi<{ assets: AssetRow[] }>(['assets'], '/api/assets')
   const recipients = useApi<{ recipients: RecipientRow[] }>(['recipients-payment'], '/api/recipients?status=ACTIVE&pageSize=100')
   const policies = useApi<PolicyData>(['policies'], '/api/policies')
-  const ruleConditions = new Map<string, Record<string, unknown>>()
 
   const wallet = wallets.data?.wallets.find((w) => w.id === walletId)
   const asset = assets.data?.assets.find((a) => a.mint === mint)

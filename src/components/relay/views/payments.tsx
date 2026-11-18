@@ -1,14 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useApi } from '@/lib/client/hooks'
+import { useApi, api } from '@/lib/client/hooks'
 import { useRouter } from '@/lib/client/store'
 import { timeAgo, shortAddress } from '@/lib/client/format'
 import { PageHeader, StatusBadge, EmptyState, ErrorState, DataTable, Amount } from '../ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Send, Layers } from 'lucide-react'
+import { Send, Layers, Download, ChevronLeft, ChevronRight } from 'lucide-react'
+import { toast } from 'sonner'
+import { haptic } from '@/lib/client/motion'
 
 type PaymentRow = {
   id: string
@@ -56,8 +58,42 @@ export function PaymentsView() {
   const { navigate } = useRouter()
   const [status, setStatus] = useState('ALL')
   const [q, setQ] = useState('')
+  const [walletId, setWalletId] = useState('ALL')
+  const [requestedPage, setPageRaw] = useState(1)
   const debouncedQ = useDebouncedValue(q, 300)
-  const payments = useApi<{ payments: PaymentRow[]; total: number }>(['payments', status, debouncedQ], `/api/payments?status=${status}&q=${encodeURIComponent(debouncedQ)}`)
+  const PAGE_SIZE = 50
+  const wallets = useApi<{ wallets: { id: string; label: string; revokedAt: string | null }[] }>(['wallets-filter'], '/api/wallets')
+  const payments = useApi<{ payments: PaymentRow[]; total: number }>(
+    ['payments', status, debouncedQ, walletId, requestedPage],
+    `/api/payments?status=${status}&q=${encodeURIComponent(debouncedQ)}&walletId=${walletId === 'ALL' ? '' : walletId}&page=${requestedPage}&pageSize=${PAGE_SIZE}`,
+  )
+  const total = payments.data?.total ?? 0
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  // Derived clamp: shrinking filters pull the view back to page 1 without an
+  // effect-driven cascading render — the query key simply uses the clamped page.
+  const page = Math.max(1, Math.min(requestedPage, pageCount))
+  function setPage(next: number) {
+    setPageRaw(Math.max(1, Math.min(next, pageCount)))
+  }
+
+  function exportCsv() {
+    haptic('select')
+    toast.promise(
+      api<{ id: string; rowCount: number; csv: string }>('/api/exports', { json: { kind: 'PAYMENTS', days: 90 } }).then((res) => {
+        const blob = new Blob([res.csv], { type: 'text/csv;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `azimara-payments-${new Date().toISOString().slice(0, 10)}.csv`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        return res
+      }),
+      { loading: 'Building payments CSV…', success: (res) => `Exported ${res.rowCount} rows (last 90 days)`, error: (e) => e instanceof Error ? e.message : 'Export failed' },
+    )
+  }
 
   return (
     <div>
@@ -67,6 +103,7 @@ export function PaymentsView() {
         breadcrumb={['Relay', 'Payments']}
         actions={
           <>
+            <Button variant="outline" onClick={exportCsv} className="border-[#1D2E42] text-xs"><Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV</Button>
             <Button variant="outline" onClick={() => navigate('/app/batches')} className="border-[#1D2E42] text-xs"><Layers className="mr-1.5 h-3.5 w-3.5" /> Batch builder</Button>
             <Button onClick={() => navigate('/app/payments/new')} className="bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"><Send className="mr-1.5 h-4 w-4" /> New payment</Button>
           </>
@@ -74,14 +111,30 @@ export function PaymentsView() {
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Input placeholder="Search reference, destination, reason…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full border-[#1D2E42] bg-[#0D1622] sm:w-64" />
-        <Select value={status} onValueChange={setStatus}>
+        <Input placeholder="Search reference, destination, reason…" value={q} onChange={(e) => { setQ(e.target.value); setPageRaw(1) }} className="w-full border-[#1D2E42] bg-[#0D1622] sm:w-64" />
+        <Select value={status} onValueChange={(v) => { setStatus(v); setPageRaw(1) }}>
           <SelectTrigger className="w-52 border-[#1D2E42] bg-[#0D1622]"><SelectValue /></SelectTrigger>
           <SelectContent className="border-[#1D2E42] bg-[#142436]">
             {STATUS_GROUPS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
           </SelectContent>
         </Select>
-        <div className="ml-auto self-center text-xs text-dim">{payments.data?.total ?? 0} payments</div>
+        <Select value={walletId} onValueChange={(v) => { setWalletId(v); setPageRaw(1) }}>
+          <SelectTrigger className="w-44 border-[#1D2E42] bg-[#0D1622]" aria-label="Filter by source wallet"><SelectValue /></SelectTrigger>
+          <SelectContent className="border-[#1D2E42] bg-[#142436]">
+            <SelectItem value="ALL">All wallets</SelectItem>
+            {(wallets.data?.wallets ?? []).filter((w) => !w.revokedAt).map((w) => <SelectItem key={w.id} value={w.id}>{w.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <div className="ml-auto flex items-center gap-3 self-center text-xs text-dim">
+          <span>{total} payment{total === 1 ? '' : 's'}</span>
+          {pageCount > 1 ? (
+            <div className="flex items-center gap-1">
+              <Button size="sm" variant="ghost" className="h-7 w-7 justify-center p-0" disabled={page <= 1} onClick={() => { haptic('tap'); setPage(page - 1) }} aria-label="Previous page"><ChevronLeft className="h-3.5 w-3.5" /></Button>
+              <span className="tabular-nums">{page} / {pageCount}</span>
+              <Button size="sm" variant="ghost" className="h-7 w-7 justify-center p-0" disabled={page >= pageCount} onClick={() => { haptic('tap'); setPage(page + 1) }} aria-label="Next page"><ChevronRight className="h-3.5 w-3.5" /></Button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {payments.isError ? <ErrorState message={String(payments.error)} retry={() => payments.refetch()} /> : null}

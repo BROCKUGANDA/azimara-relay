@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import QRCode from 'qrcode'
 import { useApi, api } from '@/lib/client/hooks'
 import { ApiClientError } from '@/lib/client/api'
-import { useSession } from '@/lib/client/store'
+import { useSession, useRouter } from '@/lib/client/store'
 import { formatDateTime } from '@/lib/client/format'
 import { PageHeader, SectionCard, ErrorState, EmptyState, SetupRequiredState } from '../ui'
 import { TableSkeleton, MetricSkeleton } from '../states'
@@ -54,7 +54,7 @@ type BillingData = {
   plan: string
   planStatus: string
   entitlements: { seats: number; maxBatchItems: number; monthlyPayments: number; aiRequestsPerMonth: number; apiKeys: number; treasuryWallets: number; exports: boolean; apiAccess: boolean; multiApprover: boolean; priceMonthlyUsd: number | null }
-  usage: { paymentsThisMonth: number; members: number; activeKeys: number; paymentsLimit: number; seatsLimit: number; apiKeysLimit: number }
+  usage: { paymentsThisMonth: number; members: number; activeKeys: number; activeWallets: number; paymentsLimit: number; seatsLimit: number; apiKeysLimit: number }
   plans: { id: string; seats: number; maxBatchItems: number; monthlyPayments: number; aiRequestsPerMonth: number; apiKeys: number; treasuryWallets: number; apiAccess: boolean; multiApprover: boolean; priceMonthlyUsd: number | null }[]
   billingEvents: { id: string; type: string; data: Record<string, unknown>; createdAt: string }[]
   invoices: Invoice[]
@@ -290,7 +290,7 @@ export function BillingView() {
               <Meter label="Payments this month" used={d.usage.paymentsThisMonth} limit={d.usage.paymentsLimit} />
               <Meter label="Seats" used={d.usage.members} limit={d.usage.seatsLimit} />
               <Meter label="Active API keys" used={d.usage.activeKeys} limit={d.usage.apiKeysLimit} />
-              <Meter label="Treasury wallets" used={d.usage.activeKeys === d.usage.apiKeysLimit ? 0 : d.usage.activeKeys} limit={d.entitlements.treasuryWallets} />
+              <Meter label="Active wallets" used={d.usage.activeWallets} limit={d.entitlements.treasuryWallets} />
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               <span className={cn('rounded-full border px-2.5 py-1', d.entitlements.multiApprover ? 'border-[#2ED3A6]/40 text-[#2ED3A6]' : 'border-[#1D2E42] text-dim')}>Multi-approver policies {d.entitlements.multiApprover ? 'included' : 'not included'}</span>
@@ -318,7 +318,16 @@ export function BillingView() {
                     </div>
                     {canManage && p.id !== d.plan ? (
                       p.priceMonthlyUsd == null ? (
-                        <Button size="sm" variant="outline" className="mt-3 w-full cursor-not-allowed border-[#1D2E42]" disabled>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-3 w-full border-[#1D2E42]"
+                          onClick={() => {
+                            const { navigate: nav } = useRouter.getState()
+                            nav('/contact')
+                            toast.info('Enterprise is priced by contract — tell us about your volume and we will respond by email')
+                          }}
+                        >
                           Contact sales
                         </Button>
                       ) : (

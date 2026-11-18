@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
+import { toast } from 'sonner'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useSession, useRouter } from '@/lib/client/store'
+import { setSessionExpiredHandler } from '@/lib/client/api'
 import { hydrateMotionPrefs } from '@/lib/client/motion'
 import { PublicSite } from './public'
 import { AuthView } from './auth'
@@ -45,6 +47,29 @@ function RelayRoot() {
     if (verifyEmail && !window.location.hash) {
       window.history.replaceState(null, '', '/')
       navigate(`#/verify/${verifyEmail}`)
+    }
+  }, [])
+
+  // Session-expiry funnel + periodic re-sync. A revoked/expired cookie used to
+  // cascade every view into error states; now ONE handler refreshes the
+  // session (which flips the router to the auth screen) and tells the user
+  // why. The 5-minute re-sync also keeps plan/role/MFA state fresh mid-session.
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      void useSession.getState().refresh().then(() => {
+        const { navigate: nav } = useRouter.getState()
+        nav('/login')
+        toast.info('Your session expired — sign in again to continue')
+      })
+    })
+    const t = setInterval(() => {
+      // Skip while hidden — same battery/data discipline as notification polls.
+      if (typeof document !== 'undefined' && document.hidden) return
+      void useSession.getState().refresh()
+    }, 5 * 60_000)
+    return () => {
+      setSessionExpiredHandler(null)
+      clearInterval(t)
     }
   }, [])
 

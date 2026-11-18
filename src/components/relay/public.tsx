@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import {
   Shield, Landmark, Workflow, BrainCircuit, Blocks, Lock, ArrowRight, Check,
@@ -299,7 +300,7 @@ function TrustMarquee() {
   )
 }
 
-function Cta({ title, sub, primary, secondary }: { title: string; sub: string; primary: string; secondary: string }) {
+function Cta({ title, sub, primary, secondary, primaryTo = '/register', secondaryTo = '/contact' }: { title: string; sub: string; primary: string; secondary: string; primaryTo?: string; secondaryTo?: string }) {
   const { navigate } = useRouter()
   return (
     <div className="relative overflow-hidden">
@@ -309,10 +310,10 @@ function Cta({ title, sub, primary, secondary }: { title: string; sub: string; p
           <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-secondary">{sub}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <MagneticButton onClick={() => navigate('/register')} hapticEvent="select" className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#39C6D8] px-4 text-sm font-medium text-[#04121A] shadow-[0_0_24px_rgba(57,198,216,0.3)] transition-colors hover:bg-[#39C6D8]/90">
+            <MagneticButton onClick={() => navigate(primaryTo)} hapticEvent="select" className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#39C6D8] px-4 text-sm font-medium text-[#04121A] shadow-[0_0_24px_rgba(57,198,216,0.3)] transition-colors hover:bg-[#39C6D8]/90">
               {primary} <ArrowRight className="h-4 w-4" />
             </MagneticButton>
-            <MagneticButton onClick={() => navigate('/contact')} strength={5} className="inline-flex h-10 items-center justify-center rounded-md border border-[#1D2E42] bg-transparent px-4 text-sm font-medium text-secondary transition-colors hover:text-foreground">
+            <MagneticButton onClick={() => navigate(secondaryTo)} strength={5} className="inline-flex h-10 items-center justify-center rounded-md border border-[#1D2E42] bg-transparent px-4 text-sm font-medium text-secondary transition-colors hover:text-foreground">
               {secondary}
             </MagneticButton>
           </div>
@@ -661,7 +662,7 @@ function SecurityPage() {
           <p><span className="font-semibold text-[#F2BB62]">Reporting:</span> Security issues can be reported through the contact page; we ask for responsible disclosure and will acknowledge receipt.</p>
         </div>
       </section>
-      <Cta title="Security questions?" sub="We publish our boundaries plainly and prefer over-disclosure." primary="Contact the team" secondary="Review the product" />
+      <Cta title="Security questions?" sub="We publish our boundaries plainly and prefer over-disclosure." primary="Contact the team" secondary="Review the product" secondaryTo="/product" />
     </Page>
   )
 }
@@ -698,7 +699,7 @@ function PricingPage() {
                 ))}
               </ul>
               <Button
-                onClick={() => navigate('/register')}
+                onClick={() => navigate(p.price === 'Custom' ? '/contact' : '/register')}
                 variant={p.featured ? 'default' : 'outline'}
                 className={`mt-5 w-full ${p.featured ? 'bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90' : 'border-[#1D2E42]'}`}
               >
@@ -741,14 +742,15 @@ function CompanyPage() {
           ))}
         </div>
       </section>
-      <Cta title="Work with us" sub="Partnerships, integrations and enterprise deployments." primary="Contact" secondary="See pricing" />
+      <Cta title="Work with us" sub="Partnerships, integrations and enterprise deployments." primary="Contact" secondary="See pricing" secondaryTo="/pricing" />
     </Page>
   )
 }
 
 function ContactPage() {
-  const [sent, setSent] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', company: '', message: '' })
+  const [sent, setSent] = useState<null | { reference: string; inboxNotified: boolean; inboxConfigured: boolean }>(null)
+  const [busy, setBusy] = useState(false)
+  const [form, setForm] = useState({ name: '', email: '', company: '', topic: 'general', message: '' })
   return (
     <Page path="/contact">
       <Hero eyebrow="Contact" title="Talk to the AZIMARA RELAY team" sub="Sales, integrations, security disclosure and enterprise deployments." />
@@ -757,28 +759,70 @@ function ContactPage() {
           <Card className="border-[#2ED3A6]/40 bg-[#2ED3A6]/5 p-6 text-center text-sm">
             <Check className="mx-auto h-8 w-8 text-[#2ED3A6]" />
             <div className="mt-3 font-medium">Message recorded</div>
-            <p className="mt-1 text-xs text-dim">Thank you — the team reviews requests in order and will respond by email. (Note: an email delivery provider is not configured in this environment; in production this form writes to the sales pipeline.)</p>
+            <p className="mt-1 text-xs text-dim">
+              Thank you — your message is saved with reference <span className="font-mono text-[10px] text-secondary">{sent.reference}</span>. The team reviews requests in order and will respond by email.
+            </p>
+            {!sent.inboxNotified ? (
+              <p className="mt-2 text-[11px] text-[#F2BB62]">
+                {sent.inboxConfigured
+                  ? 'The team inbox notification is pending delivery — your message is safely recorded and will be picked up.'
+                  : 'An email delivery provider is not configured in this environment — your message is recorded in the request pipeline and reviewed from there.'}
+              </p>
+            ) : null}
+            <Button variant="outline" className="mt-4 border-[#263249]" onClick={() => setSent(null)}>Send another message</Button>
           </Card>
         ) : (
           <Card className="border-[#1D2E42] bg-[#101C2C] p-6">
             <div className="space-y-3">
-              <Input placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="border-[#1D2E42] bg-[#0D1622]" />
-              <Input placeholder="Work email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="border-[#1D2E42] bg-[#0D1622]" />
-              <Input placeholder="Company / organization" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="border-[#1D2E42] bg-[#0D1622]" />
-              <Textarea placeholder="What are you trying to solve?" rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="border-[#1D2E42] bg-[#0D1622]" />
+              <Input placeholder="Your name" maxLength={80} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="border-[#1D2E42] bg-[#0D1622]" />
+              <Input placeholder="Work email" type="email" maxLength={200} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="border-[#1D2E42] bg-[#0D1622]" />
+              <Input placeholder="Company / organization (optional)" maxLength={120} value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="border-[#1D2E42] bg-[#0D1622]" />
+              <Select value={form.topic} onValueChange={(v) => setForm({ ...form, topic: v })}>
+                <SelectTrigger className="border-[#1D2E42] bg-[#0D1622]" aria-label="Topic"><SelectValue /></SelectTrigger>
+                <SelectContent className="border-[#1D2E42] bg-[#142436]">
+                  <SelectItem value="general">General inquiry</SelectItem>
+                  <SelectItem value="sales">Sales &amp; enterprise</SelectItem>
+                  <SelectItem value="integrations">Integrations</SelectItem>
+                  <SelectItem value="security">Security disclosure</SelectItem>
+                  <SelectItem value="support">Product support</SelectItem>
+                </SelectContent>
+              </Select>
+              <Textarea placeholder="What are you trying to solve?" rows={5} maxLength={4000} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="border-[#1D2E42] bg-[#0D1622]" />
               <Button
-                onClick={() => {
-                  if (!form.name || !form.email || !form.message) {
-                    toast.error('Name, email and message are required')
+                onClick={async () => {
+                  const emailOk = /^\S+@\S+\.\S+$/.test(form.email.trim())
+                  if (!form.name.trim() || !emailOk || form.message.trim().length < 10) {
+                    toast.error('Name, a valid email and a message of at least 10 characters are required')
                     return
                   }
-                  setSent(true)
+                  setBusy(true)
+                  try {
+                    const res = await fetch('/api/contact', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        name: form.name.trim(),
+                        email: form.email.trim(),
+                        company: form.company.trim() || undefined,
+                        topic: form.topic,
+                        message: form.message.trim(),
+                      }),
+                    })
+                    const payload = (await res.json()) as { data?: { reference: string; inboxNotified: boolean; inboxConfigured: boolean }; error?: { message: string } }
+                    if (!res.ok) throw new Error(payload.error?.message ?? 'Could not send the message')
+                    setSent({ reference: payload.data!.reference, inboxNotified: payload.data!.inboxNotified, inboxConfigured: payload.data!.inboxConfigured })
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : 'Could not send the message')
+                  } finally {
+                    setBusy(false)
+                  }
                 }}
+                disabled={busy}
                 className="w-full bg-[#39C6D8] font-medium text-[#04121A] hover:bg-[#39C6D8]/90"
               >
-                <Send className="mr-2 h-4 w-4" /> Send message
+                <Send className="mr-2 h-4 w-4" /> {busy ? 'Sending…' : 'Send message'}
               </Button>
-              <p className="text-center text-[11px] text-dim">For security disclosures, mark the subject line accordingly and we will acknowledge within one business day.</p>
+              <p className="text-center text-[11px] text-dim">For security disclosures, pick the security topic — we acknowledge within one business day.</p>
             </div>
           </Card>
         )}

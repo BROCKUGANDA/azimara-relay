@@ -12,10 +12,11 @@ export const GET = route(async ({ org }) => {
   const invoices = await db.subscriptionInvoice.findMany({ where: { orgId: org.org.id }, orderBy: { createdAt: 'desc' }, take: 25 })
   const ent = entitlementsFor(org.org.plan)
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  const [paymentsThisMonth, members, activeKeys, collection, rpcHealth] = await Promise.all([
+  const [paymentsThisMonth, members, activeKeys, activeWallets, collection, rpcHealth] = await Promise.all([
     db.paymentRequest.count({ where: { orgId: org.org.id, createdAt: { gte: monthStart } } }),
     db.membership.count({ where: { orgId: org.org.id } }),
     db.apiCredential.count({ where: { orgId: org.org.id, revokedAt: null } }),
+    db.wallet.count({ where: { orgId: org.org.id, revokedAt: null } }),
     billingConfig(),
     billingRpcHealth(),
   ])
@@ -24,7 +25,7 @@ export const GET = route(async ({ org }) => {
     plan: org.org.plan,
     planStatus: org.org.planStatus,
     entitlements: ent,
-    usage: { paymentsThisMonth, members, activeKeys, paymentsLimit: ent.monthlyPayments, seatsLimit: ent.seats, apiKeysLimit: ent.apiKeys },
+    usage: { paymentsThisMonth, members, activeKeys, activeWallets, paymentsLimit: ent.monthlyPayments, seatsLimit: ent.seats, apiKeysLimit: ent.apiKeys },
     plans: Object.entries(PLANS).map(([id, p]) => ({ id, ...p })),
     billingEvents: events.map((e) => ({ id: e.id, type: e.type, data: safeJsonParse(e.dataJson, {}), createdAt: e.createdAt })),
     invoices: invoices.map(serializeInvoice),

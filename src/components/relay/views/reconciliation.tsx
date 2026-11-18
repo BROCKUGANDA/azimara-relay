@@ -44,7 +44,6 @@ export function ReconciliationView() {
         breadcrumb={['Relay', 'Assurance', 'Reconciliation']}
         actions={
           <>
-            <a href="/api/exports" download className="hidden" aria-hidden />
             <Button size="sm" variant="outline" className="border-[#1D2E42]" onClick={async () => {
               try {
                 const res = await api<{ csv: string; rowCount: number }>('/api/exports', { json: { kind: 'RECONCILIATION', days: 90 } })

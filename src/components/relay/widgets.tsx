@@ -19,7 +19,7 @@ import {
   GlyphSearch, GlyphCommand, GlyphBatches, GlyphApprovals, GlyphTreasury, GlyphOverview,
   GlyphWallet, GlyphRecipients, GlyphPayments, GlyphPolicies, GlyphSchedules,
   GlyphActivity, GlyphReconcile, GlyphAnalytics, GlyphIntelligence, GlyphKeys,
-  GlyphIntegrations, GlyphTeam, GlyphAudit, GlyphBilling, GlyphSettings,
+  GlyphIntegrations, GlyphTeam, GlyphAudit, GlyphBilling, GlyphSettings, GlyphLogout,
 } from './glyphs'
 
 // ─── Sparkline ──────────────────────────────────────────────────────────────
@@ -327,6 +327,15 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               <PaletteItem glyph={<GlyphBatches size={15} />} label="New batch payout" keywords="bulk csv" onRun={() => go('/app/batches')} show={permissions.includes('payment:create' as never)} />
               <PaletteItem glyph={<GlyphApprovals size={15} />} label="Review pending approvals" keywords="approve sign" onRun={() => go('/app/approvals')} />
               <PaletteItem glyph={<GlyphTreasury size={15} />} label="Open treasury" keywords="balance wallets" onRun={() => go('/app/treasury')} />
+              <PaletteItem
+                glyph={<GlyphLogout size={15} />}
+                label="Sign out"
+                keywords="logout exit session"
+                onRun={() => {
+                  onOpenChange(false)
+                  void useSession.getState().signOut().then(() => navigate('/'))
+                }}
+              />
             </CommandGroup>
             <CommandGroup heading="Navigate" className="[&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-dim">
               <PaletteItem glyph={<GlyphOverview size={15} />} label="Overview" keywords="dashboard home" onRun={() => go('/app')} />

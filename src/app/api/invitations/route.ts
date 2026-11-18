@@ -69,3 +69,32 @@ export const DELETE = route(async ({ org, auth, request }) => {
   await audit({ orgId: org.org.id, actorId: auth.user.id, action: 'INVITATION_REVOKED', resourceType: 'Invitation', resourceId: invite.id })
   return ok({ revoked: true })
 }, { permission: 'team:manage' })
+
+/// Resend: re-issues a FRESH token for the same invitation (the old link dies),
+/// extends the expiry, and re-attempts email delivery. Token hashes only are
+/// stored, so the previous link cannot be re-derived — a resend always mints
+/// a new one. The response carries the link for hand-delivery when SMTP is
+/// unconfigured (same honest channel as create).
+export const PATCH = route(async ({ org, auth, request }) => {
+  const body = await readJson(request, revokeSchema)
+  const invite = await db.invitation.findFirst({ where: { id: body.invitationId, orgId: org.org.id } })
+  if (!invite) throw new ApiError('NOT_FOUND', 'Invitation not found', 404)
+  if (invite.status === 'REVOKED') throw new ApiError('INVALID_STATE', 'This invitation was revoked — create a new one instead', 409)
+  if (invite.status === 'ACCEPTED') throw new ApiError('INVALID_STATE', 'This invitation was already accepted', 409)
+  const rawToken = randomToken(24)
+  await db.invitation.update({
+    where: { id: invite.id },
+    data: { tokenHash: sha256(rawToken), expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000), status: 'PENDING' },
+  })
+  await audit({ orgId: org.org.id, actorId: auth.user.id, action: 'INVITATION_RESENT', resourceType: 'Invitation', resourceId: invite.id })
+  const inviteUrl = `${SITE_URL}/#/invite/${rawToken}`
+  const mail = await sendEmail(invitationEmail(invite.email, org.org.name, invite.role, inviteUrl))
+  return ok({
+    resent: true,
+    email: invite.email,
+    emailDeliveryConfigured: mail.delivered,
+    invitationToken: mail.delivered ? undefined : rawToken,
+    inviteUrl,
+    deliveryNote: mail.delivered ? 'A fresh invitation link was emailed.' : 'Email delivery is not configured — share the fresh link with the invitee directly.',
+  })
+}, { permission: 'team:manage' })
